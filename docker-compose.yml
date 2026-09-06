@@ -10,12 +10,20 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - THINGSBOARD_URL=https://app.humid1.com
-      - AUTHENTIK_URL=https://auth.humid1.com
-      - AUTHENTIK_APP_SLUG=humid1-dash
-      - AUTHENTIK_CLIENT_ID=7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI
-      - DASHBOARD_URL=https://dash.humid1.com
-      - DEFAULT_DEVICE_NAME=HUMID1-CABINET-01
+      # --------------------------------------------------------------
+      # - THINGSBOARD_URL=https://app.humid1.com
+      # - AUTHENTIK_URL=https://auth.humid1.com
+      # - AUTHENTIK_APP_SLUG=humid1-dash
+      # - AUTHENTIK_CLIENT_ID=7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI
+      # - DASHBOARD_URL=https://dash.humid1.com
+      # - DEFAULT_DEVICE_NAME=HUMID1-CABINET-01
+      # --------------------------------------------------------------
+      - THINGSBOARD_URL="${VITE_THINGSBOARD_URL}"
+      - AUTHENTIK_URL="${VITE_AUTHENTIK_URL}"
+      - AUTHENTIK_APP_SLUG="${VITE_AUTHENTIK_APP_SLUG}"
+      - AUTHENTIK_CLIENT_ID="${VITE_AUTHENTIK_CLIENT_ID}"
+      - DASHBOARD_URL="${VITE_DASHBOARD_URL}"
+      - DEFAULT_DEVICE_NAME="${VITE_DEFAULT_DEVICE_NAME}"
     networks:
       - proxy-net
 
