@@ -88,13 +88,13 @@ The dashboard enables runtime configuration of humidor climate thresholds withou
        ├──> [Save Telemetry] (rh, temp, battery, rssi)
        │
        ├──> [RH Filter] ─────────> rh < rh_low_warn (Dry) or rh > rh_high_warn (Humid/Mold) ──> [Raise Alarm]
-       │                          rh_low_warn <= rh <= rh_high_warn                          ──> [Clear Alarm]
+       │                           rh_low_warn <= rh <= rh_high_warn                        ──> [Clear Alarm]
        │
-       ├──> [Temp Filter] ───────> temp > temp_high_crit (Beetle Hazard)                      ──> [Raise Alarm]
-       │                          temp <= temp_high_crit                                     ──> [Clear Alarm]
+       ├──> [Temp Filter] ───────> temp > temp_high_crit (Beetle Hazard)                    ──> [Raise Alarm]
+       │                           temp <= temp_high_crit                                   ──> [Clear Alarm]
        │
-       ├──> [Low Battery Filter] ─> battery < batt_low_crit                                   ──> [Raise Alarm]
-       │                          battery >= batt_low_crit                                    ──> [Clear Alarm]
+       ├──> [Low Battery Filter] ─> battery < batt_low_crit                                 ──> [Raise Alarm]
+       │                            battery >= batt_low_crit                                ──> [Clear Alarm]
        │
        └──> [OTA Status Handler] ─> Monitors fw_state / triggers manual_ota_trigger
 ```
