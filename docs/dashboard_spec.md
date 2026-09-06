@@ -1,4 +1,4 @@
-# Preface - Requirements
+# HUMID1 - Preface & Requirements
 
 Please build a complete, interactive, single-page React + TypeScript + Tailwind CSS application based on the following specification.
 
@@ -12,7 +12,7 @@ IMPORTANT INSTRUCTIONS FOR THE MOCKUP:
    - The manual OTA push button triggers the progress bar animation.
 3. Structure the ThingsBoard REST / WebSocket service cleanly in a dedicated module so it can be pointed to a live server by simply updating an environment variable or config modal.
 
-# HUMID1_OS - Frontend Web Dashboard & PWA/TWA Specification
+# HUMID1 - Frontend Web Dashboard & PWA/TWA Specification
 
 ## 1. System Role & Scope
 A responsive React application engineered as an installable **Progressive Web App (PWA)** ready for **Trusted Web Activity (TWA)** compilation to native Android APKs. It connects directly to ThingsBoard CE with seamless JWT refresh rotation, multi-device ticker monitoring, humidor threshold tracking, browser push notifications, and device claiming. **No offline simulation is included**; if a device is unreachable, it is flagged as offline.
@@ -34,7 +34,7 @@ A responsive React application engineered as an installable **Progressive Web Ap
 Configured for full standalone Android TWA experience without browser chrome/URL bars:
 ```json
 {
-  "name": "HUMID1 Humidor OS",
+  "name": "HUMID1 Telemetry Dashboard",
   "short_name": "HUMID1",
   "start_url": "/",
   "display": "standalone",

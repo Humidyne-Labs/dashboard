@@ -10,15 +10,12 @@ export interface Humid1DomainMap {
   dashboardUrl: string;   // dash.humid1.com
   thingsboardUrl: string; // app.humid1.com (port 8080)
   authentikUrl: string;   // auth.humid1.com (port 9000)
-  captchaUrl: string;     // cap.humid1.com (port 3000)
-  chatUrl: string;        // chat.humid1.com (port 4000)
 }
 
 export interface Humid1Config {
   domains: Humid1DomainMap;
   authentikSlug: string;  // e.g. "humid1-dash"
   authentikClientId: string; // Authentik OAuth2 Provider Client ID
-  ssoAuthorizationEndpoint: string;
   thingsboardOAuthProviderPath?: string;
   defaultDeviceName: string;
   isSimulatedDefault: boolean;
@@ -28,17 +25,11 @@ export interface Humid1Config {
 export const APP_CONFIG: Humid1Config = {
   domains: {
     dashboardUrl: getEnv('VITE_DASHBOARD_URL', 'https://dash.humid1.com').replace(/\/+$/, ''),
-    thingsboardUrl: getEnv('VITE_THINGSBOARD_SERVER_URL', 'https://app.humid1.com').replace(/\/+$/, ''),
+    thingsboardUrl: getEnv('VITE_THINGSBOARD_URL', 'https://app.humid1.com').replace(/\/+$/, ''),
     authentikUrl: getEnv('VITE_AUTHENTIK_URL', 'https://auth.humid1.com').replace(/\/+$/, ''),
-    captchaUrl: getEnv('VITE_CAPTCHA_URL', 'https://cap.humid1.com').replace(/\/+$/, ''),
-    chatUrl: getEnv('VITE_CHAT_URL', 'https://chat.humid1.com').replace(/\/+$/, ''),
   },
-  authentikSlug: getEnv('VITE_AUTHENTIK_APP_SLUG', getEnv('VITE_AUTHENTIK_SLUG', 'humid1-dash')),
+  authentikSlug: getEnv('VITE_AUTHENTIK_APP_SLUG', 'humid1-dash'),
   authentikClientId: getEnv('VITE_AUTHENTIK_CLIENT_ID', '7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI'),
-  ssoAuthorizationEndpoint: getEnv(
-    'VITE_SSO_AUTH_ENDPOINT',
-    'https://app.humid1.com/oauth2/authorization/1efd3960-a10b-11f1-b530-9b9631e0c365'
-  ),
   thingsboardOAuthProviderPath: '/oauth2/authorization/1efd3960-a10b-11f1-b530-9b9631e0c365',
   defaultDeviceName: getEnv('VITE_DEFAULT_DEVICE_NAME', 'HUMID1-CABINET-01'),
   isSimulatedDefault: false,

@@ -1,8 +1,8 @@
-# HUMID1_OS Dashboard
+# HUMID1 Dashboard
 
 > **Production-Grade IoT Telemetry & Climate Control Platform for Precision Cigar Humidors**
 
-HUMID1_OS is a modern, high-performance web dashboard built with React 18, TypeScript, Tailwind CSS, and Vite. It connects directly to the ThingsBoard IoT engine and Authentik Identity Provider to provide real-time climate monitoring, dual-axis telemetry visualization, hardware claiming, shared-attribute remote controls, over-the-air (OTA) firmware update orchestration, and real-time alarms.
+HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScript, Tailwind CSS, and Vite. It connects directly to the ThingsBoard IoT engine and Authentik Identity Provider to provide real-time climate monitoring, dual-axis telemetry visualization, hardware claiming, shared-attribute remote controls, over-the-air (OTA) firmware update orchestration, and real-time alarms.
 
 ---
 
@@ -11,14 +11,15 @@ HUMID1_OS is a modern, high-performance web dashboard built with React 18, TypeS
 ```
 ├── public/                 # Static assets, Web Manifest, Favicons, Runtime Config Placeholders
 ├── docs/                   # Architecture, App Specs, and Workflow Documentation
-│   ├── api_transaction_manifest.md  # Complete JSON transaction & payload reference manifest
-│   ├── app_spec.md
-│   ├── master_plan.md
+│   ├── api_manifest.md     # Complete JSON transaction & payload reference manifest
+│   ├── dashboard_spec.md
+│   ├── architecture.md
 │   ├── release_workflow.md
 │   └── thingsboard_spec.md
 ├── src/
 │   ├── components/         # Modular, isolated UI and modal components
 │   │   ├── AlarmsFeed.tsx              # Active & historic alarms feed with Ack/Clear actions
+│   │   ├── AlarmThresholdsModal.tsx    # Runtime climate & alert threshold tuning interface
 │   │   ├── ApiInspectorModal.tsx       # Live HTTP transaction inspector, raw logs & token decoder
 │   │   ├── AuthModal.tsx               # ThingsBoard REST & SSO authentication manager
 │   │   ├── ClaimDeviceModal.tsx        # Hardware device claiming workflow modal
@@ -60,13 +61,16 @@ HUMID1_OS is a modern, high-performance web dashboard built with React 18, TypeS
 ## ⚡ Key Features
 
 - **Multi-Device Live Marquee Ticker:** Continuously scrolling top-bar ticker displaying real-time humidity, temperature, battery, and connection status across all claimed units.
-- **Precision Climate Gauges:** Instantaneous visual feedback with comfort range indicators (65%–75% RH target band) and dynamic °F/°C unit switching.
-- **Synchronized Historical Analytics:** High-resolution dual-axis time-series charts (12h, 24h, 3d, 7d ranges) powered by Recharts.
+- **Precision Climate Gauges & Mobile Layout:** Responsive, touch-friendly climate cards and gauges with dynamic °F/°C switching and comfort range boundaries optimized for phones and tablets.
+- **Runtime Configurable Alarm Thresholds:** Configure target relative humidity, warning/critical RH bounds, high/low temperature limits, and low battery thresholds directly in the UI during runtime, syncing with ThingsBoard shared attributes.
+- **Synchronized Historical Analytics:** High-resolution dual-axis time-series charts (12h, 24h, 3d, 7d ranges) powered by Recharts with dynamic threshold reference lines.
+- **Role-Aware Permission Safeguards:** Automatic handling of `CUSTOMER_USER` privileges—preventing unauthorized calls to tenant admin endpoints and seamlessly delegating device removal to safe claiming/unclaiming workflows.
 - **ThingsBoard SDK & REST Integration:** Powered by `@enerlab/thingsboard-client` with proactive and reactive 401 token refresh interceptors.
 - **Authentik SSO & OIDC Security:** Unified authentication gate supporting OAuth2 SSO redirects and direct REST token inspection.
 - **Remote Hardware Control:** Adjust RTC deep-sleep wake intervals, visual device themes, and sound alert toggles with hardware safety lockout rules.
 - **Live OTA Firmware Updates:** Track firmware release states (`DOWNLOADING`, `VERIFIED`, `UPDATING`) with real-time percentage progress indicators.
 - **Real-Time Alarms Management:** Acknowledge and clear active humidor threshold violations and system warnings with one click.
+- **Decoupled Asset CI/CD Workflows:** Manifests and Bubblewrap TWA builds pull brand assets directly from public repository URLs, eliminating local runner server overhead.
 - **Built-in API Transaction Inspector:** Real-time diagnostics modal recording every outbound request, response status, duration, and payload.
 
 ---
@@ -114,21 +118,19 @@ Container runtime variables are dynamically compiled into `window.__HUMID1_CONFI
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `VITE_DASHBOARD_URL` | `https://dash.humid1.com` | Origin URL for this dashboard instance |
-| `VITE_THINGSBOARD_SERVER_URL` | `https://app.humid1.com` | ThingsBoard IoT platform endpoint |
+| `VITE_THINGSBOARD_URL` | `https://app.humid1.com` | ThingsBoard IoT platform endpoint |
 | `VITE_AUTHENTIK_URL` | `https://auth.humid1.com` | Authentik Identity Provider endpoint |
-| `VITE_AUTHENTIK_APP_SLUG` | `humid1-dash` | Authentik Application provider slug |
-| `VITE_AUTHENTIK_CLIENT_ID` | `7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI` | Authentik OAuth2 Client ID |
-| `VITE_SSO_AUTH_ENDPOINT` | `https://app.humid1.com/oauth2/authorization/authentik` | ThingsBoard OAuth2 initiation route |
-| `VITE_CAPTCHA_URL` | `https://cap.humid1.com` | Security service endpoint |
-| `VITE_CHAT_URL` | `https://chat.humid1.com` | Customer messaging service endpoint |
-| `VITE_DEFAULT_DEVICE_NAME` | `HUMID1-CABINET-01` | Default hardware testing identifier |
+| `VITE_AUTHENTIK_APP_SLUG`| `humid1-dash` | Authentik Application provider slug |
+| `VITE_AUTHENTIK_CLIENT_ID`| `7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI`| Authentik OAuth2 Client ID |
+| `VITE_DASHBOARD_URL` | `https://dash.humid1.com` | Origin URL for this dashboard instance |
+| `VITE_APP_REDIRECT_URI` | `https://dash.humid1.com/auth/callback` | OIDC redirect callback URL |
+| `VITE_DEFAULT_DEVICE_NAME`| `CEDAR-CABINET-X9` | Default hardware unit identifier when none claimed |
 
 ---
 
 ## 📱 Progressive Web App (PWA) & Android TWA
 
-HUMID1_OS is fully compliant with Google PWA and **Trusted Web Activity (TWA)** specifications:
+HUMID1 is fully compliant with Google PWA and **Trusted Web Activity (TWA)** specifications:
 - **Service Worker:** Powered by `vite-plugin-pwa` with Workbox v7 precaching & automatic background updates.
 - **Web Push API:** Push notification service for high-priority humidity breaches, temperature alarms, and low battery alerts.
 - **Digital Asset Links:** Served at `/.well-known/assetlinks.json` linking `dash.humid1.com` to `com.humid1.app` for address-bar-free native Android execution.

@@ -1,54 +1,28 @@
-# HUMID1_OS - ThingsBoard Platform Architecture & Infrastructure Specification
+# HUMID1 - ThingsBoard Platform Architecture & Infrastructure Specification
 
 ## 1. System Role & Scope
 ThingsBoard Community Edition (CE) acts as the centralized IoT backend behind a Caddy reverse proxy. It handles ESP32 device telemetry ingestion, client/shared attribute state sync, time synchronization on boot, rule-engine humidor safety alarms, OTA binary delivery, and secure REST/WebSocket access for the PWA/TWA client.
 
 ---
 
-## 2. Infrastructure, Security & CORS Configuration
+## 2. Permissions, User Roles & Security Boundaries
 
-### A. Caddy Reverse Proxy & CORS Policy
-To enable credentialed REST/WebSocket access from PWA/TWA origins without authentication dropouts, Caddy is configured with strict CORS and security headers:
+### A. Role Hierarchy in ThingsBoard
+ThingsBoard enforces strict Role-Based Access Control (RBAC) across three primary authority tiers:
 
-```caddy
-humid1.yourdomain.com {
-    # CORS Headers for Authenticated API Access
-    @cors_preflight method OPTIONS
-    handle @cors_preflight {
-        header Access-Control-Allow-Origin "https://app.humid1.yourdomain.com"
-        header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-        header Access-Control-Allow-Headers "Authorization, X-Authorization, Content-Type, Accept"
-        header Access-Control-Allow-Credentials "true"
-        header Access-Control-Max-Age "86400"
-        respond 204
-    }
+| Authority Tier | Capabilities | Permitted Endpoints |
+| :--- | :--- | :--- |
+| **SYS_ADMIN** | Global server configuration, multi-tenant provisioning, mail/SMS gateways | All `/api/admin/*`, global tenant management |
+| **TENANT_ADMIN** | Tenant device inventory, fleet device creation/deletion, rule chains, device profiles | `GET /api/tenant/devices`, `GET /api/deviceInfos`, `DELETE /api/device/{deviceId}` |
+| **CUSTOMER_USER** | Operates claimed customer hardware, views customer telemetry, acknowledges/clears customer alarms, tunes shared attributes | `GET /api/customer/{customerId}/deviceInfos`, `GET /api/customer/{customerId}/devices`, `POST /api/customer/device/claim`, `DELETE /api/customer/device/{deviceName}/claim` |
 
-    header {
-        Access-Control-Allow-Origin "https://app.humid1.yourdomain.com"
-        Access-Control-Allow-Credentials "true"
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-    }
+### B. Customer Permission Safeguards
+Customer users (`CUSTOMER_USER`) do **not** have tenant administrator privileges. Calling tenant endpoints results in HTTP `403 Forbidden` errors:
+1. **Device Discovery:** Customer accounts must query `/api/customer/{customerId}/deviceInfos` or `/api/customer/{customerId}/devices`. Tenant endpoints (`/api/deviceInfos` or `/api/tenant/devices`) are forbidden.
+2. **Device Removal:** Customer accounts cannot permanently delete device entities from the tenant database (`DELETE /api/device/{deviceId}`). Instead, customer accounts release hardware via the unclaim endpoint (`DELETE /api/customer/device/{deviceName}/claim`), returning the unit to the available pool for future re-claiming.
 
-    # Android TWA Digital Asset Links Verification
-    handle /.well-known/assetlinks.json {
-        header Content-Type "application/json"
-        file_server {
-            root /var/www/well-known
-        }
-    }
-
-    # ThingsBoard Proxy
-    reverse_proxy localhost:8080 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-    }
-}
-```
-
-### B. Continuous Authentication & Token Lifecycle
-- **Access Tokens:** Short/medium-lived JWTs (`X-Authorization: Bearer <token>`) passed in API headers.
+### C. Continuous Authentication & Token Lifecycle
+- **Access Tokens:** Short/medium-lived JWTs (`X-Authorization: Bearer <token>` or `Authorization: Bearer <token>`) passed in API headers.
 - **Silent Refresh Endpoint:** `POST /api/auth/token/refresh` with `refreshToken` payload to continuously renew expired JWTs automatically in the background without forcing user re-logins.
 
 ---
@@ -69,9 +43,9 @@ To ensure accurate data timestamping and scheduled deep sleep without requiring 
 ### A. Time-Series Telemetry (Device $\rightarrow$ TB)
 | Key | Type | Unit | Description / Bounds |
 | :--- | :--- | :--- | :--- |
-| `rh` | Numeric (Float) | % | Relative humidity (`65% <= rh <= 75%` safe zone) |
-| `temp` | Numeric (Float) | °F | Ambient temperature (Alert ceiling at `> 75.0°F`) |
-| `battery` | Numeric (Integer) | % | Battery percentage (Alert ceiling at `< 20%`) |
+| `rh` | Numeric (Float) | % | Relative humidity (Monitored against runtime thresholds) |
+| `temp` | Numeric (Float) | °F | Ambient temperature (Alert ceiling configurable via dashboard) |
+| `battery` | Numeric (Integer) | % | Battery percentage (Alert ceiling configurable via dashboard) |
 | `rssi` | Numeric (Integer) | dBm | Wi-Fi Signal Strength (e.g. `-30` to `-90 dBm`) |
 
 ### B. Client Attributes (Device $\rightarrow$ TB)
@@ -93,36 +67,39 @@ To ensure accurate data timestamping and scheduled deep sleep without requiring 
 | `sound_enabled` | Boolean | `false` | Audio toggle (Gated by `audio_synced` & `has_sd_card`) |
 | `auto_update_enabled` | Boolean | `true` | Opt-in toggle for automatic background OTA |
 | `manual_ota_trigger` | Boolean | `false` | Set to `true` by Web App to force an immediate OTA flash |
+| `rh_target` | Numeric | `69.0` | Target relative humidity percentage |
+| `rh_low_crit` | Numeric | `62.0` | Critical low humidity threshold |
+| `rh_low_warn` | Numeric | `65.0` | Warning low humidity threshold |
+| `rh_high_warn` | Numeric | `73.0` | Warning high humidity threshold |
+| `rh_high_crit` | Numeric | `76.0` | Critical high humidity / mold risk threshold |
+| `temp_low_warn` | Numeric | `64.0` | Low temperature warning threshold (°F) |
+| `temp_high_crit` | Numeric | `74.0` | High temperature / beetle hatch risk threshold (°F) |
+| `batt_low_crit` | Numeric | `20.0` | Critical low battery alert threshold (%) |
 
 ---
 
-## 5. Rule Chain & Alarms Pipeline
+## 5. Runtime Configurable Alarm Thresholds & Rules Pipeline
+
+The dashboard enables runtime configuration of humidor climate thresholds without modifying firmware or backend code:
 
 ```
 [Incoming Telemetry / State]
        │
        ├──> [Save Telemetry] (rh, temp, battery, rssi)
        │
-       ├──> [RH Filter] ─────────> rh < 65% (Dry) or rh > 75% (Mold Risk) ──> [Raise Alarm] ──> [Web Push API]
-       │                          65% <= rh <= 75%                         ──> [Clear Alarm]
+       ├──> [RH Filter] ─────────> rh < rh_low_warn (Dry) or rh > rh_high_warn (Humid/Mold) ──> [Raise Alarm]
+       │                          rh_low_warn <= rh <= rh_high_warn                          ──> [Clear Alarm]
        │
-       ├──> [Temp Filter] ───────> temp > 75°F (Beetle Hazard)             ──> [Raise Alarm] ──> [Web Push API]
-       │                          temp <= 75°F                             ──> [Clear Alarm]
+       ├──> [Temp Filter] ───────> temp > temp_high_crit (Beetle Hazard)                      ──> [Raise Alarm]
+       │                          temp <= temp_high_crit                                     ──> [Clear Alarm]
        │
-       ├──> [Low Battery Filter] ─> battery < 20%                          ──> [Raise Alarm] ──> [Web Push API]
-       │                          battery >= 20%                           ──> [Clear Alarm]
+       ├──> [Low Battery Filter] ─> battery < batt_low_crit                                   ──> [Raise Alarm]
+       │                          battery >= batt_low_crit                                    ──> [Clear Alarm]
        │
        └──> [OTA Status Handler] ─> Monitors fw_state / triggers manual_ota_trigger
 ```
 
 ---
 
-## 6. ThingsBoard API Contracts
-1. **Device Claiming:** `POST /api/customer/device/claim` (Binds device via `deviceName` & secret PIN).
-2. **Device Discovery:** `GET /api/customer/devices` (Fetches list of owned devices).
-3. **Telemetry & Attributes:**
-   - `GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries` (Historical query).
-   - `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE` (Set shared attributes).
-   - `/api/ws/plugins/telemetry` (Live WebSocket stream).
-4. **Alarm Management:** `GET /api/alarm/DEVICE/{deviceId}`, `POST /api/alarm/{id}/ack`, `POST /api/alarm/{id}/clear`.
-5. **OTA Management:** `POST /api/otaPackage` and target firmware profile assignment.
+## 6. Build Architecture & Asset Distribution
+The PWA manifest and Android TWA (Bubblewrap) build system pull branding and icon assets directly from the public repository raw content (`https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/...`). This eliminates the requirement for running a local Python web server during CI/CD builds, simplifying workflows and preventing network timeout issues.

@@ -1,5 +1,5 @@
 {
-  "name": "humid1-os-dashboard",
+  "name": "humid1-telemetry-dashboard",
   "private": true,
   "version": "1.0.0",
   "type": "module",

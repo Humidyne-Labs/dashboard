@@ -61,7 +61,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
           {/* Description & Notice */}
           <div className="space-y-3 text-xs leading-relaxed text-slate-300 bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
             <p className="text-slate-200">
-              Welcome to <strong>HUMID1_OS Telemetry Dashboard</strong> (<code className="font-mono text-amber-400">dash.humid1.com</code>).
+              Welcome to <strong>HUMID1 Telemetry Dashboard</strong> (<code className="font-mono text-amber-400">dash.humid1.com</code>).
             </p>
             <p className="text-slate-400">
               Please note that this dashboard is in active development and testing. Features, telemetry feeds, and SSO authentication flows are being refined and may experience intermittent quirks or bugs as live hardware testing continues.

@@ -34,6 +34,10 @@ export interface SharedAttributes {
   audio_lockout?: boolean;
   auto_update_enabled: boolean;
   manual_ota_trigger: boolean;
+  alarm_thresholds?: AlarmThresholds;
+  target_rh?: number;
+  target_temp?: number;
+  [key: string]: any;
 }
 
 export interface HistoricalTelemetryPoint {
@@ -86,6 +90,18 @@ export interface HumidorAlarm {
   message?: string;
   ackTime?: number;
   clearTime?: number;
+}
+
+export interface AlarmThresholds {
+  rhLowCritical: number;
+  rhLowWarning: number;
+  rhTarget: number;
+  rhHighWarning: number;
+  rhHighCritical: number;
+  tempLowWarning: number;
+  tempTarget: number;
+  tempHighCritical: number;
+  batteryLowCritical: number;
 }
 
 export interface ThingsBoardConfig {

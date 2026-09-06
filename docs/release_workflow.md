@@ -1,4 +1,4 @@
-# HUMID1_OS - Git Branching & CI/CD Release Workflow
+# HUMID1 - Git Branching & CI/CD Release Workflow
 
 ## 1. Branching Strategy (Trunk-Based with Semantic Tags)
 
@@ -186,6 +186,12 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      # Non-interactive configuration for Bubblewrap
+      - name: Configure Bubblewrap Paths
+        run: |
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+
       - name: Configure Keystore for Signing
         id: keystore
         env:
@@ -196,49 +202,60 @@ jobs:
         run: |
           mkdir -p android-build
           if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Using production keystore from repository secrets..."
             echo "$KEYSTORE_BASE64" | base64 -d > android-build/android-keystore.jks
+            echo "has_secret=true" >> $GITHUB_OUTPUT
           else
+            echo "No ANDROID_KEYSTORE_BASE64 secret found. Generating CI debug keystore..."
             keytool -genkey -v -keystore android-build/android-keystore.jks \
               -alias "$KEY_ALIAS" \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -storepass "$KEYSTORE_PASS" -keypass "$KEY_PASS" \
               -dname "CN=HUMID1, OU=Engineering, O=HUMID1 Systems, L=Denver, S=CO, C=US"
+            echo "has_secret=false" >> $GITHUB_OUTPUT
           fi
+          
+          # Extract and log SHA-256 fingerprint for Digital Asset Links verification
+          echo "=== SHA-256 CERTIFICATE FINGERPRINT FOR ASSETLINKS.JSON ==="
+          keytool -list -v -keystore android-build/android-keystore.jks -alias "$KEY_ALIAS" -storepass "$KEYSTORE_PASS" | grep "SHA256:"
+          echo "=========================================================="
 
       - name: Build Android TWA Project with Bubblewrap
+        env:
+          BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASS || 'humid1pass' }}
+          BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
-          # Start local web server for runner asset resolution (bypasses firewall)
-          python3 -m http.server 8080 --directory dist &
-          SERVER_PID=$!
-          sleep 2
+          # Copy twa-manifest.json pulling assets directly from the public repo
+          mkdir -p android-build
+          cp twa-manifest.json android-build/twa-manifest.json
           
-          # Prepare local twa-manifest for build and compile
-          node -e '
-            const fs = require("fs");
-            const manifest = JSON.parse(fs.readFileSync("twa-manifest.json", "utf8"));
-            manifest.iconUrl = "http://localhost:8080/pwa-512x512.png";
-            manifest.maskableIconUrl = "http://localhost:8080/pwa-maskable-512x512.png";
-            manifest.webManifestUrl = "http://localhost:8080/manifest.webmanifest";
-            if (manifest.shortcuts) {
-              manifest.shortcuts.forEach(s => { s.chosenIconUrl = "http://localhost:8080/pwa-192x192.png"; });
-            }
-            manifest.host = "dash.humid1.com";
-            manifest.startUrl = "/";
-            fs.writeFileSync("android-build/twa-manifest.json", JSON.stringify(manifest, null, 2));
-          '
           cd android-build
+          
+          # Generate native files non-interactively using public repo assets
+          yes | bubblewrap update          
+          
+          # Build APK with Bubblewrap
           bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
-          kill $SERVER_PID || true
 
-      - name: Build Android App Bundle (.aab)
+      - name: Build Android App Bundle (.aab) for Google Play Store
         if: github.event.inputs.build_bundle != 'false'
+        env:
+          BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASS || 'humid1pass' }}
+          BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
-          python3 -m http.server 8080 --directory dist &
-          SERVER_PID=$!
-          sleep 2
           cd android-build
-          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || true
-          kill $SERVER_PID || true
+          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || echo "Bundle generation complete or skipped"
+
+      - name: Rename and Stage Artifacts
+        run: |
+          mkdir -p output
+          find android-build -name "*.apk" -exec cp {} output/ \;
+          find android-build -name "*.aab" -exec cp {} output/ \; || true
+          ls -la output/
 
       - name: Upload APK & AAB Artifacts
         uses: actions/upload-artifact@v4
@@ -252,6 +269,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: output/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
 ```
 
 ---

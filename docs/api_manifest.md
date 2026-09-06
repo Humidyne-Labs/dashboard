@@ -1,6 +1,6 @@
-# HUMID1_OS — Comprehensive API Transaction Manifest & JSON Reference
+# HUMID1 — Comprehensive API Transaction Manifest & JSON Reference
 
-This manifest provides a complete, structured catalog of the exact HTTP request/response JSON payloads, headers, query parameters, and WebSocket event structures used across the HUMID1_OS telemetry stack (ThingsBoard CE IoT Core, Authentik Identity Provider, and the Frontend Dashboard).
+This manifest provides a complete, structured catalog of the exact HTTP request/response JSON payloads, headers, query parameters, and WebSocket event structures used across the HUMID1 telemetry stack (ThingsBoard CE IoT Core, Authentik Identity Provider, and the Frontend Dashboard).
 
 ---
 
@@ -520,10 +520,10 @@ Links a newly purchased or provisioned ESP32 hardware device to the current user
 
 ---
 
-### 4.3 Delete / Unclaim Device
-Removes a device from the customer's active dashboard roster.
+### 4.3 Unclaim Device (Customer User)
+Releases a claimed hardware device back to the unassigned pool so it can be claimed again. This is the designated endpoint for `CUSTOMER_USER` accounts.
 
-- **Endpoint:** `DELETE https://app.humid1.com/api/customer/device/89b0d100-a10b-11f1-9b12-00163e789012`
+- **Endpoint:** `DELETE https://app.humid1.com/api/customer/device/{deviceName}/claim`
 - **Headers:**
   ```http
   X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
@@ -531,6 +531,27 @@ Removes a device from the customer's active dashboard roster.
 - **Response (200 OK):**
   ```json
   {}
+  ```
+
+### 4.4 Delete Device Entity Permanently (Tenant Administrator Only)
+Permanently deletes a device entity and all associated telemetry from the ThingsBoard database. Requires `TENANT_ADMIN` authority (returns HTTP 403 Forbidden for `CUSTOMER_USER` accounts).
+
+- **Endpoint:** `DELETE https://app.humid1.com/api/device/{deviceId}`
+- **Headers:**
+  ```http
+  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  ```
+- **Response (200 OK):**
+  ```json
+  {}
+  ```
+- **Error Response (403 Forbidden for Customer User):**
+  ```json
+  {
+    "status": 403,
+    "message": "You don't have permission to perform this operation",
+    "errorCode": 20
+  }
   ```
 
 ---

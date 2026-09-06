@@ -1,8 +1,8 @@
-# HUMID1_OS Architecture & System Specification
+# HUMID1 Architecture & System Specification
 
 ## 1. System Overview
 
-HUMID1_OS is a self-hosted humidor monitoring and telemetry stack built on ESP32 hardware, ThingsBoard CE, and Caddy. It monitors relative humidity, temperature, battery, and signal strength, syncs audio prompts over HTTP, and provides real-time control via a customer-scoped React PWA / Android TWA dashboard.
+HUMID1 is a self-hosted humidor monitoring and telemetry stack built on ESP32 hardware, ThingsBoard CE, and Caddy. It monitors relative humidity, temperature, battery, and signal strength, syncs audio prompts over HTTP, and provides real-time control via a customer-scoped React PWA / Android TWA dashboard.
 
 ## 2. Unified Data & Attribute Schema
 

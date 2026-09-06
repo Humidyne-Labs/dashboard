@@ -36,10 +36,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Expose standard web ports
 EXPOSE 5000
 
-# Healthcheck configuration
-#HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-#  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/healthz || exit 1
-
 ENTRYPOINT ["/docker-entrypoint.sh"]
 # Start Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]

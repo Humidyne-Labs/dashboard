@@ -9,8 +9,8 @@ import {
   Loader2,
   RotateCcw,
   ShieldAlert,
-  Server,
-  Cpu,
+  ShieldCheck,
+  Info,
 } from 'lucide-react';
 
 interface RemoveDeviceModalProps {
@@ -36,6 +36,10 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
 
   if (!isOpen || !device) return null;
 
+  const currentUser = thingsboard.getCurrentUser();
+  const isCustomerUser = currentUser?.authority === 'CUSTOMER_USER';
+  const isTenantOrSysAdmin = currentUser?.authority === 'TENANT_ADMIN' || currentUser?.authority === 'SYS_ADMIN';
+
   const deviceName = device.clientAttributes?.device_name || device.name;
   const isDeleteConfirmed = actionType === 'unclaim' || confirmText.trim().toUpperCase() === 'DELETE';
 
@@ -47,12 +51,12 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
     setSuccessMessage(null);
 
     try {
-      if (actionType === 'unclaim') {
+      if (actionType === 'unclaim' || isCustomerUser) {
         await thingsboard.unclaimDevice(deviceName, device.id);
         setSuccessMessage(`Device "${deviceName}" has been successfully released/unclaimed.`);
       } else {
         await thingsboard.deleteDevice(device.id, deviceName);
-        setSuccessMessage(`Device "${deviceName}" has been removed.`);
+        setSuccessMessage(`Device "${deviceName}" has been permanently removed.`);
       }
 
       onDeviceRemoved(device.id);
@@ -65,13 +69,13 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
       }, 1200);
     } catch (err: any) {
       setIsProcessing(false);
-      setError(err?.message || 'Failed to remove device. Please check permissions.');
+      setError(err?.message || 'Failed to remove device. Please check your account permissions.');
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl shadow-black/80 relative">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl shadow-black/80 relative max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -83,26 +87,26 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
 
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
-            <Trash2 className="w-6 h-6" />
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+            <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Remove Humidor Device</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Remove Humidor Device</h2>
             <p className="text-xs text-slate-400">
-              Unclaim from account or permanently remove from ThingsBoard
+              Unclaim from customer account or permanently delete device entity
             </p>
           </div>
         </div>
 
         {/* Target Device Summary */}
-        <div className="p-3.5 bg-slate-800/60 border border-slate-700/60 rounded-xl mb-5 text-xs text-slate-300 space-y-1.5">
+        <div className="p-3.5 bg-slate-800/60 border border-slate-700/60 rounded-xl mb-4 text-xs text-slate-300 space-y-1.5">
           <div className="flex justify-between items-center">
             <span className="text-slate-400 font-medium">Device Name:</span>
             <span className="font-bold text-white font-mono">{deviceName}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-400 font-medium">Device ID:</span>
-            <span className="font-mono text-slate-400 text-[11px] truncate max-w-[240px]">
+            <span className="font-mono text-slate-400 text-[11px] truncate max-w-[220px]">
               {device.id}
             </span>
           </div>
@@ -115,13 +119,9 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             </div>
           )}
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-medium">Current Status:</span>
-            <span
-              className={`font-semibold ${
-                device.status === 'ONLINE' ? 'text-emerald-400' : 'text-slate-400'
-              }`}
-            >
-              {device.status}
+            <span className="text-slate-400 font-medium">Account Role:</span>
+            <span className="font-mono text-[11px] font-bold text-amber-300">
+              {currentUser?.authority || 'CUSTOMER_USER'}
             </span>
           </div>
         </div>
@@ -131,7 +131,7 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
           <button
             type="button"
             onClick={() => setActionType('unclaim')}
-            className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+            className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
               actionType === 'unclaim'
                 ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-sm'
                 : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:bg-slate-800'
@@ -142,14 +142,14 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
               <span>Unclaim Device</span>
             </div>
             <span className="text-[11px] text-slate-400 leading-snug">
-              Releases hardware back to unassigned pool. Safe for re-claiming.
+              Standard for Customer accounts. Safe to re-claim later.
             </span>
           </button>
 
           <button
             type="button"
             onClick={() => setActionType('delete')}
-            className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 ${
+            className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
               actionType === 'delete'
                 ? 'bg-rose-500/15 border-rose-500/50 text-rose-300 shadow-sm'
                 : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:bg-slate-800'
@@ -160,28 +160,37 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
               <span>Delete Permanently</span>
             </div>
             <span className="text-[11px] text-slate-400 leading-snug">
-              Destroys entity and telemetry data in ThingsBoard backend.
+              Tenant Admin privilege required to delete entity from DB.
             </span>
           </button>
         </div>
 
         {/* Action Explanation Notice */}
         {actionType === 'unclaim' ? (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-5 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <strong>Unclaiming is non-destructive:</strong> This will detach{' '}
+              <strong>Unclaiming is non-destructive:</strong> Detaches{' '}
               <span className="font-mono text-white">{deviceName}</span> from your customer dashboard.
-              You or another technician can reclaim it anytime using the device claim key.
+              You or another user can reclaim it anytime using the device claim key.
+            </div>
+          </div>
+        ) : isCustomerUser ? (
+          <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-4 text-xs text-blue-200 leading-relaxed flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <strong>Tenant Admin Privileges Required:</strong> ThingsBoard customer accounts
+              cannot permanently delete device entities from the tenant database. Proceeding will perform
+              an <strong>Unclaim & Release</strong> operation instead to safely remove it from your dashboard.
             </div>
           </div>
         ) : (
-          <div className="space-y-3 mb-5">
+          <div className="space-y-3 mb-4">
             <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 leading-relaxed flex items-start gap-2.5">
               <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <div>
-                <strong>Irreversible Action:</strong> Deleting will permanently remove the device
-                entity and all recorded timeseries telemetry history from ThingsBoard.
+                <strong>Tenant Entity Deletion:</strong> Deleting permanently purges the device entity
+                and all recorded timeseries history from ThingsBoard.
               </div>
             </div>
 
@@ -221,7 +230,7 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isProcessing}
-            className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition disabled:opacity-50"
+            className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition disabled:opacity-50 cursor-pointer"
           >
             Cancel
           </button>
@@ -229,9 +238,9 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
           <button
             type="button"
             onClick={handleExecuteRemoval}
-            disabled={isProcessing || !isDeleteConfirmed}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition shadow-lg ${
-              actionType === 'delete'
+            disabled={isProcessing || (!isDeleteConfirmed && !isCustomerUser)}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer ${
+              actionType === 'delete' && !isCustomerUser
                 ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40 disabled:opacity-40'
                 : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/40 disabled:opacity-40'
             }`}
@@ -241,7 +250,7 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Processing...</span>
               </>
-            ) : actionType === 'delete' ? (
+            ) : actionType === 'delete' && !isCustomerUser ? (
               <>
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Device Entity</span>

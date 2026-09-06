@@ -22,7 +22,7 @@ export default defineConfig({
       ],
       manifest: {
         id: '/',
-        name: 'HUMID1 Humidor OS',
+        name: 'HUMID1 Telemetry Dashboard',
         short_name: 'HUMID1',
         description: 'Industrial-grade precision humidor IoT telemetry, dual-sensor differential analytics, and climate command center.',
         theme_color: '#0f172a',
@@ -112,6 +112,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    allowedHosts: true,
   },
 });
 

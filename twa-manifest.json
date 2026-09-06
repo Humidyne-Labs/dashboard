@@ -1,7 +1,7 @@
 {
   "packageId": "com.humid1.app",
   "host": "dash.humid1.com",
-  "name": "HUMID1 Humidor OS",
+  "name": "HUMID1 Telemetry Dashboard",
   "launcherName": "HUMID1",
   "display": "standalone",
   "themeColor": "#0f172a",
@@ -13,8 +13,8 @@
   "backgroundColor": "#0f172a",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://dash.humid1.com/pwa-512x512.png",
-  "maskableIconUrl": "https://dash.humid1.com/pwa-maskable-512x512.png",
+  "iconUrl": "https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/pwa-512x512.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/pwa-maskable-512x512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android-keystore.jks",
@@ -27,17 +27,17 @@
       "name": "Live Telemetry",
       "shortName": "Telemetry",
       "url": "https://dash.humid1.com/#telemetry",
-      "chosenIconUrl": "https://dash.humid1.com/pwa-192x192.png"
+      "chosenIconUrl": "https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/pwa-192x192.png"
     },
     {
       "name": "Alarms & Alerts",
       "shortName": "Alarms",
       "url": "https://dash.humid1.com/#alarms",
-      "chosenIconUrl": "https://dash.humid1.com/pwa-192x192.png"
+      "chosenIconUrl": "https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/pwa-192x192.png"
     }
   ],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://dash.humid1.com/manifest.webmanifest",
+  "webManifestUrl": "https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": {

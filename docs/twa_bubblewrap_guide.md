@@ -1,6 +1,6 @@
-# HUMID1_OS — Android Trusted Web Activity (TWA) & Bubblewrap Build Guide
+# HUMID1 — Android Trusted Web Activity (TWA) & Bubblewrap Build Guide
 
-This guide details how to package the **HUMID1_OS Progressive Web App** (`dash.humid1.com`) into a native Android application (`.aab` and `.apk`) for the Google Play Store using **Google's Bubblewrap CLI tool**.
+This guide details how to package the **HUMID1 Progressive Dashboard** (`dash.humid1.com`) into a native Android application (`.aab` and `.apk`) for the Google Play Store using **Google's Bubblewrap CLI tool**.
 
 ---
 
@@ -36,7 +36,7 @@ Bubblewrap will read `twa-manifest.json` / `manifest.webmanifest` and prompt for
 | :--- | :--- | :--- |
 | **Domain** | `dash.humid1.com` | Hostname of the PWA |
 | **Package ID** | `com.humid1.app` | Android Application Package Name |
-| **App Name** | `HUMID1 Humidor OS` | Display name in app drawer |
+| **App Name** | `HUMID1 Telemetry Dashboard` | Display name in app drawer |
 | **Launcher Name** | `HUMID1` | Short name under the app icon |
 | **Theme Color** | `#0f172a` | Android Status Bar Color |
 | **Background Color**| `#0f172a` | Splash Screen Color |

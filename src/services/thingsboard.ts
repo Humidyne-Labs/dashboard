@@ -475,6 +475,16 @@ class ThingsBoardService {
   public extractProfileFromJwt(jwtToken: string) {
     const decoded = decodeJwtPayload(jwtToken);
     if (decoded) {
+      const custId =
+        typeof decoded.customerId === 'object'
+          ? (decoded.customerId as any)?.id
+          : (decoded.customerId as string | undefined);
+
+      const authClaim =
+        (decoded.authority as string) ||
+        (Array.isArray(decoded.scopes) ? decoded.scopes[0] : (decoded.scopes as string)) ||
+        (decoded.role as string);
+
       this.currentUser = {
         id: (decoded.sub as string) || (decoded.userId as string) || 'authentik_user',
         email: (decoded.email as string) || (decoded.preferred_username as string) || (decoded.sub as string) || 'User',
@@ -482,7 +492,8 @@ class ThingsBoardService {
         lastName: (decoded.family_name as string) || (decoded.lastName as string) || '',
         authority: typeof decoded.iss === 'string' && decoded.iss.includes('auth')
           ? 'AUTHENTIK_SSO'
-          : ((decoded.scopes as any)?.[0] || (decoded.role as string) || 'CUSTOMER_USER'),
+          : (authClaim || 'CUSTOMER_USER'),
+        customerId: custId,
       };
     }
   }
@@ -776,12 +787,18 @@ class ThingsBoardService {
 
     try {
       let rawDevices: any[] = [];
-      const customerId =
+      // Ensure user profile is known so authority and customerId are established
+      if (!this.currentUser?.customerId && !this.currentUser?.authority) {
+        await this.fetchUserProfile().catch(() => {});
+      }
+
+      const isCustomerUser = this.currentUser?.authority === 'CUSTOMER_USER';
+      let customerId =
         typeof this.currentUser?.customerId === 'object'
-          ? this.currentUser?.customerId?.id
+          ? (this.currentUser?.customerId as any)?.id
           : this.currentUser?.customerId;
 
-      // 1. Try customer devices if customerId exists or if previously successful
+      // 1. Try customer devices if customerId exists or if user has customer authority
       if (customerId && customerId !== 'undefined' && (!this.preferredDeviceFetchStrategy || this.preferredDeviceFetchStrategy === 'customerInfos')) {
         try {
           const custRes = await apiGetCustomerDeviceInfos({
@@ -816,37 +833,46 @@ class ThingsBoardService {
         }
       }
 
-      // 2. Try all device infos
-      if (rawDevices.length === 0 && (!this.preferredDeviceFetchStrategy || this.preferredDeviceFetchStrategy === 'allDevices')) {
-        try {
-          const allRes = await apiGetAllDeviceInfos({
-            query: { pageSize: 100, page: 0 },
-            requestValidator: undefined,
-            responseValidator: undefined,
-          } as any);
-          if (allRes.data && Array.isArray((allRes.data as any).data)) {
-            rawDevices = (allRes.data as any).data;
-            this.preferredDeviceFetchStrategy = 'allDevices';
+      // If user is a CUSTOMER_USER, they do NOT have tenant admin privileges to call /api/deviceInfos or /api/tenant/devices
+      // Avoid calling tenant administrator endpoints that return 403 Forbidden.
+      if (!isCustomerUser) {
+        // 2. Try all device infos (Requires Tenant Admin or Sys Admin privileges)
+        if (rawDevices.length === 0 && (!this.preferredDeviceFetchStrategy || this.preferredDeviceFetchStrategy === 'allDevices')) {
+          try {
+            const allRes = await apiGetAllDeviceInfos({
+              query: { pageSize: 100, page: 0 },
+              requestValidator: undefined,
+              responseValidator: undefined,
+            } as any);
+            if (allRes.data && Array.isArray((allRes.data as any).data)) {
+              rawDevices = (allRes.data as any).data;
+              this.preferredDeviceFetchStrategy = 'allDevices';
+            }
+          } catch (err: any) {
+            // If 403 Forbidden, user is not a tenant admin
+            if (err?.status === 403 || err?.response?.status === 403) {
+              if (this.currentUser) this.currentUser.authority = 'CUSTOMER_USER';
+            }
           }
-        } catch {
-          // ignore
         }
-      }
 
-      // 3. Try tenant devices
-      if (rawDevices.length === 0 && (!this.preferredDeviceFetchStrategy || this.preferredDeviceFetchStrategy === 'tenantDevices')) {
-        try {
-          const tenantDevRes = await apiGetTenantDevices({
-            query: { pageSize: 100, page: 0 } as any,
-            requestValidator: undefined,
-            responseValidator: undefined,
-          } as any);
-          if (tenantDevRes.data && Array.isArray((tenantDevRes.data as any).data)) {
-            rawDevices = (tenantDevRes.data as any).data;
-            this.preferredDeviceFetchStrategy = 'tenantDevices';
+        // 3. Try tenant devices (Requires Tenant Admin privileges)
+        if (rawDevices.length === 0 && (!this.preferredDeviceFetchStrategy || this.preferredDeviceFetchStrategy === 'tenantDevices')) {
+          try {
+            const tenantDevRes = await apiGetTenantDevices({
+              query: { pageSize: 100, page: 0 } as any,
+              requestValidator: undefined,
+              responseValidator: undefined,
+            } as any);
+            if (tenantDevRes.data && Array.isArray((tenantDevRes.data as any).data)) {
+              rawDevices = (tenantDevRes.data as any).data;
+              this.preferredDeviceFetchStrategy = 'tenantDevices';
+            }
+          } catch (err: any) {
+            if (err?.status === 403 || err?.response?.status === 403) {
+              if (this.currentUser) this.currentUser.authority = 'CUSTOMER_USER';
+            }
           }
-        } catch {
-          // ignore
         }
       }
 

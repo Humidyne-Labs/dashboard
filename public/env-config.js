@@ -1,6 +1,6 @@
 // Runtime environment configuration populated by docker-entrypoint.sh
 window.__ENV__ = window.__ENV__ || {
-  VITE_APP_TITLE: "HUMID1_OS",
+  VITE_APP_TITLE: "HUMID1_DASHBOARD",
   VITE_APP_DESCRIPTION: "Precision Humidor Monitoring & Telemetry Stack",
   VITE_DASHBOARD_URL: "https://dash.humid1.com",
   VITE_THINGSBOARD_SERVER_URL: "https://app.humid1.com",

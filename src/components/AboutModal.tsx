@@ -45,7 +45,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   const dataRetention = '7 Days (604,800 seconds)';
 
   const aboutJson = {
-    appName: 'HUMID1_OS Telemetry Dashboard',
+    appName: 'HUMID1 Telemetry Dashboard',
     version,
     buildDate,
     authors,
@@ -83,7 +83,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             </div>
             <div>
               <h3 id="about-modal-title" className="font-bold text-slate-100 text-base font-display">
-                About HUMID1_OS Dashboard
+                About HUMID1 Dashboard
               </h3>
               <p className="text-xs text-slate-400">Precision IoT Telemetry &amp; Climate Control Architecture</p>
             </div>
@@ -113,7 +113,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
           <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-slate-100 font-display">HUMID1_OS</span>
+                <span className="text-lg font-bold text-slate-100 font-display">HUMID1</span>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   v{version}
                 </span>

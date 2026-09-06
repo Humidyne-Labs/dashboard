@@ -210,7 +210,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           <button
             onClick={onOpenAboutModal}
             className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 flex items-center justify-center shadow-md shadow-amber-950/40 border border-amber-500/30 hover:scale-105 transition cursor-pointer"
-            title="About HUMID1_OS Dashboard"
+            title="About HUMID1 Dashboard"
           >
             <Flame className="w-5 h-5 text-amber-200" />
           </button>
@@ -221,7 +221,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
                 className="font-display font-bold text-lg text-amber-100 tracking-wider hover:text-amber-200 transition text-left cursor-pointer"
                 title="View About & System Specs"
               >
-                {getEnv('VITE_APP_TITLE', 'HUMID1_OS')}
+                {getEnv('VITE_APP_TITLE', 'HUMID1_DASHBOARD')}
               </button>
               <button
                 onClick={onOpenDevWarning}

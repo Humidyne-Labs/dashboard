@@ -76,7 +76,7 @@ export default function App() {
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
   const [tbAuthVersion, setTbAuthVersion] = useState(0);
 
-  const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1_OS');
+  const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1-DASHBOARD');
   const appDesc = getEnv('VITE_APP_DESCRIPTION', 'Precision Humidor Monitoring & Telemetry Stack');
 
   // Check on startup if dev warning was dismissed
