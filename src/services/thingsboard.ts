@@ -26,6 +26,7 @@ import {
   SharedAttributes,
   ClaimLogEntry,
   DeviceStatus,
+  TelemetryData,
 } from '../types';
 import { normalizeUrl } from '../utils/url';
 import { getEnv } from '../utils/env';
@@ -713,7 +714,7 @@ class ThingsBoardService {
     this.fetchRealDevices();
     this.fetchRealAlarms();
 
-    // 30-second interval (reduced from 10s) with active tab visibility check
+    // 8-second interval (optimized for reactive device updates) with active tab check
     this.livePollInterval = window.setInterval(() => {
       // Pause telemetry polling when tab is hidden to prevent request flood
       if (typeof document !== 'undefined' && document.hidden) {
@@ -723,7 +724,7 @@ class ThingsBoardService {
         this.fetchRealDevices();
         this.fetchRealAlarms();
       }
-    }, 30000);
+    }, 8000);
   }
 
   public stopLivePolling() {
@@ -975,7 +976,9 @@ class ThingsBoardService {
 
               if (attrRes.data && Array.isArray(attrRes.data)) {
                 (attrRes.data as any[]).forEach((a: any) => {
-                  if (a.key in clientAttr) (clientAttr as any)[a.key] = a.value;
+                  if (a.key && a.value !== undefined) {
+                    (clientAttr as any)[a.key] = a.value;
+                  }
                 });
               }
             } catch {
@@ -996,7 +999,9 @@ class ThingsBoardService {
 
               if (sharedRes.data && Array.isArray(sharedRes.data)) {
                 (sharedRes.data as any[]).forEach((a: any) => {
-                  if (a.key in sharedAttr) (sharedAttr as any)[a.key] = a.value;
+                  if (a.key && a.value !== undefined) {
+                    (sharedAttr as any)[a.key] = a.value;
+                  }
                 });
               }
             } catch {
@@ -1627,15 +1632,65 @@ class ThingsBoardService {
 
     this.devices = this.devices.map((dev) => {
       if (dev.id === deviceId) {
+        const updatedShared = { ...dev.sharedAttributes, ...attributes };
+        const cached = this.deviceAttrCache.get(deviceId);
+        if (cached) {
+          this.deviceAttrCache.set(deviceId, {
+            ...cached,
+            shared: { ...cached.shared, ...attributes },
+          });
+        }
         return {
           ...dev,
-          sharedAttributes: { ...dev.sharedAttributes, ...attributes },
+          sharedAttributes: updatedShared,
         };
       }
       return dev;
     });
 
     this.notifySubscribers();
+  }
+
+  /**
+   * Immediately update telemetry for a device from an incoming packet.
+   * This instantly synchronizes the 4 climate widgets and device readouts across the app.
+   */
+  public updateDeviceTelemetry(
+    deviceId: string,
+    telemetry: Partial<TelemetryData>,
+    forceStatus?: DeviceStatus
+  ): void {
+    let hasChanged = false;
+    this.devices = this.devices.map((d) => {
+      if (d.id === deviceId) {
+        const now = Date.now();
+        const newTs = telemetry.timestamp || d.telemetry.timestamp || now;
+        const timeSince = now - newTs;
+        let newStatus: DeviceStatus = forceStatus || d.status;
+        if (!forceStatus) {
+          if (timeSince <= 180 * 1000) newStatus = 'ONLINE';
+          else if (timeSince <= 86400 * 1000) newStatus = 'SLEEP';
+          else newStatus = 'OFFLINE';
+        }
+
+        hasChanged = true;
+        return {
+          ...d,
+          status: newStatus,
+          lastActivityTime: newTs,
+          telemetry: {
+            ...d.telemetry,
+            ...telemetry,
+            timestamp: newTs,
+          },
+        };
+      }
+      return d;
+    });
+
+    if (hasChanged) {
+      this.notifySubscribers();
+    }
   }
 
   public async triggerManualOta(deviceId: string): Promise<void> {

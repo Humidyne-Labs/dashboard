@@ -4,6 +4,8 @@ import {
   fetchLatestTelemetry,
   type LatestTelemetryMap,
 } from '../services/tbClientService';
+import { thingsboard } from '../services/thingsboard';
+import { TelemetryData } from '../types';
 import type { Device } from '@enerlab/thingsboard-client';
 
 export interface UseTelemetryOptions {
@@ -31,7 +33,7 @@ export interface UseTelemetryResult {
 export function useThingsBoardTelemetry({
   deviceId,
   keys,
-  pollIntervalMs = 10000,
+  pollIntervalMs = 5000,
   autoRefresh = true,
   onUnauthorized,
 }: UseTelemetryOptions): UseTelemetryResult {
@@ -136,6 +138,27 @@ export function useThingsBoardTelemetry({
           lastKnownPayloadTsRef.current = latestPayloadTs > 0 ? latestPayloadTs : -1;
           setTelemetry(telemetryData);
           setLastUpdated(latestPayloadTs > 0 ? latestPayloadTs : now);
+
+          // Extract standard telemetry fields published by test script & hardware
+          const extracted: Partial<TelemetryData> = {};
+          if (telemetryData.rh?.value !== undefined) extracted.rh = Number(telemetryData.rh.value);
+          else if (telemetryData.humidity?.value !== undefined) extracted.rh = Number(telemetryData.humidity.value);
+
+          if (telemetryData.temp?.value !== undefined) extracted.temp = Number(telemetryData.temp.value);
+          else if (telemetryData.temperature?.value !== undefined) extracted.temp = Number(telemetryData.temperature.value);
+
+          if (telemetryData.battery?.value !== undefined) extracted.battery = Number(telemetryData.battery.value);
+          else if (telemetryData.batt?.value !== undefined) extracted.battery = Number(telemetryData.batt.value);
+
+          if (telemetryData.rssi?.value !== undefined) extracted.rssi = Number(telemetryData.rssi.value);
+          else if (telemetryData.wifi_rssi?.value !== undefined) extracted.rssi = Number(telemetryData.wifi_rssi.value);
+
+          if (latestPayloadTs > 0) extracted.timestamp = latestPayloadTs;
+
+          // Push instantly to thingsboard service so the 4 climate widgets update in lockstep with zero lag
+          if (deviceId && Object.keys(extracted).length > 0) {
+            thingsboard.updateDeviceTelemetry(deviceId, extracted);
+          }
 
           if (isNewData && !isInitial) {
             setNewPacketArrived(true);

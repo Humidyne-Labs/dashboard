@@ -18,6 +18,7 @@ import { HumidorTelemetryWidget } from './components/HumidorTelemetryWidget';
 import { DevelopmentWarningModal } from './components/DevelopmentWarningModal';
 import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
+import { AlarmThresholdsModal } from './components/AlarmThresholdsModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getEnv } from './utils/env';
 import { Flame, Cpu, Info, AlertTriangle, BellRing } from 'lucide-react';
@@ -74,6 +75,7 @@ export default function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isDevWarningOpen, setIsDevWarningOpen] = useState(false);
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
+  const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
   const [tbAuthVersion, setTbAuthVersion] = useState(0);
 
   const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1-DASHBOARD');
@@ -209,7 +211,10 @@ export default function App() {
               {/* Control Panel (Dual Dial Sliders) & OTA Firmware Updater */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <ControlPanel device={selectedDevice} />
+                  <ControlPanel 
+                    device={selectedDevice} 
+                    onOpenThresholds={() => setIsThresholdsModalOpen(true)} 
+                  />
                 </div>
                 <div className="lg:col-span-1">
                   <OtaUpdateCenter device={selectedDevice} />
@@ -310,6 +315,12 @@ export default function App() {
         <PushNotificationModal
           isOpen={isPushModalOpen}
           onClose={() => setIsPushModalOpen(false)}
+        />
+        <AlarmThresholdsModal
+          isOpen={isThresholdsModalOpen}
+          onClose={() => setIsThresholdsModalOpen(false)}
+          activeDevice={selectedDevice}
+          tempUnit={tempUnit}
         />
         <RemoveDeviceModal
           isOpen={isRemoveModalOpen}

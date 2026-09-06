@@ -84,7 +84,11 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
         await thingsboard.updateSharedAttributes(activeDevice.id, {
           alarm_thresholds: thresholds,
           target_rh: thresholds.rhTarget,
+          target_rh_min: thresholds.rhLowWarning,
+          target_rh_max: thresholds.rhHighWarning,
           target_temp: thresholds.tempTarget,
+          target_temp_min: thresholds.tempLowWarning,
+          target_temp_max: thresholds.tempHighCritical,
         });
         setSyncStatus('Synced to Hardware RTC & ThingsBoard shared attributes');
       } catch (err: any) {

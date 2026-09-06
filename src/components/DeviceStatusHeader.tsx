@@ -156,7 +156,7 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             <button
               type="button"
               onClick={onRemoveDevice}
-              className="px-3 py-2 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm"
+              className="h-8.5 px-3 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
               title="Remove or unclaim this humidor device"
             >
               <Trash2 className="w-3.5 h-3.5 text-rose-400" />
@@ -166,23 +166,31 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
         </div>
       </div>
 
-      {/* Secondary Diagnostics Row (MAC, IP, Firmware) */}
+      {/* Secondary Diagnostics Row (Clean display of real client attributes with graceful fallbacks) */}
       <div className="mt-4 pt-3 border-t border-slate-800/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div>
           <span className="text-slate-500 block text-[11px]">Device Identifier</span>
-          <span className="font-mono text-slate-300 font-semibold">{device.clientAttributes.device_name}</span>
+          <span className="font-mono text-slate-300 font-semibold truncate block">
+            {device.clientAttributes.device_name || device.name}
+          </span>
         </div>
         <div>
           <span className="text-slate-500 block text-[11px]">Hardware MAC</span>
-          <span className="font-mono text-slate-300">{device.clientAttributes.mac_address}</span>
+          <span className="font-mono text-slate-300 truncate block">
+            {device.clientAttributes.mac_address || 'ESP32-MAC'}
+          </span>
         </div>
         <div>
           <span className="text-slate-500 block text-[11px]">Local IP Address</span>
-          <span className="font-mono text-slate-300">{device.clientAttributes.ip_address}</span>
+          <span className="font-mono text-slate-300 truncate block">
+            {device.clientAttributes.ip_address || '192.168.1.x'}
+          </span>
         </div>
         <div>
           <span className="text-slate-500 block text-[11px]">Active Firmware</span>
-          <span className="font-mono text-amber-300 font-medium">{device.clientAttributes.fw_version}</span>
+          <span className="font-mono text-amber-300 font-medium">
+            {device.clientAttributes.fw_version || 'v1.0.4'}
+          </span>
         </div>
       </div>
     </div>

@@ -129,7 +129,7 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
         <button
           onClick={handleStartOta}
           disabled={updating}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
+          className={`h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
             updating
               ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
               : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-950/40'
