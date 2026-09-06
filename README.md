@@ -9,15 +9,15 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 ## 🏛️ Architecture Overview
 
 ```
-├── public/                 # Static assets, Web Manifest, Favicons, Runtime Config Placeholders
-├── docs/                   # Architecture, App Specs, and Workflow Documentation
-│   ├── api_manifest.md     # Complete JSON transaction & payload reference manifest
+├── public/                             # Static assets, Web Manifest, Favicons, Runtime Config Placeholders
+├── docs/                               # Architecture, App Specs, and Workflow Documentation
+│   ├── api_manifest.md                 # Complete JSON transaction & payload reference manifest
 │   ├── dashboard_spec.md
 │   ├── architecture.md
 │   ├── release_workflow.md
 │   └── thingsboard_spec.md
 ├── src/
-│   ├── components/         # Modular, isolated UI and modal components
+│   ├── components/                     # Modular, isolated UI and modal components
 │   │   ├── AlarmsFeed.tsx              # Active & historic alarms feed with Ack/Clear actions
 │   │   ├── AlarmThresholdsModal.tsx    # Runtime climate & alert threshold tuning interface
 │   │   ├── ApiInspectorModal.tsx       # Live HTTP transaction inspector, raw logs & token decoder
@@ -47,13 +47,13 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 │   │   ├── authTokens.ts               # JWT normalization, expiration check & token discovery
 │   │   ├── env.ts                      # Universal environment variable accessor
 │   │   └── url.ts                      # Domain and URL normalization helpers
-│   ├── types.ts            # Centralized TypeScript interface & enum definitions
-│   ├── App.tsx             # Root application orchestrator
-│   └── main.tsx            # Application entry point with OIDC AuthProvider wrapping
-├── Dockerfile              # Multi-stage optimized production build (Node builder + Alpine Nginx)
-├── docker-compose.yml      # Container orchestration with environment variable passing
-├── docker-entrypoint.sh    # Dynamic runtime environment injector (generates config.js at boot)
-└── nginx.conf              # Production Nginx reverse-proxy configuration with SPA fallback
+│   ├── types.ts                        # Centralized TypeScript interface & enum definitions
+│   ├── App.tsx                         # Root application orchestrator
+│   └── main.tsx                        # Application entry point with OIDC AuthProvider wrapping
+├── Dockerfile                          # Multi-stage optimized production build (Node builder + Alpine Nginx)
+├── docker-compose.yml                  # Container orchestration with environment variable passing
+├── docker-entrypoint.sh                # Dynamic runtime environment injector (generates config.js at boot)
+└── nginx.conf                          # Production Nginx reverse-proxy configuration with SPA fallback
 ```
 
 ---
