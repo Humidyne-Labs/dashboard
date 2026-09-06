@@ -59,7 +59,7 @@ To maximize battery life during deep-sleep wake cycles, the ESP32 caches BSSID, 
 - **Manual OTA Center:** One-click OTA deployment trigger and live progress tracking (`fw_progress`).
 
 ## 7. Implementation Roadmap
-1. **Phase 1 (Server Assets & TB Setup):** Deploy `manifest.json` and `.mp3` files to audio server. Configure Caddy CORS, Digital Asset Links (`assetlinks.json`), and ThingsBoard Rule Chains.
+1. **Phase 1 (Server Assets & TB Setup):** Deploy `manifest.json` and `.mp3` files to audio server. Digital Asset Links (`assetlinks.json`), and ThingsBoard Rule Chains.
 2. **Phase 2 (Frontend Dashboard / PWA):** Build React app with Authentik SSO, device claiming, news ticker, dual-axis Recharts, and Web Push notifications. Wrap as Android TWA via Bubblewrap.
 3. **Phase 3 (ESP32 Firmware):** Implement RTC fast Wi-Fi re-association, epoch time sync on boot, EXT0 button interrupt, SD manifest sync, and OTA state machine.
 4. **Phase 4 (CI/CD Pipelines):** Configure GitHub Actions workflows for automated firmware binary compilation/ThingsBoard OTA push and PWA/Android TWA releases.
