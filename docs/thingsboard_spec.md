@@ -102,4 +102,4 @@ The dashboard enables runtime configuration of humidor climate thresholds withou
 ---
 
 ## 6. Build Architecture & Asset Distribution
-The PWA manifest and Android TWA (Bubblewrap) build system pull branding and icon assets directly from the public repository raw content (`https://raw.githubusercontent.com/Humidyne-Labs/dash-board/main/public/...`). This eliminates the requirement for running a local Python web server during CI/CD builds, simplifying workflows and preventing network timeout issues.
+The PWA manifest and Android TWA (Bubblewrap) build system pull branding and icon assets directly from the public repository raw content (`https://raw.githubusercontent.com/Humidyne-Labs/dashboard/main/public/...`). This eliminates the requirement for running a local Python web server during CI/CD builds, simplifying workflows and preventing network timeout issues.
