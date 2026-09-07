@@ -143,7 +143,8 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
   const tempVal = getMetricValue('temp');
   const batteryVal = getMetricValue('battery');
   const rssiVal = telemetry['rssi']?.value !== undefined ? String(telemetry['rssi'].value) : '-64';
-  const targetHumVal = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhTarget ?? humidorDevice?.sharedAttributes?.target_rh ?? 65;
+  const rhSafeLow = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhLowWarning ?? 65;
+  const rhSafeHigh = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhHighWarning ?? 73;
 
   // VPD calculation only: derived mathematically from ambient temp & RH
   let vpdVal = '--';
@@ -327,7 +328,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             <span className="text-xs font-mono text-slate-400">%</span>
           </div>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Target: {targetHumVal}%</span>
+            <span>Safe: {rhSafeLow}–{rhSafeHigh}%</span>
             <span className="text-emerald-400 font-mono">Telemetry</span>
           </div>
         </div>
@@ -400,15 +401,19 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
 
           <div className="flex items-center gap-1.5 text-slate-300">
             <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-slate-500">Target Sweet Spot:</span>
-            <span className="font-mono font-semibold text-white">{targetHumVal}% RH</span>
+            <span className="text-slate-500">Safe Envelope:</span>
+            <span className="font-mono font-semibold text-white">{rhSafeLow}–{rhSafeHigh}% RH</span>
           </div>
 
           <div className="flex items-center gap-1.5 text-slate-300">
             <Volume2 className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-slate-500">Sound:</span>
             <span className="font-mono font-semibold text-white">
-              {humidorDevice?.sharedAttributes?.sound_enabled !== false && !humidorDevice?.sharedAttributes?.audio_lockout ? 'Enabled' : 'Muted'}
+              {humidorDevice?.clientAttributes?.has_sd_card === false
+                ? 'SD Locked'
+                : humidorDevice?.sharedAttributes?.sound_enabled !== false
+                ? 'Enabled'
+                : 'Muted'}
             </span>
           </div>
 

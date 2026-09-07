@@ -10,13 +10,11 @@ export type { AlarmThresholds };
 export const DEFAULT_THRESHOLDS: AlarmThresholds = {
   rhLowCritical: 62.0,
   rhLowWarning: 65.0,
-  rhTarget: 69.5,
   rhHighWarning: 73.0,
   rhHighCritical: 76.0,
 
   tempLowCritical: 58.0,
   tempLowWarning: 64.0,
-  tempTarget: 68.0,
   tempHighWarning: 72.0,
   tempHighCritical: 75.0,
 
@@ -47,13 +45,11 @@ export const THRESHOLD_PRESETS: ThresholdPreset[] = [
     thresholds: {
       rhLowCritical: 65.0,
       rhLowWarning: 67.0,
-      rhTarget: 69.0,
       rhHighWarning: 71.0,
       rhHighCritical: 73.0,
 
       tempLowCritical: 62.0,
       tempLowWarning: 65.0,
-      tempTarget: 68.0,
       tempHighWarning: 71.0,
       tempHighCritical: 73.0,
 
@@ -72,13 +68,11 @@ export const THRESHOLD_PRESETS: ThresholdPreset[] = [
     thresholds: {
       rhLowCritical: 62.0,
       rhLowWarning: 65.0,
-      rhTarget: 69.5,
       rhHighWarning: 73.0,
       rhHighCritical: 76.0,
 
       tempLowCritical: 58.0,
       tempLowWarning: 64.0,
-      tempTarget: 68.0,
       tempHighWarning: 72.0,
       tempHighCritical: 75.0,
 
@@ -97,13 +91,11 @@ export const THRESHOLD_PRESETS: ThresholdPreset[] = [
     thresholds: {
       rhLowCritical: 58.0,
       rhLowWarning: 62.0,
-      rhTarget: 68.0,
       rhHighWarning: 75.0,
       rhHighCritical: 79.0,
 
       tempLowCritical: 55.0,
       tempLowWarning: 60.0,
-      tempTarget: 68.0,
       tempHighWarning: 74.0,
       tempHighCritical: 78.0,
 
@@ -173,13 +165,11 @@ class AlarmThresholdService {
         return {
           rhLowCritical: Number(parsed.rhLowCritical ?? DEFAULT_THRESHOLDS.rhLowCritical),
           rhLowWarning: Number(parsed.rhLowWarning ?? DEFAULT_THRESHOLDS.rhLowWarning),
-          rhTarget: Number(parsed.rhTarget ?? DEFAULT_THRESHOLDS.rhTarget),
           rhHighWarning: Number(parsed.rhHighWarning ?? DEFAULT_THRESHOLDS.rhHighWarning),
           rhHighCritical: Number(parsed.rhHighCritical ?? DEFAULT_THRESHOLDS.rhHighCritical),
 
           tempLowCritical: Number(parsed.tempLowCritical ?? DEFAULT_THRESHOLDS.tempLowCritical),
           tempLowWarning: Number(parsed.tempLowWarning ?? DEFAULT_THRESHOLDS.tempLowWarning),
-          tempTarget: Number(parsed.tempTarget ?? DEFAULT_THRESHOLDS.tempTarget),
           tempHighWarning: Number(parsed.tempHighWarning ?? DEFAULT_THRESHOLDS.tempHighWarning),
           tempHighCritical: Number(parsed.tempHighCritical ?? DEFAULT_THRESHOLDS.tempHighCritical),
 

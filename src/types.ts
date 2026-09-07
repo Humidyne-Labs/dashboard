@@ -29,14 +29,10 @@ export interface SharedAttributes {
   sleep_interval_sec: number; // 60s to 3600s
   sleep_interval_min?: number;
   device_theme: DeviceTheme | string;
-  theme_idx?: number;
-  sound_enabled: boolean;     // Locked if has_sd_card === false || audio_synced === false
-  audio_lockout?: boolean;
+  sound_enabled: boolean;     // UI disables this when clientAttributes.has_sd_card === false
   auto_update_enabled: boolean;
   manual_ota_trigger: boolean;
   alarm_thresholds?: AlarmThresholds;
-  target_rh?: number;
-  target_temp?: number;
   [key: string]: any;
 }
 
@@ -95,13 +91,11 @@ export interface HumidorAlarm {
 export interface AlarmThresholds {
   rhLowCritical: number;
   rhLowWarning: number;
-  rhTarget: number;
   rhHighWarning: number;
   rhHighCritical: number;
 
   tempLowCritical: number;
   tempLowWarning: number;
-  tempTarget: number;
   tempHighWarning: number;
   tempHighCritical: number;
 

@@ -89,13 +89,11 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
           alarm_thresholds: {
             rhLowCritical: thresholds.rhLowCritical,
             rhLowWarning: thresholds.rhLowWarning,
-            rhTarget: thresholds.rhTarget,
             rhHighWarning: thresholds.rhHighWarning,
             rhHighCritical: thresholds.rhHighCritical,
 
             tempLowCritical: thresholds.tempLowCritical,
             tempLowWarning: thresholds.tempLowWarning,
-            tempTarget: thresholds.tempTarget,
             tempHighWarning: thresholds.tempHighWarning,
             tempHighCritical: thresholds.tempHighCritical,
 
@@ -106,8 +104,6 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
             tempHist: thresholds.tempHist,
             battHist: thresholds.battHist,
           },
-          target_rh: thresholds.rhTarget,
-          target_temp: thresholds.tempTarget,
         });
         setSyncStatus('Synced to ThingsBoard shared attributes & device RTC');
       } catch (err: any) {
@@ -128,7 +124,6 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
   // Temperature display values according to active unit (F or C)
   const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
   const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
-  const dispTempTarget = toDisplayTemp(thresholds.tempTarget, tempUnit);
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
   const dispTempHist = toDisplayDelta(thresholds.tempHist, tempUnit);
@@ -152,7 +147,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 Runtime Alarm Thresholds & Hysteresis
               </h2>
               <p className="text-xs text-slate-400">
-                Configure threshold alert points, target goals & reset hysteresis zones
+                Configure threshold alert limits, safe envelopes & reset hysteresis zones
               </p>
             </div>
           </div>
@@ -206,7 +201,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 <span>Relative Humidity (RH %) Thresholds</span>
               </div>
               <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                Target: {thresholds.rhTarget}%
+                Safe Envelope: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%
               </span>
             </div>
 
@@ -226,7 +221,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 <div
                   style={{ width: `${Math.max(8, thresholds.rhHighWarning - thresholds.rhLowWarning)}%` }}
                   className="bg-emerald-500/80"
-                  title="Optimal Target Zone"
+                  title="Optimal Safe Zone"
                 />
                 <div
                   style={{ width: `${Math.max(4, thresholds.rhHighCritical - thresholds.rhHighWarning)}%` }}
@@ -241,7 +236,6 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
               <div className="flex justify-between text-[10px] font-mono text-slate-500">
                 <span>{thresholds.rhLowCritical}% (Low Crit)</span>
                 <span className="text-sky-300 font-bold">{thresholds.rhLowWarning}% (Low Warn)</span>
-                <span className="text-emerald-400 font-bold">{thresholds.rhTarget}% (Target)</span>
                 <span className="text-amber-400 font-bold">{thresholds.rhHighWarning}% (High Warn)</span>
                 <span className="text-rose-400 font-bold">{thresholds.rhHighCritical}% (High Crit)</span>
               </div>
@@ -283,22 +277,6 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">RH Target Setpoint</span>
-                  <span className="font-mono font-bold text-emerald-400">{thresholds.rhTarget}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="64"
-                  max="74"
-                  step="0.5"
-                  value={thresholds.rhTarget}
-                  onChange={(e) => handleChange('rhTarget', Number(e.target.value))}
-                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400">High Warning (Above)</span>
                   <span className="font-mono font-bold text-amber-400">{thresholds.rhHighWarning}%</span>
                 </div>
@@ -313,7 +291,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400">High Critical Alert (Above)</span>
                   <span className="font-mono font-bold text-rose-400">{thresholds.rhHighCritical}%</span>
@@ -339,7 +317,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 <span>Temperature (°{tempUnit}) Thresholds</span>
               </div>
               <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                Unit: °{tempUnit} (Auto-scaled)
+                Safe Envelope: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}
               </span>
             </div>
 
@@ -378,22 +356,6 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">Temperature Target Setpoint</span>
-                  <span className="font-mono font-bold text-emerald-400">{dispTempTarget}°{tempUnit}</span>
-                </div>
-                <input
-                  type="range"
-                  min={tempMinSlider}
-                  max={tempMaxSlider}
-                  step="0.5"
-                  value={dispTempTarget}
-                  onChange={(e) => handleChange('tempTarget', fromDisplayTemp(Number(e.target.value), tempUnit))}
-                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-400"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400">High Warning (Above)</span>
                   <span className="font-mono font-bold text-amber-400">{dispTempHighWarning}°{tempUnit}</span>
                 </div>
@@ -408,7 +370,7 @@ export const AlarmThresholdsModal: React.FC<AlarmThresholdsModalProps> = ({
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-400">High Critical Alert (Above)</span>
                   <span className="font-mono font-bold text-rose-400">{dispTempHighCritical}°{tempUnit}</span>

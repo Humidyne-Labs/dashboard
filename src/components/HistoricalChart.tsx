@@ -33,7 +33,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const [range, setRange] = useState<TimeRange>('24h');
   const [showRh, setShowRh] = useState(true);
   const [showTemp, setShowTemp] = useState(true);
-  const [showBoundaries, setShowBoundaries] = useState(true);
+  const [showRhBoundaries, setShowRhBoundaries] = useState(true);
+  const [showTempBoundaries, setShowTempBoundaries] = useState(true);
   const [historyData, setHistoryData] = useState<HistoricalTelemetryPoint[]>(device.history || []);
   const [isLoading, setIsLoading] = useState(false);
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
@@ -123,7 +124,6 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   // Scaled temperature threshold values
   const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
   const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
-  const dispTempTarget = toDisplayTemp(thresholds.tempTarget, tempUnit);
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
 
@@ -151,12 +151,12 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               Dual-Axis Climate Telemetry History
             </h3>
             <p className="text-[11px] sm:text-xs text-slate-400">
-              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with boundary thresholds
+              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with distinct boundary thresholds
             </p>
           </div>
         </div>
 
-        {/* Range & Series Toggles */}
+        {/* Range & Series / Boundary Toggles */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Series filters */}
           <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
@@ -178,15 +178,28 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span>Temp</span>
             </button>
+            
+            {/* Separate Boundary Enablement Controls */}
             <button
-              onClick={() => setShowBoundaries(!showBoundaries)}
+              onClick={() => setShowRhBoundaries(!showRhBoundaries)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
-                showBoundaries ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-slate-500 hover:text-slate-300'
+                showRhBoundaries ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-300'
               }`}
-              title="Toggle threshold boundary lines"
+              title="Toggle RH alarm boundary lines"
             >
-              <Sliders className="w-3 h-3 text-purple-400" />
-              <span>Boundaries</span>
+              <Sliders className="w-3 h-3 text-amber-400" />
+              <span>RH Bounds</span>
+            </button>
+
+            <button
+              onClick={() => setShowTempBoundaries(!showTempBoundaries)}
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+                showTempBoundaries ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-500 hover:text-slate-300'
+              }`}
+              title="Toggle Temperature alarm boundary lines"
+            >
+              <Sliders className="w-3 h-3 text-sky-400" />
+              <span>Temp Bounds</span>
             </button>
           </div>
 
@@ -283,8 +296,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               labelFormatter={(label) => `Logged: ${label}`}
             />
 
-            {/* ALL Alarm Threshold Boundary Lines for Relative Humidity */}
-            {showBoundaries && showRh && (
+            {/* Alarm Threshold Boundary Lines for Relative Humidity */}
+            {showRhBoundaries && showRh && (
               <>
                 <ReferenceLine
                   yAxisId="rh"
@@ -294,7 +307,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1.5}
                   strokeOpacity={0.7}
                   label={{
-                    value: `Low Crit (${thresholds.rhLowCritical}%)`,
+                    value: `RH Low Crit (${thresholds.rhLowCritical}%)`,
                     fill: '#f87171',
                     fontSize: 9,
                     position: 'insideBottomLeft',
@@ -308,24 +321,10 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1}
                   strokeOpacity={0.6}
                   label={{
-                    value: `Low Warn (${thresholds.rhLowWarning}%)`,
+                    value: `RH Low Warn (${thresholds.rhLowWarning}%)`,
                     fill: '#fbbf24',
                     fontSize: 9,
                     position: 'insideBottomLeft',
-                  }}
-                />
-                <ReferenceLine
-                  yAxisId="rh"
-                  y={thresholds.rhTarget}
-                  stroke="#10b981"
-                  strokeDasharray="2 2"
-                  strokeWidth={1}
-                  strokeOpacity={0.5}
-                  label={{
-                    value: `Target (${thresholds.rhTarget}%)`,
-                    fill: '#34d399',
-                    fontSize: 9,
-                    position: 'insideTopLeft',
                   }}
                 />
                 <ReferenceLine
@@ -336,7 +335,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1}
                   strokeOpacity={0.6}
                   label={{
-                    value: `High Warn (${thresholds.rhHighWarning}%)`,
+                    value: `RH High Warn (${thresholds.rhHighWarning}%)`,
                     fill: '#fbbf24',
                     fontSize: 9,
                     position: 'insideTopLeft',
@@ -350,7 +349,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1.5}
                   strokeOpacity={0.7}
                   label={{
-                    value: `High Crit (${thresholds.rhHighCritical}%)`,
+                    value: `RH High Crit (${thresholds.rhHighCritical}%)`,
                     fill: '#f87171',
                     fontSize: 9,
                     position: 'insideTopLeft',
@@ -359,8 +358,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               </>
             )}
 
-            {/* ALL Alarm Threshold Boundary Lines for Temperature (Scaled to active unit) */}
-            {showBoundaries && showTemp && (
+            {/* Alarm Threshold Boundary Lines for Temperature (Scaled to active unit) */}
+            {showTempBoundaries && showTemp && (
               <>
                 <ReferenceLine
                   yAxisId="temp"
@@ -370,7 +369,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1.5}
                   strokeOpacity={0.7}
                   label={{
-                    value: `T Low Crit (${dispTempLowCritical}°)`,
+                    value: `Temp Low Crit (${dispTempLowCritical}°)`,
                     fill: '#60a5fa',
                     fontSize: 9,
                     position: 'insideBottomRight',
@@ -384,24 +383,10 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1}
                   strokeOpacity={0.6}
                   label={{
-                    value: `T Low Warn (${dispTempLowWarning}°)`,
+                    value: `Temp Low Warn (${dispTempLowWarning}°)`,
                     fill: '#38bdf8',
                     fontSize: 9,
                     position: 'insideBottomRight',
-                  }}
-                />
-                <ReferenceLine
-                  yAxisId="temp"
-                  y={dispTempTarget}
-                  stroke="#0ea5e9"
-                  strokeDasharray="2 2"
-                  strokeWidth={1}
-                  strokeOpacity={0.5}
-                  label={{
-                    value: `T Target (${dispTempTarget}°)`,
-                    fill: '#7dd3fc',
-                    fontSize: 9,
-                    position: 'insideTopRight',
                   }}
                 />
                 <ReferenceLine
@@ -412,7 +397,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1}
                   strokeOpacity={0.6}
                   label={{
-                    value: `T High Warn (${dispTempHighWarning}°)`,
+                    value: `Temp High Warn (${dispTempHighWarning}°)`,
                     fill: '#fbbf24',
                     fontSize: 9,
                     position: 'insideTopRight',
@@ -426,7 +411,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                   strokeWidth={1.5}
                   strokeOpacity={0.7}
                   label={{
-                    value: `T High Crit (${dispTempHighCritical}°)`,
+                    value: `Temp High Crit (${dispTempHighCritical}°)`,
                     fill: '#f87171',
                     fontSize: 9,
                     position: 'insideTopRight',

@@ -188,7 +188,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">%</span>
             </div>
             <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
-              <span>Target: {thresholds.rhTarget.toFixed(1)}%</span>
+              <span>Safe: {thresholds.rhLowWarning}–{thresholds.rhHighWarning}%</span>
             </div>
           </div>
 

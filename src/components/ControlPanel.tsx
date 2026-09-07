@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { HumidorDevice } from '../types';
+import React, { useState, useEffect } from 'react';
+import { HumidorDevice, TempUnit, AlarmThresholds } from '../types';
 import { thingsboard } from '../services/thingsboard';
-import { alarmThresholdService } from '../services/alarmThresholds';
+import { 
+  alarmThresholdService, 
+  THRESHOLD_PRESETS, 
+  toDisplayTemp, 
+  fromDisplayTemp,
+  toDisplayDelta,
+  fromDisplayDelta
+} from '../services/alarmThresholds';
 import { 
   Sliders, 
   Moon, 
@@ -20,53 +27,45 @@ import {
   Thermometer,
   ShieldCheck,
   Sparkles,
-  Layers
+  Layers,
+  Battery,
+  HardDrive
 } from 'lucide-react';
 
 interface ControlPanelProps {
   device: HumidorDevice;
+  tempUnit?: TempUnit;
   onOpenThresholds?: () => void;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresholds }) => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({ 
+  device, 
+  tempUnit = 'F',
+  onOpenThresholds 
+}) => {
   const currentThresholds = alarmThresholdService.getThresholds();
 
-  // Sleep Interval
+  // Sleep Interval (1 - 60 min)
   const [sleepMin, setSleepMin] = useState<number>(
     device.sharedAttributes.sleep_interval_min || 
     (device.sharedAttributes.sleep_interval_sec ? Math.round(device.sharedAttributes.sleep_interval_sec / 60) : 15)
   );
 
-  // Target Humidity Thresholds
-  const [rhTarget, setRhTarget] = useState<number>(
-    device.sharedAttributes.target_rh ?? currentThresholds.rhTarget ?? 69.5
-  );
-  const [rhLow, setRhLow] = useState<number>(
-    device.sharedAttributes.alarm_thresholds?.rhLowWarning ?? currentThresholds.rhLowWarning ?? 65.0
-  );
-  const [rhHigh, setRhHigh] = useState<number>(
-    device.sharedAttributes.alarm_thresholds?.rhHighWarning ?? currentThresholds.rhHighWarning ?? 73.0
+  // Active Runtime Alarm Thresholds (Canonical storage in °F for temp)
+  const [thresholds, setThresholds] = useState<AlarmThresholds>(
+    device.sharedAttributes.alarm_thresholds || currentThresholds
   );
 
-  // Target Temperature Thresholds
-  const [tempTarget, setTempTarget] = useState<number>(
-    device.sharedAttributes.target_temp ?? currentThresholds.tempTarget ?? 68.0
-  );
-  const [tempLow, setTempLow] = useState<number>(
-    device.sharedAttributes.alarm_thresholds?.tempLowWarning ?? currentThresholds.tempLowWarning ?? 64.0
-  );
-  const [tempHigh, setTempHigh] = useState<number>(
-    device.sharedAttributes.alarm_thresholds?.tempHighWarning ?? currentThresholds.tempHighWarning ?? 72.0
+  // Hardware Display Theme (strictly 'light' or 'dark')
+  const initialTheme = String(device.sharedAttributes.device_theme || 'dark').toLowerCase();
+  const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme === 'light' ? 'light' : 'dark');
+
+  // Sound enablement: locked out if SD card is missing
+  const hasSdCard = device.clientAttributes?.has_sd_card !== false;
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(
+    hasSdCard ? (device.sharedAttributes.sound_enabled !== false) : false
   );
 
-  // Hardware Display Theme & Audio
-  const initialTheme = String(device.sharedAttributes.device_theme || '').toLowerCase();
-  const [themeIndex, setThemeIndex] = useState<number>(
-    initialTheme === 'dark' ? 1 : (device.sharedAttributes.theme_idx ?? 0)
-  );
-  const [audioLockout, setAudioLockout] = useState<boolean>(
-    device.sharedAttributes.audio_lockout ?? (device.sharedAttributes.sound_enabled === false)
-  );
   const [autoUpdate, setAutoUpdate] = useState<boolean>(
     device.sharedAttributes.auto_update_enabled ?? true
   );
@@ -76,44 +75,52 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
 
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   // RPC Command states
   const [rpcLoading, setRpcLoading] = useState<string | null>(null);
   const [rpcStatus, setRpcStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const themeNames = ['light', 'dark'] as const;
+  useEffect(() => {
+    const unsub = alarmThresholdService.subscribe((updated) => {
+      setThresholds(updated);
+    });
+    return unsub;
+  }, []);
+
+  const handleApplyPreset = (presetId: 'sensitive' | 'normal' | 'relaxed') => {
+    const found = THRESHOLD_PRESETS.find((p) => p.id === presetId);
+    if (found) {
+      setThresholds(found.thresholds);
+      setActivePreset(presetId);
+    }
+  };
+
+  const handleThresholdChange = (key: keyof AlarmThresholds, val: number) => {
+    setThresholds((prev) => ({
+      ...prev,
+      [key]: val,
+    }));
+    setActivePreset(null);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const updatedThresholds = {
-        ...currentThresholds,
-        rhTarget,
-        rhLowWarning: rhLow,
-        rhHighWarning: rhHigh,
-        tempTarget,
-        tempLowWarning: tempLow,
-        tempHighWarning: tempHigh,
-      };
-
-      // 1. Update ThingsBoard Shared Attributes without redundant keys
+      // 1. Update ThingsBoard Shared Attributes with clean schema
       await thingsboard.updateSharedAttributes(device.id, {
         sleep_interval_min: sleepMin,
         sleep_interval_sec: sleepMin * 60,
-        theme_idx: themeIndex,
-        device_theme: themeNames[themeIndex],
-        audio_lockout: audioLockout,
-        sound_enabled: !audioLockout,
+        device_theme: theme,
+        sound_enabled: hasSdCard ? soundEnabled : false,
         auto_update_enabled: autoUpdate,
         manual_ota_trigger: manualOta,
-        target_rh: rhTarget,
-        target_temp: tempTarget,
-        alarm_thresholds: updatedThresholds,
+        alarm_thresholds: thresholds,
       });
 
       // 2. Synchronize local runtime alarm threshold service
-      alarmThresholdService.saveThresholds(updatedThresholds);
+      alarmThresholdService.saveThresholds(thresholds);
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
@@ -151,10 +158,21 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
     }
   };
 
+  // Temperature display conversions
+  const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
+  const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
+  const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
+  const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
+  const dispTempHist = toDisplayDelta(thresholds.tempHist, tempUnit);
+
+  const tempMinSlider = tempUnit === 'C' ? 10 : 50;
+  const tempMaxSlider = tempUnit === 'C' ? 32 : 90;
+
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm h-full flex flex-col justify-between">
+    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-4 sm:mb-5">
+        {/* Top Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <Sliders className="w-5 h-5" />
@@ -164,7 +182,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
                 Hardware Device & Alarm Parameters
               </h3>
               <p className="text-xs text-slate-400">
-                Live runtime configuration synced to ThingsBoard shared attributes
+                Direct threshold limits, hysteresis zones & hardware attributes
               </p>
             </div>
           </div>
@@ -174,11 +192,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
               <button
                 type="button"
                 onClick={onOpenThresholds}
-                className="h-8.5 px-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/40 text-amber-400 hover:text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Open Advanced Threshold Presets"
+                className="h-8.5 px-3 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 text-amber-400 hover:text-amber-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Open Advanced Threshold Configuration"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Presets</span>
+                <span>Advanced Presets</span>
               </button>
             )}
 
@@ -191,132 +209,227 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          {/* 1. Target Humidity & Alarm Thresholds */}
-          <div className="space-y-3 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
+          {/* Quick Preset Selector */}
+          <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Threshold Envelope Presets</span>
+              </span>
+              <span className="text-[11px] font-mono text-slate-400">Quick Set</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {THRESHOLD_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleApplyPreset(preset.id)}
+                  className={`h-9 px-2 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activePreset === preset.id
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                  title={preset.description}
+                >
+                  <span className="font-semibold capitalize">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 1. Relative Humidity (RH %) Thresholds */}
+          <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Target Humidity & Alerts</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                <Droplets className="w-3.5 h-3.5 text-amber-400" />
+                <span>Relative Humidity (RH %) Thresholds</span>
               </label>
-              <span className="font-mono text-xs font-bold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded border border-cyan-500/30">
-                Sweet Spot: {rhTarget.toFixed(1)}% RH
+              <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-500/30">
+                Safe Envelope: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%
               </span>
             </div>
 
-            {/* Target RH Sweet Spot Slider */}
-            <div>
-              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                <span>Target Relative Humidity:</span>
-                <span className="font-mono text-white font-semibold">{rhTarget}%</span>
+            {/* Visual Color Spectrum Bar */}
+            <div className="space-y-1">
+              <div className="h-2.5 w-full rounded-full bg-slate-800 flex overflow-hidden border border-slate-700/60 text-[9px] font-mono">
+                <div
+                  style={{ width: `${Math.max(8, thresholds.rhLowCritical)}%` }}
+                  className="bg-blue-600/80"
+                  title="Critical Low Zone"
+                />
+                <div
+                  style={{ width: `${Math.max(4, thresholds.rhLowWarning - thresholds.rhLowCritical)}%` }}
+                  className="bg-sky-500/70"
+                  title="Low Warning Zone"
+                />
+                <div
+                  style={{ width: `${Math.max(8, thresholds.rhHighWarning - thresholds.rhLowWarning)}%` }}
+                  className="bg-emerald-500/80"
+                  title="Optimal Safe Zone"
+                />
+                <div
+                  style={{ width: `${Math.max(4, thresholds.rhHighCritical - thresholds.rhHighWarning)}%` }}
+                  className="bg-amber-500/80"
+                  title="High Warning Zone"
+                />
+                <div
+                  className="bg-rose-500/80 flex-1"
+                  title="Critical High Zone"
+                />
               </div>
-              <input
-                type="range"
-                min="60"
-                max="75"
-                step="0.5"
-                value={rhTarget}
-                onChange={(e) => setRhTarget(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-              />
+              <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                <span>{thresholds.rhLowCritical}% (Low Crit)</span>
+                <span className="text-sky-300">{thresholds.rhLowWarning}% (Low Warn)</span>
+                <span className="text-amber-400">{thresholds.rhHighWarning}% (High Warn)</span>
+                <span className="text-rose-400">{thresholds.rhHighCritical}% (High Crit)</span>
+              </div>
             </div>
 
-            {/* Upper and Lower Alert Thresholds */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+            {/* 4 RH Boundary Sliders */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
               <div>
-                <span className="text-[10px] text-slate-400 block mb-1">Low Alert (&lt;):</span>
-                <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
-                  <input
-                    type="number"
-                    min="55"
-                    max={rhTarget - 1}
-                    step="0.5"
-                    value={rhLow}
-                    onChange={(e) => setRhLow(Number(e.target.value))}
-                    className="w-full bg-transparent text-xs font-mono text-amber-300 focus:outline-none"
-                  />
-                  <span className="text-[10px] font-mono text-slate-500">%</span>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Low Crit</span>
+                  <span className="font-mono font-bold text-blue-400">{thresholds.rhLowCritical}%</span>
                 </div>
+                <input
+                  type="range"
+                  min="50"
+                  max="65"
+                  step="0.5"
+                  value={thresholds.rhLowCritical}
+                  onChange={(e) => handleThresholdChange('rhLowCritical', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 block mb-1">High Alert (&gt;):</span>
-                <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
-                  <input
-                    type="number"
-                    min={rhTarget + 1}
-                    max="80"
-                    step="0.5"
-                    value={rhHigh}
-                    onChange={(e) => setRhHigh(Number(e.target.value))}
-                    className="w-full bg-transparent text-xs font-mono text-rose-300 focus:outline-none"
-                  />
-                  <span className="text-[10px] font-mono text-slate-500">%</span>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Low Warn</span>
+                  <span className="font-mono font-bold text-sky-300">{thresholds.rhLowWarning}%</span>
                 </div>
+                <input
+                  type="range"
+                  min="60"
+                  max="68"
+                  step="0.5"
+                  value={thresholds.rhLowWarning}
+                  onChange={(e) => handleThresholdChange('rhLowWarning', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">High Warn</span>
+                  <span className="font-mono font-bold text-amber-400">{thresholds.rhHighWarning}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="70"
+                  max="78"
+                  step="0.5"
+                  value={thresholds.rhHighWarning}
+                  onChange={(e) => handleThresholdChange('rhHighWarning', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">High Crit</span>
+                  <span className="font-mono font-bold text-rose-400">{thresholds.rhHighCritical}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="73"
+                  max="85"
+                  step="0.5"
+                  value={thresholds.rhHighCritical}
+                  onChange={(e) => handleThresholdChange('rhHighCritical', Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                />
               </div>
             </div>
           </div>
 
-          {/* 2. Target Temperature & Alarm Thresholds */}
-          <div className="space-y-3 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
+          {/* 2. Temperature Thresholds (Auto-scales °F / °C) */}
+          <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-                <span>Target Temperature & Alerts</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
+                <Thermometer className="w-3.5 h-3.5 text-sky-400" />
+                <span>Temperature (°{tempUnit}) Thresholds</span>
               </label>
-              <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-500/30">
-                Target: {tempTarget.toFixed(1)}°F
+              <span className="font-mono text-xs font-bold text-sky-300 bg-sky-950/60 px-2.5 py-0.5 rounded border border-sky-500/30">
+                Safe Envelope: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}
               </span>
             </div>
 
-            {/* Target Temperature Slider */}
-            <div>
-              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                <span>Curing Temperature Target:</span>
-                <span className="font-mono text-white font-semibold">{tempTarget}°F</span>
-              </div>
-              <input
-                type="range"
-                min="60"
-                max="75"
-                step="0.5"
-                value={tempTarget}
-                onChange={(e) => setTempTarget(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
-              />
-            </div>
-
-            {/* Upper and Lower Alert Temp */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+            {/* 4 Temp Boundary Sliders */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
               <div>
-                <span className="text-[10px] text-slate-400 block mb-1">Low Temp Warning (&lt;):</span>
-                <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
-                  <input
-                    type="number"
-                    min="55"
-                    max={tempTarget - 1}
-                    step="0.5"
-                    value={tempLow}
-                    onChange={(e) => setTempLow(Number(e.target.value))}
-                    className="w-full bg-transparent text-xs font-mono text-amber-300 focus:outline-none"
-                  />
-                  <span className="text-[10px] font-mono text-slate-500">°F</span>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Low Crit</span>
+                  <span className="font-mono font-bold text-blue-400">{dispTempLowCritical}°{tempUnit}</span>
                 </div>
+                <input
+                  type="range"
+                  min={tempMinSlider}
+                  max={tempMaxSlider}
+                  step="0.5"
+                  value={dispTempLowCritical}
+                  onChange={(e) => handleThresholdChange('tempLowCritical', fromDisplayTemp(Number(e.target.value), tempUnit))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 block mb-1">High Temp Critical (&gt;):</span>
-                <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
-                  <input
-                    type="number"
-                    min={tempTarget + 1}
-                    max="80"
-                    step="0.5"
-                    value={tempHigh}
-                    onChange={(e) => setTempHigh(Number(e.target.value))}
-                    className="w-full bg-transparent text-xs font-mono text-rose-300 focus:outline-none"
-                  />
-                  <span className="text-[10px] font-mono text-slate-500">°F</span>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Low Warn</span>
+                  <span className="font-mono font-bold text-sky-300">{dispTempLowWarning}°{tempUnit}</span>
                 </div>
+                <input
+                  type="range"
+                  min={tempMinSlider}
+                  max={tempMaxSlider}
+                  step="0.5"
+                  value={dispTempLowWarning}
+                  onChange={(e) => handleThresholdChange('tempLowWarning', fromDisplayTemp(Number(e.target.value), tempUnit))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">High Warn</span>
+                  <span className="font-mono font-bold text-amber-400">{dispTempHighWarning}°{tempUnit}</span>
+                </div>
+                <input
+                  type="range"
+                  min={tempMinSlider}
+                  max={tempMaxSlider}
+                  step="0.5"
+                  value={dispTempHighWarning}
+                  onChange={(e) => handleThresholdChange('tempHighWarning', fromDisplayTemp(Number(e.target.value), tempUnit))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">High Crit</span>
+                  <span className="font-mono font-bold text-rose-400">{dispTempHighCritical}°{tempUnit}</span>
+                </div>
+                <input
+                  type="range"
+                  min={tempMinSlider}
+                  max={tempMaxSlider}
+                  step="0.5"
+                  value={dispTempHighCritical}
+                  onChange={(e) => handleThresholdChange('tempHighCritical', fromDisplayTemp(Number(e.target.value), tempUnit))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                />
               </div>
             </div>
           </div>
@@ -350,7 +463,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
             </div>
           </div>
 
-          {/* 4. On-Device E-Ink Display Theme Selector */}
+          {/* 4. On-Device E-Ink Display Theme Selector (Light vs Dark) */}
           <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               <Sun className="w-3.5 h-3.5 text-amber-400" />
@@ -360,9 +473,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setThemeIndex(0)}
+                onClick={() => setTheme('light')}
                 className={`h-9 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  themeIndex === 0
+                  theme === 'light'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                     : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
@@ -373,9 +486,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
 
               <button
                 type="button"
-                onClick={() => setThemeIndex(1)}
+                onClick={() => setTheme('dark')}
                 className={`h-9 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  themeIndex === 1
+                  theme === 'dark'
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                     : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
@@ -388,29 +501,36 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
 
           {/* 5. Audio & Auto-Update Toggles */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {/* Audio Lockout Toggle */}
+            {/* Sound Toggle (Locked if No SD Card) */}
             <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800">
               <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg ${audioLockout ? 'bg-rose-950 text-rose-400' : 'bg-slate-800 text-slate-300'}`}>
-                  {audioLockout ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                <div className={`p-1.5 rounded-lg ${!hasSdCard ? 'bg-slate-800 text-slate-500' : soundEnabled ? 'bg-emerald-950 text-emerald-400' : 'bg-rose-950 text-rose-400'}`}>
+                  {!hasSdCard ? <HardDrive className="w-3.5 h-3.5 text-slate-500" /> : soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-200 block">Sound</span>
-                  <span className="text-[10px] text-slate-400">{audioLockout ? 'Muted' : 'Enabled'}</span>
+                  <span className="text-[10px] text-slate-400">
+                    {!hasSdCard ? 'Locked (No SD Card)' : soundEnabled ? 'Enabled' : 'Muted'}
+                  </span>
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={() => setAudioLockout(!audioLockout)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                  audioLockout ? 'bg-rose-700' : 'bg-emerald-600'
+                disabled={!hasSdCard}
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  !hasSdCard 
+                    ? 'bg-slate-800 opacity-50 cursor-not-allowed' 
+                    : soundEnabled 
+                    ? 'bg-emerald-600 cursor-pointer' 
+                    : 'bg-slate-800 cursor-pointer'
                 }`}
-                title={audioLockout ? 'Unmute buzzer' : 'Mute buzzer'}
+                title={!hasSdCard ? 'SD Card required to enable hardware audio' : soundEnabled ? 'Mute buzzer' : 'Enable sound'}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    audioLockout ? 'translate-x-1' : 'translate-x-6'
+                    soundEnabled && hasSdCard ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>
@@ -535,7 +655,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
       <div className="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-between">
         <div className="flex items-center gap-1 text-[11px] text-slate-500 font-mono">
           <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span>Syncs to ThingsBoard & Display Gauges</span>
+          <span>Syncs to ThingsBoard & Active Alarms</span>
         </div>
 
         <button

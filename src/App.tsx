@@ -208,18 +208,15 @@ export default function App() {
               {/* Historical Telemetry Chart */}
               <HistoricalChart device={selectedDevice} tempUnit={tempUnit} />
 
-              {/* Control Panel (Dual Dial Sliders) & OTA Firmware Updater */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <ControlPanel 
-                    device={selectedDevice} 
-                    onOpenThresholds={() => setIsThresholdsModalOpen(true)} 
-                  />
-                </div>
-                <div className="lg:col-span-1">
-                  <OtaUpdateCenter device={selectedDevice} />
-                </div>
-              </div>
+              {/* Hardware Device & Alarm Parameters Control Panel */}
+              <ControlPanel 
+                device={selectedDevice} 
+                tempUnit={tempUnit}
+                onOpenThresholds={() => setIsThresholdsModalOpen(true)} 
+              />
+
+              {/* OTA Firmware Management Center */}
+              <OtaUpdateCenter device={selectedDevice} />
 
               {/* Live ThingsBoard Alarms Feed */}
               <div id="alarms-feed-section">
