@@ -81,35 +81,39 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         setHistoryData(points);
         setLastBatchTime(new Date());
       } else {
-        // Fallback: Generate points anchoring to current real telemetry if database has no history
+        // Fallback: Generate points anchoring to current real telemetry spanning the full window
         const currentTelemetry = telemetryRef.current;
         const liveTs = currentTelemetry?.timestamp || Date.now();
         const liveRh = currentTelemetry?.rh || 68;
         const liveTemp = currentTelemetry?.temp || 70;
         const liveBatt = currentTelemetry?.battery || 100;
 
-        const generated: HistoricalTelemetryPoint[] = [];
         let count = 60;
-        if (range === '1h') count = 30;
-        else if (range === '6h') count = 48;
-        else if (range === '12h') count = 60;
-        else if (range === '24h') count = 72;
-        else if (range === '3d') count = 96;
-        else count = 120;
+        if (range === '1h') count = 60;
+        else if (range === '6h') count = 72;
+        else if (range === '12h') count = 72;
+        else if (range === '24h') count = 96;
+        else if (range === '3d') count = 120;
+        else count = 140;
 
-        const stepMs = (rangeHours * 3600 * 1000) / count;
+        const windowDurationMs = rangeHours * 3600 * 1000;
+        const startTs = liveTs - windowDurationMs;
+        const stepMs = windowDurationMs / count;
 
-        for (let i = count; i >= 0; i--) {
-          const ptTs = liveTs - i * stepMs;
+        const generated: HistoricalTelemetryPoint[] = [];
+
+        for (let i = 0; i <= count; i++) {
+          const ptTs = startTs + i * stepMs;
           const d = new Date(ptTs);
           const hours = d.getHours().toString().padStart(2, '0');
           const minutes = d.getMinutes().toString().padStart(2, '0');
           const month = (d.getMonth() + 1).toString().padStart(2, '0');
           const day = d.getDate().toString().padStart(2, '0');
 
-          // Subtle variation leading up to live reading
-          const offsetRh = i === 0 ? 0 : Math.sin(i * 0.8) * 0.8;
-          const offsetTemp = i === 0 ? 0 : Math.cos(i * 0.6) * 0.5;
+          const progress = i / count;
+          const wave = Math.sin((ptTs / 1000 / 3600) * Math.PI);
+          const offsetRh = (1 - progress) * (wave * 0.8 + ((ptTs % 7) - 3) * 0.05);
+          const offsetTemp = (1 - progress) * (wave * 0.6 + ((ptTs % 5) - 2) * 0.05);
 
           const currentPtRh = Number((liveRh + offsetRh).toFixed(1));
           const currentPtTemp = Number((liveTemp + offsetTemp).toFixed(1));
@@ -288,6 +292,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               fontSize={10}
               tickLine={false}
               axisLine={false}
+              minTickGap={28}
+              interval="preserveStartEnd"
             />
 
             {/* Left Y-Axis: Humidity */}
@@ -327,7 +333,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 if (name === 'displayTemp') return [`${Number(value).toFixed(1)} ${tempSymbol}`, 'Temperature'];
                 return [value, name];
               }}
-              labelFormatter={(label) => `Logged: ${label}`}
+              labelFormatter={(label, payload) => {
+                const pt = payload?.[0]?.payload;
+                if (pt?.dateFormatted) {
+                  return `Logged: ${pt.dateFormatted}`;
+                }
+                return `Logged: ${label}`;
+              }}
             />
 
             {/* Alarm Threshold Boundary Lines for Relative Humidity */}
