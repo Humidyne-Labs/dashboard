@@ -33,7 +33,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     if (variant === 'compact') return null;
     return (
       <div
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono select-none ${className}`}
+        className={`h-9 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono select-none whitespace-nowrap ${className}`}
         title="Running as an installed PWA / Android TWA"
       >
         <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
@@ -54,7 +54,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         type="button"
         onClick={handleInstallClick}
         disabled={installing}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-wide transition shadow-sm cursor-pointer active:scale-95 disabled:opacity-50 ${className}`}
+        className={`h-9 flex items-center gap-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs tracking-wide transition shadow-sm cursor-pointer active:scale-95 disabled:opacity-50 whitespace-nowrap ${className}`}
         title={isIOS ? 'Install HUMID1 on iPhone/iPad' : 'Install HUMID1 Native App'}
       >
         <Download className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />

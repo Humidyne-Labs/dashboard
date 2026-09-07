@@ -1,90 +1,156 @@
+import { AlarmThresholds, TempUnit } from '../types';
+
+export type { AlarmThresholds };
+
 /**
- * Runtime Alarm & Climate Thresholds Management
- * Allows live configuration of relative humidity, temperature, and battery thresholds
- * from the dashboard, persisting to localStorage and synchronizing with ThingsBoard shared attributes.
+ * Default runtime alarm thresholds & hysteresis constants
+ * All temperature values stored canonically in °F.
+ * When displaying or editing in °C, helper functions auto-scale them dynamically.
  */
-
-export interface AlarmThresholds {
-  rhLowCritical: number;      // Below this: Critically Dry danger
-  rhLowWarning: number;       // Below this: Dry warning
-  rhTarget: number;           // Optimal target RH
-  rhHighWarning: number;      // Above this: Humid warning
-  rhHighCritical: number;     // Above this: Mold Hazard danger
-  tempLowWarning: number;     // Below this: Slow aging (°F)
-  tempTarget: number;         // Optimal temperature target (°F)
-  tempHighCritical: number;   // Above this: Tobacco Beetle Risk (°F)
-  batteryLowCritical: number; // Below this: Battery alert (%)
-}
-
 export const DEFAULT_THRESHOLDS: AlarmThresholds = {
   rhLowCritical: 62.0,
   rhLowWarning: 65.0,
   rhTarget: 69.5,
   rhHighWarning: 73.0,
   rhHighCritical: 76.0,
+
+  tempLowCritical: 58.0,
   tempLowWarning: 64.0,
   tempTarget: 68.0,
-  tempHighCritical: 74.0,
-  batteryLowCritical: 20.0,
+  tempHighWarning: 72.0,
+  tempHighCritical: 75.0,
+
+  batteryLowCritical: 15.0,
+  batteryLowWarning: 25.0,
+
+  rhHist: 1.5,
+  tempHist: 1.0,
+  battHist: 2.0,
 };
 
 export interface ThresholdPreset {
-  id: string;
+  id: 'sensitive' | 'normal' | 'relaxed';
   name: string;
   description: string;
   thresholds: AlarmThresholds;
 }
 
+/**
+ * Presets: 'sensitive', 'normal', and 'relaxed'
+ * Configures notification levels and hysteresis zones
+ */
 export const THRESHOLD_PRESETS: ThresholdPreset[] = [
   {
-    id: 'cuban-aging',
-    name: 'Cuban & Long-Term Aging',
-    description: 'Traditional 65% envelope favored for Cuban puros, preventing tight draws and oily leaf mold.',
+    id: 'sensitive',
+    name: 'Sensitive',
+    description: 'Strict tolerance bands (±2% RH, ±2°F) and low hysteresis (0.5) for tight, proactive monitoring.',
     thresholds: {
-      rhLowCritical: 60.0,
-      rhLowWarning: 63.0,
-      rhTarget: 66.0,
-      rhHighWarning: 69.0,
-      rhHighCritical: 72.0,
-      tempLowWarning: 62.0,
-      tempTarget: 66.0,
-      tempHighCritical: 72.0,
+      rhLowCritical: 65.0,
+      rhLowWarning: 67.0,
+      rhTarget: 69.0,
+      rhHighWarning: 71.0,
+      rhHighCritical: 73.0,
+
+      tempLowCritical: 62.0,
+      tempLowWarning: 65.0,
+      tempTarget: 68.0,
+      tempHighWarning: 71.0,
+      tempHighCritical: 73.0,
+
       batteryLowCritical: 20.0,
+      batteryLowWarning: 30.0,
+
+      rhHist: 0.5,
+      tempHist: 0.5,
+      battHist: 1.0,
     },
   },
   {
-    id: 'modern-standard',
-    name: 'Modern Balanced Standard',
-    description: 'Industrial 69-72% equilibrium for standard New World Nicaraguan, Dominican, and Honduran blends.',
+    id: 'normal',
+    name: 'Normal',
+    description: 'Standard recommended envelope (65–73% RH, 64–72°F) with moderate hysteresis (1.5 / 1.0) for stable daily control.',
     thresholds: {
       rhLowCritical: 62.0,
       rhLowWarning: 65.0,
       rhTarget: 69.5,
       rhHighWarning: 73.0,
       rhHighCritical: 76.0,
+
+      tempLowCritical: 58.0,
       tempLowWarning: 64.0,
       tempTarget: 68.0,
-      tempHighCritical: 74.0,
-      batteryLowCritical: 20.0,
+      tempHighWarning: 72.0,
+      tempHighCritical: 75.0,
+
+      batteryLowCritical: 15.0,
+      batteryLowWarning: 25.0,
+
+      rhHist: 1.5,
+      tempHist: 1.0,
+      battHist: 2.0,
     },
   },
   {
-    id: 'maduro-preservation',
-    name: 'Heavy Maduro & Oily Wrapper',
-    description: 'Targeted 67-70% sweet spot preventing split wrappers during climate and humidity swings.',
+    id: 'relaxed',
+    name: 'Relaxed',
+    description: 'Wider boundaries (62–75% RH, 60–74°F) with generous hysteresis (2.5 / 2.0) preventing alerts during seasonal shifts.',
     thresholds: {
-      rhLowCritical: 61.0,
-      rhLowWarning: 64.0,
+      rhLowCritical: 58.0,
+      rhLowWarning: 62.0,
       rhTarget: 68.0,
-      rhHighWarning: 71.0,
-      rhHighCritical: 74.0,
-      tempLowWarning: 63.0,
-      tempTarget: 67.0,
-      tempHighCritical: 73.0,
-      batteryLowCritical: 20.0,
+      rhHighWarning: 75.0,
+      rhHighCritical: 79.0,
+
+      tempLowCritical: 55.0,
+      tempLowWarning: 60.0,
+      tempTarget: 68.0,
+      tempHighWarning: 74.0,
+      tempHighCritical: 78.0,
+
+      batteryLowCritical: 10.0,
+      batteryLowWarning: 20.0,
+
+      rhHist: 2.5,
+      tempHist: 2.0,
+      battHist: 3.0,
     },
   },
 ];
+
+/**
+ * Temperature Unit Conversion Helpers
+ * Canonical storage is in Fahrenheit (°F).
+ */
+export const toDisplayTemp = (fVal: number, unit: TempUnit): number => {
+  if (unit === 'C') {
+    return Number(((fVal - 32) * (5 / 9)).toFixed(1));
+  }
+  return Number(fVal.toFixed(1));
+};
+
+export const fromDisplayTemp = (dispVal: number, unit: TempUnit): number => {
+  if (unit === 'C') {
+    return Number(((dispVal * (9 / 5)) + 32).toFixed(1));
+  }
+  return Number(dispVal.toFixed(1));
+};
+
+/**
+ * Temperature Differential / Hysteresis Conversion
+ */
+export const toDisplayDelta = (fDelta: number, unit: TempUnit): number => {
+  if (unit === 'C') {
+    return Number((fDelta * (5 / 9)).toFixed(1));
+  }
+  return Number(fDelta.toFixed(1));
+};
+
+export const fromDisplayDelta = (dispDelta: number, unit: TempUnit): number => {
+  if (unit === 'C') {
+    return Number((dispDelta * (9 / 5)).toFixed(1));
+  }
+  return Number(dispDelta.toFixed(1));
+};
 
 const STORAGE_KEY = 'humid1_runtime_alarm_thresholds';
 
@@ -110,10 +176,19 @@ class AlarmThresholdService {
           rhTarget: Number(parsed.rhTarget ?? DEFAULT_THRESHOLDS.rhTarget),
           rhHighWarning: Number(parsed.rhHighWarning ?? DEFAULT_THRESHOLDS.rhHighWarning),
           rhHighCritical: Number(parsed.rhHighCritical ?? DEFAULT_THRESHOLDS.rhHighCritical),
+
+          tempLowCritical: Number(parsed.tempLowCritical ?? DEFAULT_THRESHOLDS.tempLowCritical),
           tempLowWarning: Number(parsed.tempLowWarning ?? DEFAULT_THRESHOLDS.tempLowWarning),
           tempTarget: Number(parsed.tempTarget ?? DEFAULT_THRESHOLDS.tempTarget),
+          tempHighWarning: Number(parsed.tempHighWarning ?? DEFAULT_THRESHOLDS.tempHighWarning),
           tempHighCritical: Number(parsed.tempHighCritical ?? DEFAULT_THRESHOLDS.tempHighCritical),
+
           batteryLowCritical: Number(parsed.batteryLowCritical ?? DEFAULT_THRESHOLDS.batteryLowCritical),
+          batteryLowWarning: Number(parsed.batteryLowWarning ?? DEFAULT_THRESHOLDS.batteryLowWarning),
+
+          rhHist: Math.max(0, Math.min(5, Number(parsed.rhHist ?? DEFAULT_THRESHOLDS.rhHist))),
+          tempHist: Math.max(0, Math.min(5, Number(parsed.tempHist ?? DEFAULT_THRESHOLDS.tempHist))),
+          battHist: Math.max(0, Math.min(5, Number(parsed.battHist ?? DEFAULT_THRESHOLDS.battHist))),
         };
       }
     } catch (e) {
@@ -130,6 +205,10 @@ class AlarmThresholdService {
     this.thresholds = {
       ...this.thresholds,
       ...newThresholds,
+      // Clamp hysteresis values to 0 - 5.0
+      rhHist: Math.max(0, Math.min(5, Number(newThresholds.rhHist ?? this.thresholds.rhHist))),
+      tempHist: Math.max(0, Math.min(5, Number(newThresholds.tempHist ?? this.thresholds.tempHist))),
+      battHist: Math.max(0, Math.min(5, Number(newThresholds.battHist ?? this.thresholds.battHist))),
     };
     if (typeof window !== 'undefined') {
       try {
@@ -146,7 +225,7 @@ class AlarmThresholdService {
     return this.saveThresholds(DEFAULT_THRESHOLDS);
   }
 
-  public applyPreset(presetId: string): AlarmThresholds {
+  public applyPreset(presetId: 'sensitive' | 'normal' | 'relaxed'): AlarmThresholds {
     const preset = THRESHOLD_PRESETS.find((p) => p.id === presetId);
     if (preset) {
       return this.saveThresholds(preset.thresholds);

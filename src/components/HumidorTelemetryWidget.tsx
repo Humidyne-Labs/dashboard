@@ -63,18 +63,9 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
     });
   }, [serverUrl, token]);
 
-  // Query only actual hardware payload keys sent by the device/script
+  // Query only the 4 active hardware telemetry keys: rh, temp, battery, rssi
   const requestedKeys = useMemo(
-    () => [
-      'rh',
-      'humidity',
-      'temp',
-      'temperature',
-      'battery',
-      'batt',
-      'rssi',
-      'wifi_rssi',
-    ],
+    () => ['rh', 'temp', 'battery', 'rssi'],
     []
   );
 
@@ -147,43 +138,12 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
     return String(val);
   };
 
-  // Robust multi-key lookups for Relative Humidity (rh or humidity or hum)
-  const humVal =
-    getMetricValue('rh') !== '--'
-      ? getMetricValue('rh')
-      : getMetricValue('humidity') !== '--'
-      ? getMetricValue('humidity')
-      : getMetricValue('hum');
-
-  // Robust multi-key lookups for Temperature (temp or temperature or tempF)
-  const tempVal =
-    getMetricValue('temp') !== '--'
-      ? getMetricValue('temp')
-      : getMetricValue('temperature') !== '--'
-      ? getMetricValue('temperature')
-      : getMetricValue('tempF');
-
-  // Target Humidity
-  const targetHumVal =
-    getMetricValue('targetHumidity') !== '--'
-      ? getMetricValue('targetHumidity')
-      : getMetricValue('target_humidity') !== '--'
-      ? getMetricValue('target_humidity')
-      : getMetricValue('target_rh', '65');
-
-  // Battery
-  const batteryVal =
-    getMetricValue('battery') !== '--'
-      ? getMetricValue('battery')
-      : getMetricValue('batt');
-
-  // Signal RSSI
-  const rssiVal =
-    telemetry['rssi']?.value !== undefined
-      ? String(telemetry['rssi'].value)
-      : telemetry['wifi_rssi']?.value !== undefined
-      ? String(telemetry['wifi_rssi'].value)
-      : '-64';
+  // 4 Active Telemetry Keys: rh, temp, battery, rssi
+  const humVal = getMetricValue('rh');
+  const tempVal = getMetricValue('temp');
+  const batteryVal = getMetricValue('battery');
+  const rssiVal = telemetry['rssi']?.value !== undefined ? String(telemetry['rssi'].value) : '-64';
+  const targetHumVal = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhTarget ?? humidorDevice?.sharedAttributes?.target_rh ?? 65;
 
   // VPD calculation only: derived mathematically from ambient temp & RH
   let vpdVal = '--';

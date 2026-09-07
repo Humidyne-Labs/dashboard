@@ -139,19 +139,12 @@ export function useThingsBoardTelemetry({
           setTelemetry(telemetryData);
           setLastUpdated(latestPayloadTs > 0 ? latestPayloadTs : now);
 
-          // Extract standard telemetry fields published by test script & hardware
+          // Extract strictly the 4 active telemetry keys: rh, temp, battery, rssi
           const extracted: Partial<TelemetryData> = {};
           if (telemetryData.rh?.value !== undefined) extracted.rh = Number(telemetryData.rh.value);
-          else if (telemetryData.humidity?.value !== undefined) extracted.rh = Number(telemetryData.humidity.value);
-
           if (telemetryData.temp?.value !== undefined) extracted.temp = Number(telemetryData.temp.value);
-          else if (telemetryData.temperature?.value !== undefined) extracted.temp = Number(telemetryData.temperature.value);
-
           if (telemetryData.battery?.value !== undefined) extracted.battery = Number(telemetryData.battery.value);
-          else if (telemetryData.batt?.value !== undefined) extracted.battery = Number(telemetryData.batt.value);
-
           if (telemetryData.rssi?.value !== undefined) extracted.rssi = Number(telemetryData.rssi.value);
-          else if (telemetryData.wifi_rssi?.value !== undefined) extracted.rssi = Number(telemetryData.wifi_rssi.value);
 
           if (latestPayloadTs > 0) extracted.timestamp = latestPayloadTs;
 

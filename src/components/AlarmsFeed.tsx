@@ -12,7 +12,8 @@ import {
   XCircle,
   Sliders,
   Sparkles,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 
 interface AlarmsFeedProps {
@@ -63,6 +64,7 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
   };
 
   const activeAlarms = alarms.filter((a) => a.status.startsWith('ACTIVE'));
+  const inactiveAlarms = alarms.filter((a) => !a.status.startsWith('ACTIVE'));
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
@@ -81,7 +83,19 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {inactiveAlarms.length > 0 && (
+            <button
+              type="button"
+              onClick={() => thingsboard.clearInactiveAlarms()}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              title="Purge all resolved/cleared alarms from history"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+              <span>Clear Inactive ({inactiveAlarms.length})</span>
+            </button>
+          )}
+
           {onOpenThresholds && (
             <button
               type="button"
@@ -106,9 +120,9 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
           <span className="text-slate-500">RUNTIME LIMITS:</span>
           <span className="text-emerald-400">RH {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%</span>
           <span className="text-slate-600">•</span>
-          <span className="text-rose-400">Mold &gt;{thresholds.rhHighCritical}%</span>
+          <span className="text-rose-400">RH Critical &gt;{thresholds.rhHighCritical}%</span>
           <span className="text-slate-600 hidden xs:inline">•</span>
-          <span className="text-sky-300 hidden xs:inline">Temp &lt;{thresholds.tempHighCritical}°F</span>
+          <span className="text-sky-300 hidden xs:inline">Temp Critical &gt;{thresholds.tempHighCritical}°F</span>
         </div>
         {onOpenThresholds && (
           <button

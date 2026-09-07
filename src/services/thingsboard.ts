@@ -42,6 +42,7 @@ import {
   isThingsBoardToken,
 } from '../utils/authTokens';
 import { registerGlobalClientInterceptors } from './apiClientInit';
+import { alarmThresholdService } from './alarmThresholds';
 
 const CONFIG_STORAGE_KEY = 'humid1_thingsboard_config';
 const CLAIM_LOGS_STORAGE_KEY = 'humid1_tb_claim_logs';
@@ -116,6 +117,11 @@ class ThingsBoardService {
     if (this.getEffectiveToken()) {
       this.initRealBackend();
     }
+
+    // Evaluate live alarm states whenever threshold constants or hysteresis changes
+    alarmThresholdService.subscribe(() => {
+      this.evaluateAllAlarms();
+    });
   }
 
   /**
@@ -1435,7 +1441,7 @@ class ThingsBoardService {
       const endTs = Date.now();
       const startTs = endTs - rangeHours * 3600 * 1000;
       const limit = 1000;
-      const keys = 'rh,humidity,hum,temp,temperature,tempF,tempC,battery,rssi';
+      const keys = 'rh,temp,battery,rssi';
 
       let rawData: any = null;
 
@@ -1689,6 +1695,351 @@ class ThingsBoardService {
     });
 
     if (hasChanged) {
+      this.evaluateAllAlarms();
+      this.notifySubscribers();
+    }
+  }
+
+  /**
+   * Evaluates all devices against active alarm threshold configurations & hysteresis.
+   * When an alarm threshold is violated, creates or flags an active alarm.
+   * When telemetry returns back within the safe boundary past hysteresis buffer,
+   * the alarm automatically clears and so does the alert.
+   */
+  public evaluateAllAlarms(): void {
+    const globalThresholds = alarmThresholdService.getThresholds();
+    let updated = false;
+    const now = Date.now();
+
+    for (const device of this.devices) {
+      const th = device.sharedAttributes?.alarm_thresholds || globalThresholds;
+      const { rh, temp, battery } = device.telemetry;
+      if (typeof rh !== 'number' || typeof temp !== 'number') continue;
+
+      const deviceAlarms = this.alarms.filter((a) => a.deviceId === device.id);
+
+      // --- 1. Relative Humidity Alerts ---
+      // A. RH Critical High
+      const rhCritHigh = deviceAlarms.find((a) => a.type === 'RH_CRITICAL_HIGH');
+      if (rh > th.rhHighCritical) {
+        if (!rhCritHigh || !rhCritHigh.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-rh-hc-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'RH_CRITICAL_HIGH',
+              severity: 'CRITICAL',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Critical high humidity (${rh.toFixed(1)}%) exceeded ${th.rhHighCritical}% limit`,
+                rh,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (rhCritHigh && rhCritHigh.status.startsWith('ACTIVE')) {
+        if (rh <= th.rhHighCritical - th.rhHist) {
+          rhCritHigh.status = rhCritHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          rhCritHigh.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // B. RH Warning High
+      const rhWarnHigh = deviceAlarms.find((a) => a.type === 'RH_HIGH_WARNING');
+      if (rh > th.rhHighWarning && rh <= th.rhHighCritical) {
+        if (!rhWarnHigh || !rhWarnHigh.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-rh-hw-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'RH_HIGH_WARNING',
+              severity: 'WARNING',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `High humidity warning (${rh.toFixed(1)}%) exceeded ${th.rhHighWarning}% limit`,
+                rh,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (rhWarnHigh && rhWarnHigh.status.startsWith('ACTIVE')) {
+        if (rh <= th.rhHighWarning - th.rhHist) {
+          rhWarnHigh.status = rhWarnHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          rhWarnHigh.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // C. RH Warning Low
+      const rhWarnLow = deviceAlarms.find((a) => a.type === 'RH_LOW_WARNING');
+      if (rh < th.rhLowWarning && rh >= th.rhLowCritical) {
+        if (!rhWarnLow || !rhWarnLow.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-rh-lw-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'RH_LOW_WARNING',
+              severity: 'WARNING',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Low humidity warning (${rh.toFixed(1)}%) dropped below ${th.rhLowWarning}% limit`,
+                rh,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (rhWarnLow && rhWarnLow.status.startsWith('ACTIVE')) {
+        if (rh >= th.rhLowWarning + th.rhHist) {
+          rhWarnLow.status = rhWarnLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          rhWarnLow.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // D. RH Critical Low
+      const rhCritLow = deviceAlarms.find((a) => a.type === 'RH_CRITICAL_LOW');
+      if (rh < th.rhLowCritical) {
+        if (!rhCritLow || !rhCritLow.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-rh-lc-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'RH_CRITICAL_LOW',
+              severity: 'CRITICAL',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Critical low humidity (${rh.toFixed(1)}%) dropped below ${th.rhLowCritical}% limit`,
+                rh,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (rhCritLow && rhCritLow.status.startsWith('ACTIVE')) {
+        if (rh >= th.rhLowCritical + th.rhHist) {
+          rhCritLow.status = rhCritLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          rhCritLow.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // --- 2. Temperature Alerts ---
+      // A. Temp Critical High
+      const tempCritHigh = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_HIGH');
+      if (temp > th.tempHighCritical) {
+        if (!tempCritHigh || !tempCritHigh.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-temp-hc-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'TEMP_CRITICAL_HIGH',
+              severity: 'CRITICAL',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Critical high temperature (${temp.toFixed(1)}°F) exceeded ${th.tempHighCritical}°F limit`,
+                temp,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (tempCritHigh && tempCritHigh.status.startsWith('ACTIVE')) {
+        if (temp <= th.tempHighCritical - th.tempHist) {
+          tempCritHigh.status = tempCritHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          tempCritHigh.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // B. Temp Warning High
+      const tempWarnHigh = deviceAlarms.find((a) => a.type === 'TEMP_HIGH_WARNING');
+      if (temp > th.tempHighWarning && temp <= th.tempHighCritical) {
+        if (!tempWarnHigh || !tempWarnHigh.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-temp-hw-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'TEMP_HIGH_WARNING',
+              severity: 'WARNING',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}°F limit`,
+                temp,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (tempWarnHigh && tempWarnHigh.status.startsWith('ACTIVE')) {
+        if (temp <= th.tempHighWarning - th.tempHist) {
+          tempWarnHigh.status = tempWarnHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          tempWarnHigh.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // C. Temp Warning Low
+      const tempWarnLow = deviceAlarms.find((a) => a.type === 'TEMP_LOW_WARNING');
+      if (temp < th.tempLowWarning && temp >= th.tempLowCritical) {
+        if (!tempWarnLow || !tempWarnLow.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-temp-lw-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'TEMP_LOW_WARNING',
+              severity: 'WARNING',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Low temperature warning (${temp.toFixed(1)}°F) dropped below ${th.tempLowWarning}°F limit`,
+                temp,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (tempWarnLow && tempWarnLow.status.startsWith('ACTIVE')) {
+        if (temp >= th.tempLowWarning + th.tempHist) {
+          tempWarnLow.status = tempWarnLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          tempWarnLow.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // D. Temp Critical Low
+      const tempCritLow = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_LOW');
+      if (temp < th.tempLowCritical) {
+        if (!tempCritLow || !tempCritLow.status.startsWith('ACTIVE')) {
+          this.alarms = [
+            {
+              id: `alm-temp-lc-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'TEMP_CRITICAL_LOW',
+              severity: 'CRITICAL',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Critical low temperature (${temp.toFixed(1)}°F) dropped below ${th.tempLowCritical}°F limit`,
+                temp,
+              },
+            },
+            ...this.alarms,
+          ];
+          updated = true;
+        }
+      } else if (tempCritLow && tempCritLow.status.startsWith('ACTIVE')) {
+        if (temp >= th.tempLowCritical + th.tempHist) {
+          tempCritLow.status = tempCritLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+          tempCritLow.clearTime = now;
+          updated = true;
+        }
+      }
+
+      // --- 3. Battery Alerts ---
+      if (typeof battery === 'number') {
+        const battCrit = deviceAlarms.find((a) => a.type === 'BATTERY_CRITICAL_LOW');
+        if (battery < th.batteryLowCritical) {
+          if (!battCrit || !battCrit.status.startsWith('ACTIVE')) {
+            this.alarms = [
+              {
+                id: `alm-batt-lc-${device.id}-${now}`,
+                deviceId: device.id,
+                deviceName: device.name,
+                type: 'BATTERY_CRITICAL_LOW',
+                severity: 'CRITICAL',
+                status: 'ACTIVE_UNACK',
+                createdTime: now,
+                details: {
+                  message: `Battery level (${battery}%) below critical threshold (<${th.batteryLowCritical}%)`,
+                  battery,
+                },
+              },
+              ...this.alarms,
+            ];
+            updated = true;
+          }
+        } else if (battCrit && battCrit.status.startsWith('ACTIVE')) {
+          if (battery >= th.batteryLowCritical + th.battHist) {
+            battCrit.status = battCrit.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+            battCrit.clearTime = now;
+            updated = true;
+          }
+        }
+
+        const battWarn = deviceAlarms.find((a) => a.type === 'BATTERY_LOW_WARNING');
+        if (battery < th.batteryLowWarning && battery >= th.batteryLowCritical) {
+          if (!battWarn || !battWarn.status.startsWith('ACTIVE')) {
+            this.alarms = [
+              {
+                id: `alm-batt-lw-${device.id}-${now}`,
+                deviceId: device.id,
+                deviceName: device.name,
+                type: 'BATTERY_LOW_WARNING',
+                severity: 'WARNING',
+                status: 'ACTIVE_UNACK',
+                createdTime: now,
+                details: {
+                  message: `Battery level (${battery}%) below warning threshold (<${th.batteryLowWarning}%)`,
+                  battery,
+                },
+              },
+              ...this.alarms,
+            ];
+            updated = true;
+          }
+        } else if (battWarn && battWarn.status.startsWith('ACTIVE')) {
+          if (battery >= th.batteryLowWarning + th.battHist) {
+            battWarn.status = battWarn.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+            battWarn.clearTime = now;
+            updated = true;
+          }
+        }
+      }
+
+      // If climate and battery are in normal comfort zone, ensure legacy alarms for this device resolve
+      if (
+        rh >= th.rhLowWarning &&
+        rh <= th.rhHighWarning &&
+        temp >= th.tempLowWarning &&
+        temp <= th.tempHighWarning &&
+        (battery === undefined || battery >= th.batteryLowWarning)
+      ) {
+        for (const alm of deviceAlarms) {
+          if (alm.status.startsWith('ACTIVE')) {
+            alm.status = alm.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
+            alm.clearTime = now;
+            updated = true;
+          }
+        }
+      }
+    }
+
+    if (updated) {
       this.notifySubscribers();
     }
   }
@@ -1830,6 +2181,14 @@ class ThingsBoardService {
 
   public deleteAlarm(alarmId: string) {
     this.alarms = this.alarms.filter((alm) => alm.id !== alarmId);
+    this.notifySubscribers();
+  }
+
+  /**
+   * Clear and purge all inactive (resolved/cleared) alarms from the history list
+   */
+  public clearInactiveAlarms(): void {
+    this.alarms = this.alarms.filter((alm) => alm.status.startsWith('ACTIVE'));
     this.notifySubscribers();
   }
 }

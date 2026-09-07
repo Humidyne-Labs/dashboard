@@ -42,10 +42,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
     device.sharedAttributes.target_rh ?? currentThresholds.rhTarget ?? 69.5
   );
   const [rhLow, setRhLow] = useState<number>(
-    device.sharedAttributes.target_rh_min ?? currentThresholds.rhLowWarning ?? 65.0
+    device.sharedAttributes.alarm_thresholds?.rhLowWarning ?? currentThresholds.rhLowWarning ?? 65.0
   );
   const [rhHigh, setRhHigh] = useState<number>(
-    device.sharedAttributes.target_rh_max ?? currentThresholds.rhHighWarning ?? 73.0
+    device.sharedAttributes.alarm_thresholds?.rhHighWarning ?? currentThresholds.rhHighWarning ?? 73.0
   );
 
   // Target Temperature Thresholds
@@ -53,21 +53,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
     device.sharedAttributes.target_temp ?? currentThresholds.tempTarget ?? 68.0
   );
   const [tempLow, setTempLow] = useState<number>(
-    device.sharedAttributes.target_temp_min ?? currentThresholds.tempLowWarning ?? 64.0
+    device.sharedAttributes.alarm_thresholds?.tempLowWarning ?? currentThresholds.tempLowWarning ?? 64.0
   );
   const [tempHigh, setTempHigh] = useState<number>(
-    device.sharedAttributes.target_temp_max ?? currentThresholds.tempHighCritical ?? 74.0
+    device.sharedAttributes.alarm_thresholds?.tempHighWarning ?? currentThresholds.tempHighWarning ?? 72.0
   );
 
   // Hardware Display Theme & Audio
+  const initialTheme = String(device.sharedAttributes.device_theme || '').toLowerCase();
   const [themeIndex, setThemeIndex] = useState<number>(
-    device.sharedAttributes.theme_idx ?? 0
+    initialTheme === 'dark' ? 1 : (device.sharedAttributes.theme_idx ?? 0)
   );
   const [audioLockout, setAudioLockout] = useState<boolean>(
     device.sharedAttributes.audio_lockout ?? (device.sharedAttributes.sound_enabled === false)
   );
   const [autoUpdate, setAutoUpdate] = useState<boolean>(
     device.sharedAttributes.auto_update_enabled ?? true
+  );
+  const [manualOta, setManualOta] = useState<boolean>(
+    device.sharedAttributes.manual_ota_trigger ?? false
   );
 
   const [isSaving, setIsSaving] = useState(false);
@@ -77,52 +81,39 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
   const [rpcLoading, setRpcLoading] = useState<string | null>(null);
   const [rpcStatus, setRpcStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const themeNames = ['Classic Amber', 'Midnight Dark', 'Cuban Cigar Brown', 'Emerald Vintage'];
+  const themeNames = ['light', 'dark'] as const;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // 1. Update ThingsBoard Shared Attributes
+      const updatedThresholds = {
+        ...currentThresholds,
+        rhTarget,
+        rhLowWarning: rhLow,
+        rhHighWarning: rhHigh,
+        tempTarget,
+        tempLowWarning: tempLow,
+        tempHighWarning: tempHigh,
+      };
+
+      // 1. Update ThingsBoard Shared Attributes without redundant keys
       await thingsboard.updateSharedAttributes(device.id, {
         sleep_interval_min: sleepMin,
         sleep_interval_sec: sleepMin * 60,
         theme_idx: themeIndex,
-        device_theme: themeNames[themeIndex].toUpperCase().replace(/\s+/g, '_'),
+        device_theme: themeNames[themeIndex],
         audio_lockout: audioLockout,
         sound_enabled: !audioLockout,
         auto_update_enabled: autoUpdate,
+        manual_ota_trigger: manualOta,
         target_rh: rhTarget,
-        target_rh_min: rhLow,
-        target_rh_max: rhHigh,
         target_temp: tempTarget,
-        target_temp_min: tempLow,
-        target_temp_max: tempHigh,
-        alarm_thresholds: {
-          ...currentThresholds,
-          rhTarget,
-          rhLowWarning: rhLow,
-          rhLowCritical: Math.min(rhLow - 3, 58),
-          rhHighWarning: rhHigh,
-          rhHighCritical: Math.max(rhHigh + 3, 76),
-          tempTarget,
-          tempLowWarning: tempLow,
-          tempHighCritical: tempHigh,
-        },
+        alarm_thresholds: updatedThresholds,
       });
 
       // 2. Synchronize local runtime alarm threshold service
-      alarmThresholdService.saveThresholds({
-        ...currentThresholds,
-        rhTarget,
-        rhLowWarning: rhLow,
-        rhLowCritical: Math.min(rhLow - 3, 58),
-        rhHighWarning: rhHigh,
-        rhHighCritical: Math.max(rhHigh + 3, 76),
-        tempTarget,
-        tempLowWarning: tempLow,
-        tempHighCritical: tempHigh,
-      });
+      alarmThresholdService.saveThresholds(updatedThresholds);
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
@@ -359,29 +350,39 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
             </div>
           </div>
 
-          {/* 4. On-Device Display Theme Selector */}
+          {/* 4. On-Device E-Ink Display Theme Selector */}
           <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               <Sun className="w-3.5 h-3.5 text-amber-400" />
-              <span>Hardware OLED Display Theme</span>
+              <span>Hardware E-Ink Display Theme</span>
             </label>
 
             <div className="grid grid-cols-2 gap-2">
-              {themeNames.map((name, idx) => (
-                <button
-                  type="button"
-                  key={name}
-                  onClick={() => setThemeIndex(idx)}
-                  className={`h-8.5 px-2.5 sm:px-3 rounded-lg text-xs font-medium border text-left transition-all cursor-pointer flex items-center ${
-                    themeIndex === idx
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
-                  }`}
-                >
-                  <span className="font-mono mr-1.5 text-[10px] text-slate-500">#{idx + 1}</span>
-                  <span className="truncate">{name}</span>
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setThemeIndex(0)}
+                className={`h-9 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  themeIndex === 0
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                }`}
+              >
+                <Sun className="w-4 h-4 text-amber-400" />
+                <span className="font-semibold">Light</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setThemeIndex(1)}
+                className={`h-9 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  themeIndex === 1
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                }`}
+              >
+                <Moon className="w-4 h-4 text-sky-400" />
+                <span className="font-semibold">Dark</span>
+              </button>
             </div>
           </div>
 
@@ -423,7 +424,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-200 block">Auto Update</span>
-                  <span className="text-[10px] text-slate-400">{autoUpdate ? 'Active' : 'Manual'}</span>
+                  <span className="text-[10px] text-slate-400">{autoUpdate ? 'Automatic' : 'Manual'}</span>
                 </div>
               </div>
 
@@ -438,6 +439,34 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({ device, onOpenThresh
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                     autoUpdate ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Manual OTA Trigger Attribute */}
+            <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${manualOta ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-200 block">Manual OTA Armed Trigger</span>
+                  <span className="text-[10px] text-slate-400">Forces device bootloader to query OTA binary on next wake</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setManualOta(!manualOta)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                  manualOta ? 'bg-amber-500' : 'bg-slate-800'
+                }`}
+                title="Arm manual OTA flash trigger"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    manualOta ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>

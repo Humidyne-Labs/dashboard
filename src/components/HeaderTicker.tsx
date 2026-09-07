@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { HumidorDevice, TempUnit } from '../types';
 import { UserProfile, thingsboard } from '../services/thingsboard';
@@ -19,7 +19,9 @@ import {
   Info,
   AlertTriangle,
   BellRing,
-  Smartphone
+  Smartphone,
+  Menu,
+  X
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
@@ -60,6 +62,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   currentUser,
   isDemoMode,
 }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const auth = useAuth();
   const authUsername =
     (auth.user?.profile?.preferred_username as string) ||
@@ -204,75 +207,52 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand & Identity */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onOpenAboutModal}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 flex items-center justify-center shadow-md shadow-amber-950/40 border border-amber-500/30 hover:scale-105 transition cursor-pointer"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 flex items-center justify-center shadow-md shadow-amber-950/40 border border-amber-500/30 hover:scale-105 transition cursor-pointer shrink-0"
             title="About HUMID1 Dashboard"
           >
             <Flame className="w-5 h-5 text-amber-200" />
           </button>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={onOpenAboutModal}
-                className="font-display font-bold text-lg text-amber-100 tracking-wider hover:text-amber-200 transition text-left cursor-pointer"
+                className="font-display font-bold text-base sm:text-lg text-amber-100 tracking-wider hover:text-amber-200 transition text-left truncate cursor-pointer"
                 title="View About & System Specs"
               >
-                {getEnv('VITE_APP_TITLE', 'HUMID1_DASHBOARD')}
+                <span className="sm:hidden">HUMID1</span>
+                <span className="hidden sm:inline">{getEnv('VITE_APP_TITLE', 'HUMID1_DASHBOARD')}</span>
               </button>
               <button
                 onClick={onOpenDevWarning}
-                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 transition cursor-pointer"
+                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 transition cursor-pointer shrink-0"
                 title="Dashboard Under Active Development - Click to view notice"
               >
                 <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
-                <span>v{APP_CONFIG.version} (Dev)</span>
+                <span className="hidden xs:inline">v{APP_CONFIG.version} (Dev)</span>
+                <span className="xs:hidden">Dev</span>
               </button>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hidden sm:flex items-center gap-1">
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hidden xl:flex items-center gap-1 shrink-0">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
                 SSO Active
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 tracking-tight font-mono">
+            <span className="text-[10px] sm:text-[11px] text-slate-400 tracking-tight font-mono truncate block max-w-[130px] xs:max-w-[200px] sm:max-w-none">
               {getSafeHost(getEnv('VITE_AUTHENTIK_URL', ''), 'SSO')} • {authUsername || 'Authenticated'}
             </span>
           </div>
         </div>
 
-        {/* Center / Right Controls */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* PWA Install Button / Status */}
-          <PWAInstallButton />
-
-          {/* Web Push Alerts Modal Trigger */}
-          <button
-            id="open-push-modal-btn"
-            onClick={onOpenPushModal}
-            className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
-            title="Web Push Notifications & TWA Settings"
-          >
-            <BellRing className="w-4 h-4 text-amber-400" />
-            <span className="hidden xl:inline">Push</span>
-          </button>
-
-          {/* About Badge Button */}
-          <button
-            id="open-about-modal-btn"
-            onClick={onOpenAboutModal}
-            className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1 text-xs font-mono"
-            title="About Dashboard, Authors, Contributors & Specs"
-          >
-            <Info className="w-4 h-4 text-amber-400" />
-            <span className="hidden lg:inline">About</span>
-          </button>
-
-          {/* Quick Unit Switcher */}
+        {/* Center / Right Controls Cluster */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Quick Unit Switcher (°F / °C) - Always Visible */}
           <button
             onClick={onToggleTempUnit}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-xs font-mono text-slate-200 transition-colors shadow-sm cursor-pointer"
+            className="h-9 px-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-xs font-mono text-slate-200 transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1 shrink-0 whitespace-nowrap"
             title="Toggle temperature scale"
           >
             <span className={tempUnit === 'F' ? 'text-amber-400 font-bold' : 'text-slate-400'}>°F</span>
@@ -280,10 +260,10 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             <span className={tempUnit === 'C' ? 'text-amber-400 font-bold' : 'text-slate-400'}>°C</span>
           </button>
 
-          {/* Alarms Button */}
+          {/* Alarms Button - Always Visible */}
           <button
             onClick={onOpenAlarmsModal}
-            className="relative p-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="w-9 h-9 relative rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
             title="View active alarms"
           >
             <Bell className="w-4 h-4" />
@@ -294,20 +274,47 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             )}
           </button>
 
-          {/* Claim Device Action */}
+          {/* Desktop & Tablet Direct Controls (Hidden on Mobile) */}
+          {/* PWA Install Button / Status - Visible on lg+ */}
+          <div className="hidden lg:flex items-center shrink-0">
+            <PWAInstallButton />
+          </div>
+
+          {/* Web Push Alerts Modal Trigger - Visible on xl+ */}
           <button
-            onClick={onOpenClaimModal}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-amber-950/30 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            id="open-push-modal-btn"
+            onClick={onOpenPushModal}
+            className="hidden xl:flex h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 transition-colors cursor-pointer items-center justify-center gap-1.5 text-xs font-mono shrink-0 whitespace-nowrap"
+            title="Web Push Notifications & TWA Settings"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Claim Device</span>
-            <span className="sm:hidden">Claim</span>
+            <BellRing className="w-4 h-4 text-amber-400" />
+            <span>Push</span>
           </button>
 
-          {/* Login / Profile Button */}
+          {/* About Badge Button - Visible on xl+ */}
+          <button
+            id="open-about-modal-btn"
+            onClick={onOpenAboutModal}
+            className="hidden xl:flex h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 transition-colors cursor-pointer items-center justify-center gap-1.5 text-xs font-mono shrink-0 whitespace-nowrap"
+            title="About Dashboard, Authors, Contributors & Specs"
+          >
+            <Info className="w-4 h-4 text-amber-400" />
+            <span>About</span>
+          </button>
+
+          {/* Claim Device Action - Visible on md+ */}
+          <button
+            onClick={onOpenClaimModal}
+            className="hidden md:inline-flex h-9 items-center justify-center gap-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-amber-950/30 hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Claim Device</span>
+          </button>
+
+          {/* Login / Profile Button - Visible on md+ */}
           <button
             onClick={handleAuthClick}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+            className={`hidden md:inline-flex h-9 items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
               isAuth
                 ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/80 hover:border-emerald-500'
                 : 'bg-slate-800 border-slate-700 hover:border-amber-500/50 text-slate-200 hover:text-white'
@@ -317,7 +324,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             {isAuth ? (
               <>
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="max-w-[120px] truncate hidden sm:inline font-mono">{authUsername}</span>
+                <span className="max-w-[110px] truncate font-mono">{authUsername}</span>
                 <LogOut className="w-3 h-3 text-slate-400 ml-0.5 hover:text-rose-400" />
               </>
             ) : (
@@ -328,26 +335,163 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             )}
           </button>
 
-          {/* API Transaction Inspector */}
+          {/* API Transaction Inspector - Visible on lg+ */}
           <button
             onClick={onOpenApiInspector}
-            className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 px-2.5 text-xs font-mono"
+            className="hidden lg:flex h-9 px-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer items-center justify-center gap-1.5 text-xs font-mono shrink-0 whitespace-nowrap"
             title="Inspect API Transactions, Endpoints & JSON Payloads"
           >
             <Terminal className="w-4 h-4" />
-            <span className="hidden md:inline">API Logs</span>
+            <span className="hidden xl:inline">API Logs</span>
           </button>
 
-          {/* Settings / Connection Config */}
+          {/* Settings / Connection Config - Visible on sm+ */}
           <button
             onClick={onOpenConfigModal}
-            className="p-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="hidden sm:flex w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white transition-colors cursor-pointer items-center justify-center shrink-0"
             title="ThingsBoard Server Settings"
           >
             <Settings className="w-4 h-4" />
           </button>
+
+          {/* Mobile Menu Toggle Button (Hamburger / Close) - Visible on mobile only */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-200 hover:text-amber-300 transition cursor-pointer shrink-0"
+            aria-label="Toggle Navigation Menu"
+            title={isMobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Dropdown Menu Drawer (Clean, Accessible & Responsive) */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-800 bg-slate-900/98 backdrop-blur-xl px-4 py-3.5 space-y-3 animate-fadeIn shadow-2xl">
+          {/* User Session Bar in Mobile Menu */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className={`p-1.5 rounded-lg ${isAuth ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                {isAuth ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
+              </div>
+              <div className="min-w-0">
+                <span className="text-xs font-mono font-semibold text-slate-200 truncate block">
+                  {authUsername || 'Guest User'}
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono block">
+                  {isAuth ? 'SSO Authenticated' : 'Session Unauthenticated'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                handleAuthClick();
+              }}
+              className={`h-7 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                isAuth
+                  ? 'bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25'
+                  : 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400'
+              }`}
+            >
+              {isAuth ? (
+                <>
+                  <LogOut className="w-3 h-3" />
+                  <span>Sign Out</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-3 h-3" />
+                  <span>Sign In</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Prominent Action: Claim Device */}
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onOpenClaimModal();
+            }}
+            className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Claim New Humidor Device</span>
+          </button>
+
+          {/* Quick Actions Grid in Mobile Menu */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {/* PWA Install Button */}
+            <div className="col-span-2">
+              <PWAInstallButton className="w-full justify-center h-9" />
+            </div>
+
+            {/* Server Settings */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenConfigModal();
+              }}
+              className="h-9 px-3 rounded-xl bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/40 text-slate-300 text-xs font-medium flex items-center gap-2 transition cursor-pointer"
+            >
+              <Settings className="w-4 h-4 text-slate-400" />
+              <span>Server Settings</span>
+            </button>
+
+            {/* Web Push Notifications */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenPushModal();
+              }}
+              className="h-9 px-3 rounded-xl bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/40 text-slate-300 text-xs font-medium flex items-center gap-2 transition cursor-pointer"
+            >
+              <BellRing className="w-4 h-4 text-amber-400" />
+              <span>Push Alerts</span>
+            </button>
+
+            {/* API Logs Inspector */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenApiInspector();
+              }}
+              className="h-9 px-3 rounded-xl bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/40 text-slate-300 text-xs font-medium flex items-center gap-2 transition cursor-pointer font-mono"
+            >
+              <Terminal className="w-4 h-4 text-amber-400" />
+              <span>API Logs</span>
+            </button>
+
+            {/* About & Specs */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenAboutModal();
+              }}
+              className="h-9 px-3 rounded-xl bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/40 text-slate-300 text-xs font-medium flex items-center gap-2 transition cursor-pointer"
+            >
+              <Info className="w-4 h-4 text-amber-400" />
+              <span>About & Specs</span>
+            </button>
+
+            {/* Dev Notice */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenDevWarning();
+              }}
+              className="col-span-2 h-8 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-[11px] font-medium flex items-center justify-center gap-1.5 transition cursor-pointer font-mono"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span>Dashboard v{APP_CONFIG.version} (Active Development)</span>
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

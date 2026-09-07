@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { HumidorDevice, TempUnit, HistoricalTelemetryPoint } from '../types';
 import { thingsboard } from '../services/thingsboard';
-import { alarmThresholdService, AlarmThresholds } from '../services/alarmThresholds';
+import {
+  alarmThresholdService,
+  AlarmThresholds,
+  toDisplayTemp,
+} from '../services/alarmThresholds';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -13,7 +17,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { Activity, RefreshCw } from 'lucide-react';
+import { Activity, RefreshCw, Sliders } from 'lucide-react';
 
 interface HistoricalChartProps {
   device: HumidorDevice;
@@ -29,6 +33,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const [range, setRange] = useState<TimeRange>('24h');
   const [showRh, setShowRh] = useState(true);
   const [showTemp, setShowTemp] = useState(true);
+  const [showBoundaries, setShowBoundaries] = useState(true);
   const [historyData, setHistoryData] = useState<HistoricalTelemetryPoint[]>(device.history || []);
   const [isLoading, setIsLoading] = useState(false);
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
@@ -40,7 +45,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     return unsub;
   }, []);
 
-  // Range hours bounded by 7-Day Server Retention Policy (SQL_DATA_RETENTION_TTL=604800s / 168h max)
+  // Range hours bounded by 7-Day Server Retention Policy
   const rangeHours = range === '12h' ? 12 : range === '24h' ? 24 : range === '3d' ? 72 : 168;
 
   const telemetryRef = useRef(device?.telemetry);
@@ -115,6 +120,24 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
 
   const tempSymbol = tempUnit === 'C' ? '°C' : '°F';
 
+  // Scaled temperature threshold values
+  const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
+  const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
+  const dispTempTarget = toDisplayTemp(thresholds.tempTarget, tempUnit);
+  const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
+  const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
+
+  // Dynamic axis domains to keep boundary lines and series visible
+  const rhMin = Math.min(50, Math.floor(thresholds.rhLowCritical - 2));
+  const rhMax = Math.max(82, Math.ceil(thresholds.rhHighCritical + 2));
+
+  const tempMin = tempUnit === 'C'
+    ? Math.min(10, Math.floor(dispTempLowCritical - 2))
+    : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
+  const tempMax = tempUnit === 'C'
+    ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
+    : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
+
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
       {/* Header & Controls */}
@@ -128,7 +151,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               Dual-Axis Climate Telemetry History
             </h3>
             <p className="text-[11px] sm:text-xs text-slate-400">
-              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries
+              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with boundary thresholds
             </p>
           </div>
         </div>
@@ -154,6 +177,16 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             >
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span>Temp</span>
+            </button>
+            <button
+              onClick={() => setShowBoundaries(!showBoundaries)}
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+                showBoundaries ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-slate-500 hover:text-slate-300'
+              }`}
+              title="Toggle threshold boundary lines"
+            >
+              <Sliders className="w-3 h-3 text-purple-400" />
+              <span>Boundaries</span>
             </button>
           </div>
 
@@ -187,15 +220,15 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       </div>
 
       {/* Main Dual-Axis Chart Area */}
-      <div className="h-[260px] sm:h-[340px] w-full pt-2">
+      <div className="h-[270px] sm:h-[350px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={displayHistory}
-            margin={{ top: 10, right: 8, left: -14, bottom: 0 }}
+            margin={{ top: 12, right: 12, left: -10, bottom: 0 }}
           >
             <defs>
               <linearGradient id="rhGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
                 <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
               </linearGradient>
             </defs>
@@ -213,7 +246,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             {/* Left Y-Axis: Humidity */}
             <YAxis
               yAxisId="rh"
-              domain={[55, 85]}
+              domain={[rhMin, rhMax]}
               stroke="#f59e0b"
               fontSize={10}
               tickLine={false}
@@ -225,7 +258,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <YAxis
               yAxisId="temp"
               orientation="right"
-              domain={tempUnit === 'C' ? [15, 30] : [60, 85]}
+              domain={[tempMin, tempMax]}
               stroke="#38bdf8"
               fontSize={10}
               tickLine={false}
@@ -250,21 +283,157 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               labelFormatter={(label) => `Logged: ${label}`}
             />
 
-            {/* Dynamic Configured Humidor Safe Limit Reference Lines */}
-            <ReferenceLine
-              yAxisId="rh"
-              y={thresholds.rhHighWarning}
-              stroke="#10b981"
-              strokeDasharray="4 4"
-              strokeOpacity={0.5}
-            />
-            <ReferenceLine
-              yAxisId="rh"
-              y={thresholds.rhLowWarning}
-              stroke="#10b981"
-              strokeDasharray="4 4"
-              strokeOpacity={0.5}
-            />
+            {/* ALL Alarm Threshold Boundary Lines for Relative Humidity */}
+            {showBoundaries && showRh && (
+              <>
+                <ReferenceLine
+                  yAxisId="rh"
+                  y={thresholds.rhLowCritical}
+                  stroke="#ef4444"
+                  strokeDasharray="3 3"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.7}
+                  label={{
+                    value: `Low Crit (${thresholds.rhLowCritical}%)`,
+                    fill: '#f87171',
+                    fontSize: 9,
+                    position: 'insideBottomLeft',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="rh"
+                  y={thresholds.rhLowWarning}
+                  stroke="#f59e0b"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                  strokeOpacity={0.6}
+                  label={{
+                    value: `Low Warn (${thresholds.rhLowWarning}%)`,
+                    fill: '#fbbf24',
+                    fontSize: 9,
+                    position: 'insideBottomLeft',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="rh"
+                  y={thresholds.rhTarget}
+                  stroke="#10b981"
+                  strokeDasharray="2 2"
+                  strokeWidth={1}
+                  strokeOpacity={0.5}
+                  label={{
+                    value: `Target (${thresholds.rhTarget}%)`,
+                    fill: '#34d399',
+                    fontSize: 9,
+                    position: 'insideTopLeft',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="rh"
+                  y={thresholds.rhHighWarning}
+                  stroke="#f59e0b"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                  strokeOpacity={0.6}
+                  label={{
+                    value: `High Warn (${thresholds.rhHighWarning}%)`,
+                    fill: '#fbbf24',
+                    fontSize: 9,
+                    position: 'insideTopLeft',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="rh"
+                  y={thresholds.rhHighCritical}
+                  stroke="#ef4444"
+                  strokeDasharray="3 3"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.7}
+                  label={{
+                    value: `High Crit (${thresholds.rhHighCritical}%)`,
+                    fill: '#f87171',
+                    fontSize: 9,
+                    position: 'insideTopLeft',
+                  }}
+                />
+              </>
+            )}
+
+            {/* ALL Alarm Threshold Boundary Lines for Temperature (Scaled to active unit) */}
+            {showBoundaries && showTemp && (
+              <>
+                <ReferenceLine
+                  yAxisId="temp"
+                  y={dispTempLowCritical}
+                  stroke="#3b82f6"
+                  strokeDasharray="3 3"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.7}
+                  label={{
+                    value: `T Low Crit (${dispTempLowCritical}°)`,
+                    fill: '#60a5fa',
+                    fontSize: 9,
+                    position: 'insideBottomRight',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="temp"
+                  y={dispTempLowWarning}
+                  stroke="#0284c7"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                  strokeOpacity={0.6}
+                  label={{
+                    value: `T Low Warn (${dispTempLowWarning}°)`,
+                    fill: '#38bdf8',
+                    fontSize: 9,
+                    position: 'insideBottomRight',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="temp"
+                  y={dispTempTarget}
+                  stroke="#0ea5e9"
+                  strokeDasharray="2 2"
+                  strokeWidth={1}
+                  strokeOpacity={0.5}
+                  label={{
+                    value: `T Target (${dispTempTarget}°)`,
+                    fill: '#7dd3fc',
+                    fontSize: 9,
+                    position: 'insideTopRight',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="temp"
+                  y={dispTempHighWarning}
+                  stroke="#f59e0b"
+                  strokeDasharray="4 4"
+                  strokeWidth={1}
+                  strokeOpacity={0.6}
+                  label={{
+                    value: `T High Warn (${dispTempHighWarning}°)`,
+                    fill: '#fbbf24',
+                    fontSize: 9,
+                    position: 'insideTopRight',
+                  }}
+                />
+                <ReferenceLine
+                  yAxisId="temp"
+                  y={dispTempHighCritical}
+                  stroke="#ef4444"
+                  strokeDasharray="3 3"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.7}
+                  label={{
+                    value: `T High Crit (${dispTempHighCritical}°)`,
+                    fill: '#f87171',
+                    fontSize: 9,
+                    position: 'insideTopRight',
+                  }}
+                />
+              </>
+            )}
 
             {showRh && (
               <Area
@@ -294,8 +463,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         </ResponsiveContainer>
       </div>
 
-      {/* Footer Legend / Safe Zones */}
-      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+      {/* Footer Legend / Threshold Envelope Summary */}
+      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2.5 text-[11px] text-slate-400">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-amber-400" />
@@ -303,13 +472,23 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-sky-400" />
-            <span className="text-slate-300 font-medium">Temp</span>
+            <span className="text-slate-300 font-medium">Temp ({tempSymbol})</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-0.5 border-t border-dashed border-purple-400" />
+            <span className="text-purple-300 font-medium">Boundary Lines</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono text-emerald-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>Active Safe Limits: {thresholds.rhLowWarning}% – {thresholds.rhHighWarning}%</span>
+        <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center gap-1.5 text-amber-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span>RH Safe: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% (Crit: &lt;{thresholds.rhLowCritical}% / &gt;{thresholds.rhHighCritical}%)</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-sky-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+            <span>Temp Safe: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}</span>
+          </div>
         </div>
       </div>
     </div>

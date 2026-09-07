@@ -1,5 +1,5 @@
 export type DeviceStatus = 'ONLINE' | 'SLEEP' | 'OFFLINE';
-export type DeviceTheme = 'DARK' | 'LIGHT' | 'STEALTH';
+export type DeviceTheme = 'light' | 'dark' | 'LIGHT' | 'DARK';
 export type OtaState = 'IDLE' | 'QUEUED' | 'DOWNLOADING' | 'VERIFIED' | 'UPDATING' | 'SUCCESS' | 'FAILED';
 export type FwState = OtaState;
 export type AlarmSeverity = 'CRITICAL' | 'MAJOR' | 'WARNING';
@@ -98,10 +98,19 @@ export interface AlarmThresholds {
   rhTarget: number;
   rhHighWarning: number;
   rhHighCritical: number;
+
+  tempLowCritical: number;
   tempLowWarning: number;
   tempTarget: number;
+  tempHighWarning: number;
   tempHighCritical: number;
+
   batteryLowCritical: number;
+  batteryLowWarning: number;
+
+  rhHist: number;
+  tempHist: number;
+  battHist: number;
 }
 
 export interface ThingsBoardConfig {

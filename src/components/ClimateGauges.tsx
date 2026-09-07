@@ -70,21 +70,21 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     }
     if (val <= thresholds.rhHighCritical) {
       return {
-        label: 'HUMID ZONE',
+        label: 'HIGH WARNING',
         color: 'text-amber-400',
         bg: 'bg-amber-950/40',
         border: 'border-amber-500/30',
         barColor: 'bg-amber-400',
-        desc: `Approaching upper limit (${thresholds.rhHighCritical}%). Watch for mold.`,
+        desc: `Approaching upper threshold limit (${thresholds.rhHighCritical}%).`,
       };
     }
     return {
-      label: 'MOLD HAZARD',
+      label: 'CRITICAL HIGH',
       color: 'text-rose-400',
       bg: 'bg-rose-950/40',
       border: 'border-rose-500/30',
       barColor: 'bg-rose-500',
-      desc: `High mold & tobacco beetle hatching danger (> ${thresholds.rhHighCritical}%).`,
+      desc: `Upper critical threshold exceeded (> ${thresholds.rhHighCritical}%).`,
     };
   };
 
@@ -92,7 +92,25 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
   const getTempStatus = (tempF: number) => {
     if (tempF > thresholds.tempHighCritical) {
       return {
-        label: `BEETLE RISK (>${thresholds.tempHighCritical}°F)`,
+        label: `CRITICAL HIGH (>${thresholds.tempHighCritical}°F)`,
+        color: 'text-rose-400',
+        bg: 'bg-rose-950/40',
+        border: 'border-rose-500/30',
+        barColor: 'bg-rose-500',
+      };
+    }
+    if (tempF > thresholds.tempHighWarning) {
+      return {
+        label: `HIGH WARNING (>${thresholds.tempHighWarning}°F)`,
+        color: 'text-amber-400',
+        bg: 'bg-amber-950/40',
+        border: 'border-amber-500/30',
+        barColor: 'bg-amber-400',
+      };
+    }
+    if (tempF < thresholds.tempLowCritical) {
+      return {
+        label: `CRITICAL LOW (<${thresholds.tempLowCritical}°F)`,
         color: 'text-rose-400',
         bg: 'bg-rose-950/40',
         border: 'border-rose-500/30',
@@ -101,7 +119,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     }
     if (tempF < thresholds.tempLowWarning) {
       return {
-        label: `SLOW AGING (<${thresholds.tempLowWarning}°F)`,
+        label: `LOW WARNING (<${thresholds.tempLowWarning}°F)`,
         color: 'text-blue-300',
         bg: 'bg-blue-950/40',
         border: 'border-blue-500/30',
@@ -109,7 +127,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
       };
     }
     return {
-      label: `OPTIMAL (${thresholds.tempLowWarning}–${thresholds.tempHighCritical}°F)`,
+      label: `OPTIMAL (${thresholds.tempLowWarning}–${thresholds.tempHighWarning}°F)`,
       color: 'text-emerald-400',
       bg: 'bg-emerald-950/40',
       border: 'border-emerald-500/30',
@@ -247,7 +265,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
         </div>
 
         <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
-          Keep below {thresholds.tempHighCritical}°F to safeguard against tobacco beetle hatching.
+          Keep between {tempUnit === 'C' ? (((thresholds.tempLowWarning - 32) * 5 / 9).toFixed(1) + '°C – ' + ((thresholds.tempHighWarning - 32) * 5 / 9).toFixed(1) + '°C') : `${thresholds.tempLowWarning}°F – ${thresholds.tempHighWarning}°F`} configured target boundary.
         </p>
       </div>
 

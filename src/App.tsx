@@ -155,7 +155,7 @@ export default function App() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950 font-sans antialiased">
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950 font-sans antialiased overflow-x-hidden w-full max-w-full">
         {/* Top Header with live ticker & device switcher */}
         <HeaderTicker
           devices={devices}
