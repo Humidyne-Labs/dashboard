@@ -1103,9 +1103,10 @@ class ThingsBoardService {
     }
 
     const txId = 'alm-' + Math.random().toString(36).substring(2, 9);
-    const pageSize = options?.pageSize || 25; // Default small page size to prevent packet bloat
+    const pageSize = options?.pageSize || 30;
     const page = options?.page || 0;
-    const searchStatus = options?.searchStatus || 'ACTIVE';
+    // Default to 'ANY' so cleared alarms remain logged in the user's history until explicitly purged
+    const searchStatus = options?.searchStatus || 'ANY';
 
     const url = `${serverUrl}/api/v2/alarms?pageSize=${pageSize}&page=${page}&sortProperty=createdTime&sortOrder=DESC&searchStatus=${searchStatus}`;
     apiLogger.logRequest(txId, 'GET', url, { pageSize, page, searchStatus }, `Bearer ${token}`);
@@ -1125,16 +1126,35 @@ class ThingsBoardService {
 
       if (res.data) {
         const rawAlarms = (res.data as any).data || [];
-        this.alarms = rawAlarms.map((a: any) => ({
-          id: a.id?.id || a.id,
-          deviceId: a.originator?.id || 'unknown',
-          deviceName: a.originatorName || 'Humidor Unit',
-          severity: a.severity || 'WARNING',
-          type: a.type || 'SYSTEM_WARNING',
-          details: a.details?.message || a.type || 'Telemetry Alarm',
-          createdTime: a.createdTime || 1700000000000,
-          status: a.status || 'ACTIVE_UNACK',
-        }));
+        const mappedAlarms: HumidorAlarm[] = rawAlarms.map((a: any) => {
+          let msg = a.type || 'Telemetry Alarm';
+          if (a.details) {
+            if (typeof a.details === 'string') {
+              msg = a.details;
+            } else if (typeof a.details === 'object') {
+              msg = a.details.message || a.details.msg || JSON.stringify(a.details);
+            }
+          }
+          return {
+            id: a.id?.id || a.id,
+            deviceId: a.originator?.id || 'unknown',
+            deviceName: a.originatorName || 'Humidor Unit',
+            severity: a.severity || 'WARNING',
+            type: a.type || 'SYSTEM_WARNING',
+            details: msg,
+            createdTime: a.createdTime || 1700000000000,
+            status: a.status || 'ACTIVE_UNACK',
+          };
+        });
+
+        // Trigger notification sound / push alert for newly active server-side alarms
+        for (const alarm of mappedAlarms) {
+          if (alarm.status.startsWith('ACTIVE')) {
+            notificationService.notifyAlarm(alarm, alarm.deviceName);
+          }
+        }
+
+        this.alarms = mappedAlarms;
         apiLogger.logResponse(txId, 200, { alarmCount: this.alarms.length, status: searchStatus });
         this.notifySubscribers();
         return this.alarms;
@@ -1797,18 +1817,27 @@ class ThingsBoardService {
     });
 
     if (hasChanged) {
-      this.evaluateAllAlarms();
+      // In Demo mode or when offline without an active ThingsBoard session,
+      // run client-side alarm simulation as a fallback.
+      if (this.isDemoMode() || !this.getEffectiveToken()) {
+        this.evaluateAllAlarms();
+      }
       this.notifySubscribers();
     }
   }
 
   /**
-   * Evaluates all devices against active alarm threshold configurations & hysteresis.
-   * When an alarm threshold is violated, creates or flags an active alarm.
-   * When telemetry returns back within the safe boundary past hysteresis buffer,
-   * the alarm automatically clears and so does the alert.
+   * Offline / Demo Mode Alarm Evaluator:
+   * Evaluates devices against local threshold configurations & hysteresis.
+   * NOTE: When connected to ThingsBoard, the server-side Rule Chain (Master Evaluator -> Trigger/Clear Alarm)
+   * is the authoritative source of truth.
    */
   public evaluateAllAlarms(): void {
+    // If connected to a real ThingsBoard instance, server-side Rule Engine manages alarms
+    if (!this.isDemoMode() && this.getEffectiveToken()) {
+      return;
+    }
+
     const globalThresholds = alarmThresholdService.getThresholds();
     let updated = false;
     const now = Date.now();
@@ -1971,7 +2000,7 @@ class ThingsBoardService {
             status: 'ACTIVE_UNACK',
             createdTime: now,
             details: {
-              message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}% limit`,
+              message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}°F limit`,
               temp,
             },
           });
