@@ -105,8 +105,8 @@ class NotificationService {
 
     // Use user-provided audio files in /audio/ (hosted from public/audio)
     const audioSrc = severity === 'CRITICAL' 
-      ? '/audio/critical-229154.mp3'
-      : '/audio/warning-129258.mp3';
+      ? '/audio/critical-129258.mp3'
+      : '/audio/warning-229154.mp3';
 
     try {
       const audio = new Audio(audioSrc);
