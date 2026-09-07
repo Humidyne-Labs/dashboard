@@ -103,6 +103,27 @@ class NotificationService {
   public playAlarmSound(severity: 'CRITICAL' | 'MAJOR' | 'WARNING' | 'INFO' = 'WARNING'): void {
     if (!this.settings.soundEnabled || typeof window === 'undefined') return;
 
+    // Use user-provided audio files in /audio/ (hosted from public/audio)
+    const audioSrc = severity === 'CRITICAL' 
+      ? '/audio/critical-229154.mp3'
+      : '/audio/warning-129258.mp3';
+
+    try {
+      const audio = new Audio(audioSrc);
+      audio.volume = severity === 'CRITICAL' ? 1.0 : 0.8;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // If browser blocked HTMLAudioElement or file missing, fallback to Web Audio API synthesis
+          this.playSyntheticAlarmSound(severity);
+        });
+      }
+    } catch {
+      this.playSyntheticAlarmSound(severity);
+    }
+  }
+
+  private playSyntheticAlarmSound(severity: 'CRITICAL' | 'MAJOR' | 'WARNING' | 'INFO'): void {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
@@ -175,6 +196,7 @@ class NotificationService {
           icon: '/favicon.svg',
           tag: `humid1-${alarm.id}`,
           requireInteraction: alarm.severity === 'CRITICAL',
+          silent: true, // Disable host OS / browser default chime to prevent double sound alerts
         });
       } catch {
         // Fallback or permission blocked in context
@@ -187,6 +209,7 @@ class NotificationService {
       try {
         new Notification(title, {
           icon: '/favicon.svg',
+          silent: true, // Disable host default sound to avoid double chime
           ...options,
         });
       } catch {

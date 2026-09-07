@@ -1088,22 +1088,37 @@ class ThingsBoardService {
 
   /**
    * Fetch alarms via /src_lib/client apiGetAllAlarmsV2
+   * Uses searchStatus: ACTIVE and bounded pageSize to keep response packet size small.
    */
-  public async fetchRealAlarms(): Promise<HumidorAlarm[]> {
+  public async fetchRealAlarms(options?: {
+    searchStatus?: 'ACTIVE' | 'ANY' | 'CLEARED' | 'UNACK';
+    pageSize?: number;
+    page?: number;
+  }): Promise<HumidorAlarm[]> {
     const token = this.getEffectiveToken();
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
     if (!token) {
       this.alarms = [];
       return [];
     }
 
+    const txId = 'alm-' + Math.random().toString(36).substring(2, 9);
+    const pageSize = options?.pageSize || 25; // Default small page size to prevent packet bloat
+    const page = options?.page || 0;
+    const searchStatus = options?.searchStatus || 'ACTIVE';
+
+    const url = `${serverUrl}/api/v2/alarms?pageSize=${pageSize}&page=${page}&sortProperty=createdTime&sortOrder=DESC&searchStatus=${searchStatus}`;
+    apiLogger.logRequest(txId, 'GET', url, { pageSize, page, searchStatus }, `Bearer ${token}`);
+
     try {
       const res = await apiGetAllAlarmsV2({
         query: {
-          pageSize: 50,
-          page: 0,
+          pageSize,
+          page,
           sortProperty: 'createdTime',
           sortOrder: 'DESC',
-        },
+          searchStatus,
+        } as any,
         requestValidator: undefined,
         responseValidator: undefined,
       } as any);
@@ -1120,11 +1135,15 @@ class ThingsBoardService {
           createdTime: a.createdTime || 1700000000000,
           status: a.status || 'ACTIVE_UNACK',
         }));
+        apiLogger.logResponse(txId, 200, { alarmCount: this.alarms.length, status: searchStatus });
         this.notifySubscribers();
         return this.alarms;
+      } else {
+        apiLogger.logResponse(txId, 200, { alarmCount: 0 });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Failed to fetch alarms from ThingsBoard API:', err);
+      apiLogger.logResponse(txId, 0, undefined, err?.message || 'Failed to fetch alarms');
     }
     return this.alarms;
   }
@@ -1448,6 +1467,7 @@ class ThingsBoardService {
     const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
     if (!token || !deviceId) return [];
 
+    const txId = 'hist-' + Math.random().toString(36).substring(2, 9);
     try {
       const endTs = Date.now();
       const startTs = endTs - rangeHours * 3600 * 1000;
@@ -1483,18 +1503,35 @@ class ThingsBoardService {
       const keys = 'rh,temp,battery,rssi';
 
       let rawData: any = null;
+      let reqUrl = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
+        keys
+      )}&startTs=${startTs}&endTs=${endTs}&limit=${limit}&agg=${agg}&orderBy=${orderBy}`;
+
+      if (agg !== 'NONE' && interval) {
+        reqUrl += `&interval=${interval}`;
+      }
+
+      apiLogger.logRequest(
+        txId,
+        'GET',
+        reqUrl,
+        {
+          deviceId,
+          keys,
+          rangeHours,
+          startTs,
+          endTs,
+          limit,
+          agg,
+          interval,
+          orderBy,
+        },
+        token ? `Bearer ${token}` : undefined
+      );
 
       // 1. Direct REST fetch to guaranteed timeseries endpoint
       try {
-        let url = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
-          keys
-        )}&startTs=${startTs}&endTs=${endTs}&limit=${limit}&agg=${agg}&orderBy=${orderBy}`;
-
-        if (agg !== 'NONE' && interval) {
-          url += `&interval=${interval}`;
-        }
-
-        const res = await fetch(url, {
+        const res = await fetch(reqUrl, {
           method: 'GET',
           headers: {
             Accept: 'application/json',
@@ -1505,8 +1542,16 @@ class ThingsBoardService {
 
         if (res.ok) {
           rawData = await res.json();
+          apiLogger.logResponse(txId, res.status, {
+            keysFound: Object.keys(rawData || {}),
+            rhPoints: rawData?.rh?.length || 0,
+            tempPoints: rawData?.temp?.length || 0,
+          });
+        } else {
+          const errText = await res.text().catch(() => '');
+          apiLogger.logResponse(txId, res.status, undefined, `HTTP ${res.status}: ${errText.substring(0, 100)}`);
         }
-      } catch {
+      } catch (fetchErr: any) {
         // SDK Fallback
       }
 
@@ -1531,6 +1576,10 @@ class ThingsBoardService {
 
         if (sdkRes.data) {
           rawData = sdkRes.data;
+          apiLogger.logResponse(txId, 200, {
+            source: 'sdk_fallback',
+            keysFound: Object.keys(rawData || {}),
+          });
         }
       }
 
@@ -2157,12 +2206,34 @@ class ThingsBoardService {
   }
 
   /**
-   * Acknowledge alarm via /src_lib/client apiAckAlarm
+   * Acknowledge alarm via ThingsBoard REST API / SDK
    */
-  public acknowledgeAlarm(alarmId: string) {
+  public async acknowledgeAlarm(alarmId: string): Promise<boolean> {
     const token = this.getEffectiveToken();
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    const txId = 'ack-' + Math.random().toString(36).substring(2, 9);
+    const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarmId)}/ack`;
+
     if (token) {
-      apiAckAlarm({ path: { alarmId } }).catch(() => {});
+      apiLogger.logRequest(txId, 'POST', url, { alarmId }, `Bearer ${token}`);
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          apiLogger.logResponse(txId, res.status, { acknowledged: true, alarmId });
+        } else {
+          // SDK Fallback
+          await apiAckAlarm({ path: { alarmId } } as any).catch(() => {});
+          apiLogger.logResponse(txId, res.status, undefined, `HTTP ${res.status}`);
+        }
+      } catch {
+        apiAckAlarm({ path: { alarmId } } as any).catch(() => {});
+      }
     }
 
     this.alarms = this.alarms.map((alm) => {
@@ -2175,15 +2246,38 @@ class ThingsBoardService {
       return alm;
     });
     this.notifySubscribers();
+    return true;
   }
 
   /**
-   * Clear alarm via /src_lib/client apiClearAlarm
+   * Clear alarm via ThingsBoard REST API / SDK
    */
-  public clearAlarm(alarmId: string) {
+  public async clearAlarm(alarmId: string): Promise<boolean> {
     const token = this.getEffectiveToken();
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    const txId = 'clr-' + Math.random().toString(36).substring(2, 9);
+    const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarmId)}/clear`;
+
     if (token) {
-      apiClearAlarm({ path: { alarmId } }).catch(() => {});
+      apiLogger.logRequest(txId, 'POST', url, { alarmId }, `Bearer ${token}`);
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          apiLogger.logResponse(txId, res.status, { cleared: true, alarmId });
+        } else {
+          // SDK Fallback
+          await apiClearAlarm({ path: { alarmId } } as any).catch(() => {});
+          apiLogger.logResponse(txId, res.status, undefined, `HTTP ${res.status}`);
+        }
+      } catch {
+        apiClearAlarm({ path: { alarmId } } as any).catch(() => {});
+      }
     }
 
     this.alarms = this.alarms.map((alm) => {
@@ -2191,24 +2285,104 @@ class ThingsBoardService {
         return {
           ...alm,
           status: alm.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK',
+          clearTime: Date.now(),
         };
       }
       return alm;
     });
     this.notifySubscribers();
-  }
-
-  public deleteAlarm(alarmId: string) {
-    this.alarms = this.alarms.filter((alm) => alm.id !== alarmId);
-    this.notifySubscribers();
+    return true;
   }
 
   /**
-   * Clear and purge all inactive (resolved/cleared) alarms from the history list
+   * Delete an alarm permanently from ThingsBoard server via REST API (DELETE /api/alarm/{alarmId})
+   * This permanently removes the alarm record, keeping ThingsBoard database & network packet size minimal.
    */
-  public clearInactiveAlarms(): void {
+  public async deleteAlarm(alarmId: string): Promise<boolean> {
+    const token = this.getEffectiveToken();
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    const txId = 'del-alm-' + Math.random().toString(36).substring(2, 9);
+    const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarmId)}`;
+
+    if (token) {
+      apiLogger.logRequest(txId, 'DELETE', url, { alarmId }, `Bearer ${token}`);
+      try {
+        const res = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            Accept: 'application/json',
+            'X-Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          apiLogger.logResponse(txId, res.status, { deleted: true, alarmId });
+        } else {
+          const errText = await res.text().catch(() => '');
+          apiLogger.logResponse(txId, res.status, undefined, `HTTP ${res.status}: ${errText}`);
+        }
+      } catch (err: any) {
+        apiLogger.logResponse(txId, 0, undefined, err?.message || 'Network error deleting alarm');
+      }
+    }
+
+    this.alarms = this.alarms.filter((alm) => alm.id !== alarmId);
+    this.notifySubscribers();
+    return true;
+  }
+
+  /**
+   * Purge all inactive/cleared alarms from the ThingsBoard server via REST API.
+   * Sends DELETE /api/alarm/{alarmId} for each cleared alarm entity, reducing payload overhead.
+   */
+  public async purgeServerAlarmHistory(): Promise<{ purgedCount: number; errors: number }> {
+    const inactiveAlarms = this.alarms.filter((alm) => !alm.status.startsWith('ACTIVE'));
+    let purgedCount = 0;
+    let errors = 0;
+
+    const token = this.getEffectiveToken();
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+
+    for (const alarm of inactiveAlarms) {
+      try {
+        if (token) {
+          const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarm.id)}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+              'X-Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (res.ok) {
+            purgedCount++;
+          } else {
+            errors++;
+          }
+        } else {
+          purgedCount++;
+        }
+      } catch {
+        errors++;
+      }
+    }
+
     this.alarms = this.alarms.filter((alm) => alm.status.startsWith('ACTIVE'));
     this.notifySubscribers();
+    return { purgedCount, errors };
+  }
+
+  /**
+   * Clear and purge all inactive (resolved/cleared) alarms from local state and ThingsBoard
+   */
+  public async clearInactiveAlarms(purgeOnServer: boolean = true): Promise<{ purgedCount: number; errors: number }> {
+    if (purgeOnServer) {
+      return await this.purgeServerAlarmHistory();
+    }
+    const count = this.alarms.filter((alm) => !alm.status.startsWith('ACTIVE')).length;
+    this.alarms = this.alarms.filter((alm) => alm.status.startsWith('ACTIVE'));
+    this.notifySubscribers();
+    return { purgedCount: count, errors: 0 };
   }
 }
 
