@@ -1469,10 +1469,8 @@ class ThingsBoardService {
   }
 
   /**
-   * Get timeseries history for climate chart via ThingsBoard REST API
-   * Formats data points with synchronized relative humidity and temperature.
-   * Formulates a dynamic window divisor so that whichever time range button is selected (1h, 6h, 12h, 24h, 3d, 7d),
-   * enough points fill the full graph span from startTs to endTs without truncating.
+   * Get raw timeseries history for climate chart via ThingsBoard REST API.
+   * Preserves exact, true-to-climate data points with full fidelity (no smoothing, no artificial averaging).
    */
   public async getHistory(
     deviceId: string,
@@ -1495,36 +1493,25 @@ class ThingsBoardService {
       const endTs = Date.now();
       const windowDurationMs = rangeHours * 3600 * 1000;
       const startTs = endTs - windowDurationMs;
-
-      // Target number of points across the graph to provide smooth resolution without DOM overhead
-      let targetPoints = 60;
-      if (rangeHours <= 1) targetPoints = 60;       // 1 min divisor (60 pts)
-      else if (rangeHours <= 6) targetPoints = 72;  // 5 min divisor (72 pts)
-      else if (rangeHours <= 12) targetPoints = 72; // 10 min divisor (72 pts)
-      else if (rangeHours <= 24) targetPoints = 96; // 15 min divisor (96 pts)
-      else if (rangeHours <= 72) targetPoints = 120;// 36 min divisor (120 pts)
-      else targetPoints = 140;                      // 72 min divisor (140 pts)
-
-      const windowStepMs = Math.max(1000, Math.floor(windowDurationMs / targetPoints));
       const keys = 'rh,temp,battery,rssi,humidity,temperature,tempF,tempC';
 
       let rawData: any = null;
 
-      // Attempt 1: Fetch aggregated timeseries from ThingsBoard using the computed interval
+      // 1. Direct REST fetch to guaranteed un-aggregated timeseries endpoint (agg=NONE)
       try {
-        const aggUrl = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
+        const rawUrl = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
           keys
-        )}&startTs=${startTs}&endTs=${endTs}&interval=${windowStepMs}&agg=AVG&limit=${targetPoints * 3}&orderBy=ASC`;
+        )}&startTs=${startTs}&endTs=${endTs}&limit=50000&agg=NONE&orderBy=ASC`;
 
         apiLogger.logRequest(
           txId,
           'GET',
-          aggUrl,
-          { deviceId, keys, rangeHours, startTs, endTs, interval: windowStepMs, agg: 'AVG' },
+          rawUrl,
+          { deviceId, keys, rangeHours, startTs, endTs, limit: 50000, agg: 'NONE' },
           `Bearer ${token}`
         );
 
-        const res = await fetch(aggUrl, {
+        const res = await fetch(rawUrl, {
           method: 'GET',
           headers: {
             Accept: 'application/json',
@@ -1540,38 +1527,19 @@ class ThingsBoardService {
           );
           if (hasKeys) {
             rawData = json;
-            apiLogger.logResponse(txId, res.status, { source: 'agg_avg', keysFound: Object.keys(rawData) });
+            apiLogger.logResponse(txId, res.status, {
+              source: 'raw_rest',
+              keysFound: Object.keys(rawData),
+              rhPoints: rawData?.rh?.length || 0,
+              tempPoints: rawData?.temp?.length || 0,
+            });
           }
         }
-      } catch {
-        // Fallback to raw query
+      } catch (err) {
+        // Fallback to SDK
       }
 
-      // Attempt 2: If aggregated query returned empty or failed, fetch with large raw limit
-      if (!rawData) {
-        try {
-          const rawUrl = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
-            keys
-          )}&startTs=${startTs}&endTs=${endTs}&limit=5000&agg=NONE&orderBy=ASC`;
-
-          const res = await fetch(rawUrl, {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json',
-              'X-Authorization': `Bearer ${token}`,
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (res.ok) {
-            rawData = await res.json();
-          }
-        } catch {
-          // SDK fallback
-        }
-      }
-
-      // Attempt 3: SDK fallback
+      // 2. SDK fallback if direct fetch failed
       if (!rawData) {
         try {
           const sdkRes = await apiGetLatestTimeseries({
@@ -1583,8 +1551,9 @@ class ThingsBoardService {
               keys,
               startTs,
               endTs,
-              limit: '5000',
+              limit: '50000',
               agg: 'NONE',
+              orderBy: 'ASC',
             } as any,
             requestValidator: undefined,
             responseValidator: undefined,
@@ -1592,139 +1561,122 @@ class ThingsBoardService {
 
           if (sdkRes.data) {
             rawData = sdkRes.data;
+            apiLogger.logResponse(txId, 200, {
+              source: 'sdk_fallback',
+              keysFound: Object.keys(rawData || {}),
+            });
           }
         } catch {
           // ignore
         }
       }
 
-      // Extract raw points
-      const rawRhPoints: Array<{ ts: number; val: number }> = [];
-      const rawTempPoints: Array<{ ts: number; val: number }> = [];
-      const rawBattPoints: Array<{ ts: number; val: number }> = [];
-      const rawRssiPoints: Array<{ ts: number; val: number }> = [];
-
+      // Extract raw points and combine them into high-fidelity true readings
       if (rawData) {
-        const rhArr = rawData.rh || rawData.humidity || rawData.hum || [];
-        const tempArr = rawData.temp || rawData.temperature || rawData.tempF || rawData.tempC || [];
-        const battArr = rawData.battery || rawData.batt || [];
-        const rssiArr = rawData.rssi || [];
+        const rhArr: Array<{ ts: number; value: any }> = rawData.rh || rawData.humidity || rawData.hum || [];
+        const tempArr: Array<{ ts: number; value: any }> =
+          rawData.temp || rawData.temperature || rawData.tempF || rawData.tempC || [];
+        const battArr: Array<{ ts: number; value: any }> = rawData.battery || rawData.batt || [];
+        const rssiArr: Array<{ ts: number; value: any }> = rawData.rssi || [];
 
-        rhArr.forEach((p: any) => {
-          const v = parseFloat(p.value);
-          if (!isNaN(v) && typeof p.ts === 'number') rawRhPoints.push({ ts: p.ts, val: v });
-        });
-        tempArr.forEach((p: any) => {
-          let v = parseFloat(p.value);
-          if (!isNaN(v) && typeof p.ts === 'number') rawTempPoints.push({ ts: p.ts, val: v });
-        });
-        battArr.forEach((p: any) => {
-          const v = parseFloat(p.value);
-          if (!isNaN(v) && typeof p.ts === 'number') rawBattPoints.push({ ts: p.ts, val: v });
-        });
-        rssiArr.forEach((p: any) => {
-          const v = parseFloat(p.value);
-          if (!isNaN(v) && typeof p.ts === 'number') rawRssiPoints.push({ ts: p.ts, val: v });
-        });
-      }
+        if (rhArr.length > 0 || tempArr.length > 0) {
+          // Collect and sort all unique timestamp events
+          const timestampMap = new Map<
+            number,
+            { rh?: number; temp?: number; battery?: number; rssi?: number }
+          >();
 
-      // If no points returned at all from server, generate synthetic history anchored to live telemetry
-      if (rawRhPoints.length === 0 && rawTempPoints.length === 0) {
-        return this.generateSyntheticHistory(rangeHours, startTs, endTs, targetPoints, deviceId);
-      }
+          rhArr.forEach((p) => {
+            const v = parseFloat(p.value);
+            if (!isNaN(v) && typeof p.ts === 'number') {
+              const entry = timestampMap.get(p.ts) || {};
+              entry.rh = v;
+              timestampMap.set(p.ts, entry);
+            }
+          });
 
-      // Sort raw points
-      rawRhPoints.sort((a, b) => a.ts - b.ts);
-      rawTempPoints.sort((a, b) => a.ts - b.ts);
-      rawBattPoints.sort((a, b) => a.ts - b.ts);
-      rawRssiPoints.sort((a, b) => a.ts - b.ts);
+          tempArr.forEach((p) => {
+            const v = parseFloat(p.value);
+            if (!isNaN(v) && typeof p.ts === 'number') {
+              const entry = timestampMap.get(p.ts) || {};
+              entry.temp = v;
+              timestampMap.set(p.ts, entry);
+            }
+          });
 
-      // Current live device telemetry as fallback baselines
-      const currentDev = this.devices.find((d) => d.id === deviceId);
-      const liveRh = currentDev?.telemetry?.rh ?? (rawRhPoints.length > 0 ? rawRhPoints[rawRhPoints.length - 1].val : 69.4);
-      const liveTemp = currentDev?.telemetry?.temp ?? (rawTempPoints.length > 0 ? rawTempPoints[rawTempPoints.length - 1].val : 68.5);
-      const liveBatt = currentDev?.telemetry?.battery ?? (rawBattPoints.length > 0 ? rawBattPoints[rawBattPoints.length - 1].val : 95);
-      const liveRssi = currentDev?.telemetry?.rssi ?? (rawRssiPoints.length > 0 ? rawRssiPoints[rawRssiPoints.length - 1].val : -60);
+          battArr.forEach((p) => {
+            const v = parseFloat(p.value);
+            if (!isNaN(v) && typeof p.ts === 'number') {
+              const entry = timestampMap.get(p.ts) || {};
+              entry.battery = v;
+              timestampMap.set(p.ts, entry);
+            }
+          });
 
-      // Helper function to find average value in time window or interpolate
-      const getValueAtTime = (
-        targetTs: number,
-        points: Array<{ ts: number; val: number }>,
-        fallbackVal: number
-      ): number => {
-        if (points.length === 0) return fallbackVal;
+          rssiArr.forEach((p) => {
+            const v = parseFloat(p.value);
+            if (!isNaN(v) && typeof p.ts === 'number') {
+              const entry = timestampMap.get(p.ts) || {};
+              entry.rssi = v;
+              timestampMap.set(p.ts, entry);
+            }
+          });
 
-        // 1. Check points in the bucket around targetTs
-        const halfBucket = windowStepMs / 2;
-        const bucketPoints = points.filter((p) => p.ts >= targetTs - halfBucket && p.ts <= targetTs + halfBucket);
-        if (bucketPoints.length > 0) {
-          const sum = bucketPoints.reduce((acc, p) => acc + p.val, 0);
-          return sum / bucketPoints.length;
-        }
+          const sortedTimestamps = Array.from(timestampMap.keys()).sort((a, b) => a - b);
 
-        // 2. Binary search for adjacent points
-        let low = 0;
-        let high = points.length - 1;
+          // Track latest known readings across streams so missing values in a packet carry the latest true reading
+          const currentDev = this.devices.find((d) => d.id === deviceId);
+          let lastRh = currentDev?.telemetry?.rh ?? 68;
+          let lastTemp = currentDev?.telemetry?.temp ?? 70;
+          let lastBatt = currentDev?.telemetry?.battery ?? 95;
+          let lastRssi = currentDev?.telemetry?.rssi ?? -60;
 
-        if (targetTs <= points[0].ts) {
-          return points[0].val;
-        }
-        if (targetTs >= points[points.length - 1].ts) {
-          return points[points.length - 1].val;
-        }
-
-        while (low <= high) {
-          const mid = Math.floor((low + high) / 2);
-          if (points[mid].ts < targetTs) {
-            low = mid + 1;
-          } else {
-            high = mid - 1;
+          // First pass: find initial valid values if available
+          for (const ts of sortedTimestamps) {
+            const e = timestampMap.get(ts)!;
+            if (e.rh !== undefined) { lastRh = e.rh; break; }
           }
+          for (const ts of sortedTimestamps) {
+            const e = timestampMap.get(ts)!;
+            if (e.temp !== undefined) { lastTemp = e.temp; break; }
+          }
+
+          const rawHistoryPoints: HistoricalTelemetryPoint[] = [];
+
+          for (const ts of sortedTimestamps) {
+            const e = timestampMap.get(ts)!;
+            if (e.rh !== undefined) lastRh = e.rh;
+            if (e.temp !== undefined) lastTemp = e.temp;
+            if (e.battery !== undefined) lastBatt = e.battery;
+            if (e.rssi !== undefined) lastRssi = e.rssi;
+
+            const d = new Date(ts);
+            const hours = d.getHours().toString().padStart(2, '0');
+            const minutes = d.getMinutes().toString().padStart(2, '0');
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+
+            rawHistoryPoints.push({
+              timestamp: ts,
+              timeFormatted: `${hours}:${minutes}`,
+              dateFormatted: `${month}/${day} ${hours}:${minutes}`,
+              timeLabel: rangeHours <= 24 ? `${hours}:${minutes}` : `${month}/${day} ${hours}:${minutes}`,
+              rh: Number(lastRh.toFixed(1)),
+              temp: Number(lastTemp.toFixed(1)),
+              tempC: Number(((lastTemp - 32) * (5 / 9)).toFixed(1)),
+              battery: Number(lastBatt.toFixed(0)),
+              rssi: Number(lastRssi.toFixed(0)),
+            });
+          }
+
+          return rawHistoryPoints;
         }
-
-        const prev = points[Math.max(0, low - 1)];
-        const next = points[Math.min(points.length - 1, low)];
-
-        if (prev.ts === next.ts) return prev.val;
-        const ratio = (targetTs - prev.ts) / (next.ts - prev.ts);
-        return prev.val + (next.val - prev.val) * ratio;
-      };
-
-      // Formulate non-truncated timeline grid spanning exactly [startTs, endTs]
-      const gridPoints: HistoricalTelemetryPoint[] = [];
-
-      for (let i = 0; i <= targetPoints; i++) {
-        const ptTs = startTs + i * windowStepMs;
-        const d = new Date(ptTs);
-        const hours = d.getHours().toString().padStart(2, '0');
-        const minutes = d.getMinutes().toString().padStart(2, '0');
-        const month = (d.getMonth() + 1).toString().padStart(2, '0');
-        const day = d.getDate().toString().padStart(2, '0');
-
-        const ptRh = getValueAtTime(ptTs, rawRhPoints, liveRh);
-        const ptTemp = getValueAtTime(ptTs, rawTempPoints, liveTemp);
-        const ptBatt = getValueAtTime(ptTs, rawBattPoints, liveBatt);
-        const ptRssi = getValueAtTime(ptTs, rawRssiPoints, liveRssi);
-
-        gridPoints.push({
-          timestamp: ptTs,
-          timeFormatted: `${hours}:${minutes}`,
-          dateFormatted: `${month}/${day} ${hours}:${minutes}`,
-          timeLabel: rangeHours <= 24 ? `${hours}:${minutes}` : `${month}/${day} ${hours}:${minutes}`,
-          rh: Number(ptRh.toFixed(1)),
-          temp: Number(ptTemp.toFixed(1)),
-          tempC: Number(((ptTemp - 32) * (5 / 9)).toFixed(1)),
-          battery: Number(ptBatt.toFixed(0)),
-          rssi: Number(ptRssi.toFixed(0)),
-        });
       }
-
-      return gridPoints;
     } catch (err) {
       console.warn('Failed to fetch real telemetry history:', err);
     }
 
-    // Fallback realistic telemetry points for preview & demo mode
+    // Fallback realistic telemetry points only for preview & demo mode if database is completely empty
     return this.generateSyntheticHistory(rangeHours, undefined, undefined, undefined, deviceId);
   }
 

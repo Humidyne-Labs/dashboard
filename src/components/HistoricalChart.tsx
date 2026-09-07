@@ -67,6 +67,44 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     }
   }, [range]);
 
+  const { startTs, endTs, ticks } = useMemo(() => {
+    const end = Date.now();
+    const start = end - rangeHours * 3600 * 1000;
+
+    let stepMs = (rangeHours * 3600 * 1000) / 6;
+    if (range === '1h') stepMs = 10 * 60 * 1000; // 10m
+    else if (range === '6h') stepMs = 60 * 60 * 1000; // 1h
+    else if (range === '12h') stepMs = 2 * 60 * 60 * 1000; // 2h
+    else if (range === '24h') stepMs = 4 * 60 * 60 * 1000; // 4h
+    else if (range === '3d') stepMs = 12 * 60 * 60 * 1000; // 12h
+    else if (range === '7d') stepMs = 24 * 60 * 60 * 1000; // 24h
+
+    const tickList: number[] = [];
+    for (let t = start; t <= end; t += stepMs) {
+      tickList.push(t);
+    }
+    if (tickList.length > 0 && tickList[tickList.length - 1] < end - stepMs / 4) {
+      tickList.push(end);
+    }
+    return { startTs: start, endTs: end, ticks: tickList };
+  }, [range, rangeHours]);
+
+  const formatTick = useCallback(
+    (ts: number) => {
+      const d = new Date(ts);
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+
+      if (['1h', '6h', '12h', '24h'].includes(range)) {
+        return `${hours}:${minutes}`;
+      }
+      return `${month}/${day} ${hours}:${minutes}`;
+    },
+    [range]
+  );
+
   const telemetryRef = useRef(device?.telemetry);
   useEffect(() => {
     telemetryRef.current = device?.telemetry;
@@ -164,16 +202,37 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
 
-  // Dynamic axis domains to keep boundary lines and series visible
-  const rhMin = Math.min(50, Math.floor(thresholds.rhLowCritical - 2));
-  const rhMax = Math.max(82, Math.ceil(thresholds.rhHighCritical + 2));
+  // Dynamic axis domains to keep boundary lines and series visible (including large test swings)
+  const { calculatedRhMin, calculatedRhMax, calculatedTempMin, calculatedTempMax } = useMemo(() => {
+    let minRh = Math.min(50, Math.floor(thresholds.rhLowCritical - 2));
+    let maxRh = Math.max(82, Math.ceil(thresholds.rhHighCritical + 2));
+    let minT = tempUnit === 'C'
+      ? Math.min(10, Math.floor(dispTempLowCritical - 2))
+      : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
+    let maxT = tempUnit === 'C'
+      ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
+      : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
 
-  const tempMin = tempUnit === 'C'
-    ? Math.min(10, Math.floor(dispTempLowCritical - 2))
-    : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
-  const tempMax = tempUnit === 'C'
-    ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
-    : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
+    if (displayHistory.length > 0) {
+      for (const pt of displayHistory) {
+        if (typeof pt.rh === 'number' && !isNaN(pt.rh)) {
+          if (pt.rh < minRh) minRh = Math.floor(pt.rh - 2);
+          if (pt.rh > maxRh) maxRh = Math.ceil(pt.rh + 2);
+        }
+        if (typeof pt.displayTemp === 'number' && !isNaN(pt.displayTemp)) {
+          if (pt.displayTemp < minT) minT = Math.floor(pt.displayTemp - 2);
+          if (pt.displayTemp > maxT) maxT = Math.ceil(pt.displayTemp + 2);
+        }
+      }
+    }
+
+    return {
+      calculatedRhMin: Math.max(0, minRh),
+      calculatedRhMax: Math.min(100, maxRh),
+      calculatedTempMin: minT,
+      calculatedTempMax: maxT,
+    };
+  }, [displayHistory, thresholds, tempUnit, dispTempLowCritical, dispTempHighCritical]);
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
@@ -287,19 +346,21 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
 
             <XAxis
-              dataKey={['1h', '6h', '12h', '24h'].includes(range) ? 'timeFormatted' : 'dateFormatted'}
+              dataKey="timestamp"
+              type="number"
+              domain={[startTs, endTs]}
+              ticks={ticks}
+              tickFormatter={formatTick}
               stroke="#64748b"
               fontSize={10}
               tickLine={false}
               axisLine={false}
-              minTickGap={28}
-              interval="preserveStartEnd"
             />
 
             {/* Left Y-Axis: Humidity */}
             <YAxis
               yAxisId="rh"
-              domain={[rhMin, rhMax]}
+              domain={[calculatedRhMin, calculatedRhMax]}
               stroke="#f59e0b"
               fontSize={10}
               tickLine={false}
@@ -311,7 +372,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <YAxis
               yAxisId="temp"
               orientation="right"
-              domain={[tempMin, tempMax]}
+              domain={[calculatedTempMin, calculatedTempMax]}
               stroke="#38bdf8"
               fontSize={10}
               tickLine={false}
@@ -335,8 +396,15 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               }}
               labelFormatter={(label, payload) => {
                 const pt = payload?.[0]?.payload;
-                if (pt?.dateFormatted) {
-                  return `Logged: ${pt.dateFormatted}`;
+                const ts = typeof label === 'number' ? label : pt?.timestamp;
+                if (ts) {
+                  const d = new Date(ts);
+                  const hours = d.getHours().toString().padStart(2, '0');
+                  const minutes = d.getMinutes().toString().padStart(2, '0');
+                  const seconds = d.getSeconds().toString().padStart(2, '0');
+                  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                  const day = d.getDate().toString().padStart(2, '0');
+                  return `Logged: ${month}/${day} ${hours}:${minutes}:${seconds}`;
                 }
                 return `Logged: ${label}`;
               }}
@@ -476,6 +544,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#rhGradient)"
+                connectNulls={true}
+                isAnimationActive={false}
               />
             )}
 
@@ -488,6 +558,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 stroke="#38bdf8"
                 strokeWidth={2}
                 dot={false}
+                connectNulls={true}
+                isAnimationActive={false}
               />
             )}
           </ComposedChart>
