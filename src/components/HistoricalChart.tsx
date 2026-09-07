@@ -6,6 +6,7 @@ import {
   AlarmThresholds,
   toDisplayTemp,
 } from '../services/alarmThresholds';
+import { downsampleTelemetryLTTB } from '../utils/downsample';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -16,8 +17,20 @@ import {
   Tooltip,
   CartesianGrid,
   ReferenceLine,
+  ReferenceArea,
+  Brush,
 } from 'recharts';
-import { Activity, RefreshCw, Sliders } from 'lucide-react';
+import {
+  Activity,
+  RefreshCw,
+  Sliders,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  MoveHorizontal,
+} from 'lucide-react';
 
 interface HistoricalChartProps {
   device: HumidorDevice;
@@ -35,12 +48,19 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const [showTemp, setShowTemp] = useState(true);
   const [showRhBoundaries, setShowRhBoundaries] = useState(true);
   const [showTempBoundaries, setShowTempBoundaries] = useState(true);
+  const [showBrush, setShowBrush] = useState(false);
   const [historyData, setHistoryData] = useState<HistoricalTelemetryPoint[]>(device.history || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastBatchTime, setLastBatchTime] = useState<Date | null>(null);
+  const [, setLastBatchTime] = useState<Date | null>(null);
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
     alarmThresholdService.getThresholds()
   );
+
+  // Zoom and Drag-Selection State
+  const [zoomRange, setZoomRange] = useState<{ startTs: number; endTs: number } | null>(null);
+  const [refAreaLeft, setRefAreaLeft] = useState<number | null>(null);
+  const [refAreaRight, setRefAreaRight] = useState<number | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
     const unsub = alarmThresholdService.subscribe(setThresholds);
@@ -67,27 +87,46 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     }
   }, [range]);
 
-  const { startTs, endTs, ticks } = useMemo(() => {
-    const end = Date.now();
-    const start = end - rangeHours * 3600 * 1000;
+  // Base full window timestamps
+  const baseEndTs = useMemo(() => Date.now(), [range, historyData]);
+  const baseStartTs = useMemo(() => baseEndTs - rangeHours * 3600 * 1000, [baseEndTs, rangeHours]);
 
-    let stepMs = (rangeHours * 3600 * 1000) / 6;
-    if (range === '1h') stepMs = 10 * 60 * 1000; // 10m
-    else if (range === '6h') stepMs = 60 * 60 * 1000; // 1h
-    else if (range === '12h') stepMs = 2 * 60 * 60 * 1000; // 2h
-    else if (range === '24h') stepMs = 4 * 60 * 60 * 1000; // 4h
-    else if (range === '3d') stepMs = 12 * 60 * 60 * 1000; // 12h
-    else if (range === '7d') stepMs = 24 * 60 * 60 * 1000; // 24h
+  // Reset custom zoom when range selection button changes
+  const handleRangeChange = (newRange: TimeRange) => {
+    setRange(newRange);
+    setZoomRange(null);
+    setRefAreaLeft(null);
+    setRefAreaRight(null);
+  };
+
+  // Active viewing window
+  const activeStartTs = zoomRange ? zoomRange.startTs : baseStartTs;
+  const activeEndTs = zoomRange ? zoomRange.endTs : baseEndTs;
+  const isZoomed = zoomRange !== null;
+
+  // Compute clean tick marks for active window
+  const ticks = useMemo(() => {
+    const duration = activeEndTs - activeStartTs;
+    let stepMs: number;
+
+    if (duration <= 30 * 60 * 1000) stepMs = 5 * 60 * 1000; // 5 min
+    else if (duration <= 2 * 3600 * 1000) stepMs = 15 * 60 * 1000; // 15 min
+    else if (duration <= 6 * 3600 * 1000) stepMs = 60 * 60 * 1000; // 1 hr
+    else if (duration <= 12 * 3600 * 1000) stepMs = 2 * 3600 * 1000; // 2 hr
+    else if (duration <= 24 * 3600 * 1000) stepMs = 4 * 3600 * 1000; // 4 hr
+    else if (duration <= 72 * 3600 * 1000) stepMs = 12 * 3600 * 1000; // 12 hr
+    else stepMs = 24 * 3600 * 1000; // 24 hr
 
     const tickList: number[] = [];
-    for (let t = start; t <= end; t += stepMs) {
+    const firstTick = Math.ceil(activeStartTs / stepMs) * stepMs;
+    for (let t = firstTick; t <= activeEndTs; t += stepMs) {
       tickList.push(t);
     }
-    if (tickList.length > 0 && tickList[tickList.length - 1] < end - stepMs / 4) {
-      tickList.push(end);
+    if (tickList.length > 0 && tickList[tickList.length - 1] < activeEndTs - stepMs / 3) {
+      tickList.push(activeEndTs);
     }
-    return { startTs: start, endTs: end, ticks: tickList };
-  }, [range, rangeHours]);
+    return tickList.length > 0 ? tickList : [activeStartTs, activeEndTs];
+  }, [activeStartTs, activeEndTs]);
 
   const formatTick = useCallback(
     (ts: number) => {
@@ -97,12 +136,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       const month = (d.getMonth() + 1).toString().padStart(2, '0');
       const day = d.getDate().toString().padStart(2, '0');
 
-      if (['1h', '6h', '12h', '24h'].includes(range)) {
+      const duration = activeEndTs - activeStartTs;
+      if (duration <= 24 * 3600 * 1000) {
         return `${hours}:${minutes}`;
       }
       return `${month}/${day} ${hours}:${minutes}`;
     },
-    [range]
+    [activeStartTs, activeEndTs]
   );
 
   const telemetryRef = useRef(device?.telemetry);
@@ -119,20 +159,19 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         setHistoryData(points);
         setLastBatchTime(new Date());
       } else {
-        // Fallback: Generate points anchoring to current real telemetry spanning the full window
+        // Fallback realistic points spanning full window
         const currentTelemetry = telemetryRef.current;
         const liveTs = currentTelemetry?.timestamp || Date.now();
         const liveRh = currentTelemetry?.rh || 68;
         const liveTemp = currentTelemetry?.temp || 70;
         const liveBatt = currentTelemetry?.battery || 100;
 
-        let count = 60;
+        let count = 120;
         if (range === '1h') count = 60;
-        else if (range === '6h') count = 72;
-        else if (range === '12h') count = 72;
-        else if (range === '24h') count = 96;
-        else if (range === '3d') count = 120;
-        else count = 140;
+        else if (range === '6h') count = 90;
+        else if (range === '12h') count = 120;
+        else if (range === '24h') count = 150;
+        else count = 200;
 
         const windowDurationMs = rangeHours * 3600 * 1000;
         const startTs = liveTs - windowDurationMs;
@@ -177,22 +216,35 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     }
   }, [device?.id, rangeHours, range]);
 
-  // Trigger batch refresh immediately upon period selection or device change
-  // and maintain a 300-second (5 min) batch polling cycle
   useEffect(() => {
     loadHistory();
     const intervalId = setInterval(() => {
       loadHistory();
-    }, 300000); // 300 seconds (5 min)
+    }, 300000); // 5 min
     return () => clearInterval(intervalId);
   }, [loadHistory]);
 
+  // Downsample data points adaptively (Max 220 points) using LTTB to eliminate noise while preserving all real climate swings
   const displayHistory = useMemo(() => {
-    return historyData.map((pt) => ({
+    if (!historyData || historyData.length === 0) return [];
+
+    // Filter points in active window plus slight margin
+    const margin = (activeEndTs - activeStartTs) * 0.05;
+    const windowPoints = historyData.filter(
+      (p) => p.timestamp >= activeStartTs - margin && p.timestamp <= activeEndTs + margin
+    );
+
+    // Apply LTTB downsampling to preserve peaks, maintenance drops, and thermal ramps
+    const sampled = downsampleTelemetryLTTB(
+      windowPoints.length > 0 ? windowPoints : historyData,
+      220
+    );
+
+    return sampled.map((pt) => ({
       ...pt,
       displayTemp: tempUnit === 'C' ? pt.tempC : pt.temp,
     }));
-  }, [historyData, tempUnit]);
+  }, [historyData, activeStartTs, activeEndTs, tempUnit]);
 
   const tempSymbol = tempUnit === 'C' ? '°C' : '°F';
 
@@ -202,16 +254,18 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
 
-  // Dynamic axis domains to keep boundary lines and series visible (including large test swings)
+  // Dynamic axis domains to keep boundary lines and series visible
   const { calculatedRhMin, calculatedRhMax, calculatedTempMin, calculatedTempMax } = useMemo(() => {
     let minRh = Math.min(50, Math.floor(thresholds.rhLowCritical - 2));
     let maxRh = Math.max(82, Math.ceil(thresholds.rhHighCritical + 2));
-    let minT = tempUnit === 'C'
-      ? Math.min(10, Math.floor(dispTempLowCritical - 2))
-      : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
-    let maxT = tempUnit === 'C'
-      ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
-      : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
+    let minT =
+      tempUnit === 'C'
+        ? Math.min(10, Math.floor(dispTempLowCritical - 2))
+        : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
+    let maxT =
+      tempUnit === 'C'
+        ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
+        : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
 
     if (displayHistory.length > 0) {
       for (const pt of displayHistory) {
@@ -234,6 +288,84 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     };
   }, [displayHistory, thresholds, tempUnit, dispTempLowCritical, dispTempHighCritical]);
 
+  // Zoom & Pan Actions
+  const handleZoomIn = () => {
+    const currentSpan = activeEndTs - activeStartTs;
+    if (currentSpan <= 5 * 60 * 1000) return; // Limit minimum zoom to 5 min
+    const zoomDelta = currentSpan * 0.25;
+    setZoomRange({
+      startTs: activeStartTs + zoomDelta / 2,
+      endTs: activeEndTs - zoomDelta / 2,
+    });
+  };
+
+  const handleZoomOut = () => {
+    const currentSpan = activeEndTs - activeStartTs;
+    const zoomDelta = currentSpan * 0.33;
+    const newStart = Math.max(baseStartTs - 3600000, activeStartTs - zoomDelta / 2);
+    const newEnd = Math.min(baseEndTs + 60000, activeEndTs + zoomDelta / 2);
+
+    if (newStart <= baseStartTs && newEnd >= baseEndTs) {
+      setZoomRange(null);
+    } else {
+      setZoomRange({ startTs: newStart, endTs: newEnd });
+    }
+  };
+
+  const handlePan = (direction: 'left' | 'right') => {
+    const currentSpan = activeEndTs - activeStartTs;
+    const shift = currentSpan * 0.25 * (direction === 'left' ? -1 : 1);
+    const newStart = activeStartTs + shift;
+    const newEnd = activeEndTs + shift;
+    setZoomRange({ startTs: newStart, endTs: newEnd });
+  };
+
+  const handleResetZoom = () => {
+    setZoomRange(null);
+    setRefAreaLeft(null);
+    setRefAreaRight(null);
+  };
+
+  // Selection Drag-to-Zoom
+  const handleMouseDown = (e: any) => {
+    if (e && e.activeLabel) {
+      setRefAreaLeft(Number(e.activeLabel));
+      setIsSelecting(true);
+    }
+  };
+
+  const handleMouseMove = (e: any) => {
+    if (isSelecting && e && e.activeLabel) {
+      setRefAreaRight(Number(e.activeLabel));
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (refAreaLeft && refAreaRight) {
+      const [start, end] = [
+        Math.min(refAreaLeft, refAreaRight),
+        Math.max(refAreaLeft, refAreaRight),
+      ];
+      // Require at least 20 seconds selection
+      if (end - start >= 20000) {
+        setZoomRange({ startTs: start, endTs: end });
+      }
+    }
+    setRefAreaLeft(null);
+    setRefAreaRight(null);
+    setIsSelecting(false);
+  };
+
+  // Human readable active zoom label
+  const zoomDurationLabel = useMemo(() => {
+    if (!isZoomed) return null;
+    const durMs = activeEndTs - activeStartTs;
+    const durMinutes = Math.round(durMs / 60000);
+    if (durMinutes < 60) return `${durMinutes}m`;
+    const hours = (durMinutes / 60).toFixed(1);
+    return `${hours}h`;
+  }, [isZoomed, activeStartTs, activeEndTs]);
+
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
       {/* Header & Controls */}
@@ -243,23 +375,39 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-              Dual-Axis Climate Telemetry History
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                Dual-Axis Climate Telemetry History
+              </h3>
+              {isZoomed && (
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono flex items-center gap-1">
+                  <span>Zoomed: {zoomDurationLabel}</span>
+                  <button
+                    onClick={handleResetZoom}
+                    className="hover:text-white font-bold ml-1 cursor-pointer"
+                    title="Reset Zoom"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
             <p className="text-[11px] sm:text-xs text-slate-400">
-              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with distinct boundary thresholds
+              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with noise-filtered true climate fidelity
             </p>
           </div>
         </div>
 
-        {/* Range & Series / Boundary Toggles */}
+        {/* Range & Series / Boundary / Zoom Toggles */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Series filters */}
           <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
             <button
               onClick={() => setShowRh(!showRh)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
-                showRh ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-300'
+                showRh
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-amber-400" />
@@ -268,18 +416,22 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <button
               onClick={() => setShowTemp(!showTemp)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
-                showTemp ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-500 hover:text-slate-300'
+                showTemp
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span>Temp</span>
             </button>
-            
-            {/* Separate Boundary Enablement Controls */}
+
+            {/* Boundary controls */}
             <button
               onClick={() => setShowRhBoundaries(!showRhBoundaries)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
-                showRhBoundaries ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-500 hover:text-slate-300'
+                showRhBoundaries
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
               title="Toggle RH alarm boundary lines"
             >
@@ -290,7 +442,9 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <button
               onClick={() => setShowTempBoundaries(!showTempBoundaries)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
-                showTempBoundaries ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-500 hover:text-slate-300'
+                showTempBoundaries
+                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
               title="Toggle Temperature alarm boundary lines"
             >
@@ -299,14 +453,14 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             </button>
           </div>
 
-          {/* Time range selector */}
+          {/* Time range preset selector */}
           <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
             {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
               <button
                 key={r}
-                onClick={() => setRange(r)}
+                onClick={() => handleRangeChange(r)}
                 className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-                  range === r
+                  range === r && !isZoomed
                     ? 'bg-amber-600 text-slate-950 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
@@ -316,12 +470,65 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             ))}
           </div>
 
+          {/* Zoom & Navigation Button Group */}
+          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
+            <button
+              onClick={() => handlePan('left')}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Pan Left (Shift Back in Time)"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Zoom In (+25%)"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Zoom Out (-25%)"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handlePan('right')}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Pan Right (Shift Forward in Time)"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            {isZoomed && (
+              <button
+                onClick={handleResetZoom}
+                className="px-1.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1 text-[11px]"
+                title="Reset to Full Range"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span className="hidden lg:inline">Reset</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowBrush(!showBrush)}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                showBrush
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Toggle Timeline Scroll & Range Slider"
+            >
+              <MoveHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Manual Refresh Button */}
           <button
             onClick={loadHistory}
             disabled={isLoading}
             className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs"
-            title="Manual Batch Window Refresh (Grabs latest ThingsBoard timeseries)"
+            title="Manual Batch Window Refresh"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-400' : ''}`} />
             <span className="hidden md:inline text-[11px] font-medium">Refresh</span>
@@ -329,12 +536,31 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         </div>
       </div>
 
+      {/* Interactive Helper Banner when selection or zoom is active */}
+      <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 mb-1.5">
+        <span className="text-[10px] text-slate-500">
+          💡 Click and drag across the chart to zoom into any time region. Scroll with navigation controls or slider below.
+        </span>
+        {isZoomed && (
+          <button
+            onClick={handleResetZoom}
+            className="text-[10px] text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <RotateCcw className="w-2.5 h-2.5" />
+            Reset Zoom View
+          </button>
+        )}
+      </div>
+
       {/* Main Dual-Axis Chart Area */}
-      <div className="h-[270px] sm:h-[350px] w-full pt-2">
+      <div className="h-[270px] sm:h-[350px] w-full pt-1 select-none">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={displayHistory}
-            margin={{ top: 12, right: 12, left: -10, bottom: 0 }}
+            margin={{ top: 12, right: 12, left: -10, bottom: showBrush ? 20 : 0 }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
           >
             <defs>
               <linearGradient id="rhGradient" x1="0" y1="0" x2="0" y2="1">
@@ -348,7 +574,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <XAxis
               dataKey="timestamp"
               type="number"
-              domain={[startTs, endTs]}
+              domain={[activeStartTs, activeEndTs]}
               ticks={ticks}
               tickFormatter={formatTick}
               stroke="#64748b"
@@ -472,7 +698,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               </>
             )}
 
-            {/* Alarm Threshold Boundary Lines for Temperature (Scaled to active unit) */}
+            {/* Alarm Threshold Boundary Lines for Temperature */}
             {showTempBoundaries && showTemp && (
               <>
                 <ReferenceLine
@@ -562,6 +788,30 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 isAnimationActive={false}
               />
             )}
+
+            {/* Drag-to-zoom selection highlight box */}
+            {refAreaLeft && refAreaRight ? (
+              <ReferenceArea
+                yAxisId="rh"
+                x1={refAreaLeft}
+                x2={refAreaRight}
+                strokeOpacity={0.3}
+                fill="#f59e0b"
+                fillOpacity={0.25}
+              />
+            ) : null}
+
+            {/* Optional Timeline Brush Scroller */}
+            {showBrush && displayHistory.length > 0 && (
+              <Brush
+                dataKey="timestamp"
+                height={26}
+                stroke="#f59e0b"
+                fill="#0f172a"
+                tickFormatter={formatTick}
+                travellerWidth={10}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -586,14 +836,20 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-mono">
           <div className="flex items-center gap-1.5 text-amber-300">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            <span>RH Safe: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% (Crit: &lt;{thresholds.rhLowCritical}% / &gt;{thresholds.rhHighCritical}%)</span>
+            <span>
+              RH Safe: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% (Crit: &lt;
+              {thresholds.rhLowCritical}% / &gt;{thresholds.rhHighCritical}%)
+            </span>
           </div>
           <div className="flex items-center gap-1.5 text-sky-300">
             <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-            <span>Temp Safe: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}</span>
+            <span>
+              Temp Safe: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
