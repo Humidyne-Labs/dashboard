@@ -24,7 +24,7 @@ interface HistoricalChartProps {
   tempUnit: TempUnit;
 }
 
-type TimeRange = '12h' | '24h' | '3d' | '7d';
+type TimeRange = '1h' | '6h' | '12h' | '24h' | '3d' | '7d';
 
 export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   device,
@@ -37,6 +37,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const [showTempBoundaries, setShowTempBoundaries] = useState(true);
   const [historyData, setHistoryData] = useState<HistoricalTelemetryPoint[]>(device.history || []);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastBatchTime, setLastBatchTime] = useState<Date | null>(null);
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
     alarmThresholdService.getThresholds()
   );
@@ -46,8 +47,25 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     return unsub;
   }, []);
 
-  // Range hours bounded by 7-Day Server Retention Policy
-  const rangeHours = range === '12h' ? 12 : range === '24h' ? 24 : range === '3d' ? 72 : 168;
+  // Time series window range hours (1h, 6h, 12h, 24h, 3d, 7d)
+  const rangeHours = useMemo(() => {
+    switch (range) {
+      case '1h':
+        return 1;
+      case '6h':
+        return 6;
+      case '12h':
+        return 12;
+      case '24h':
+        return 24;
+      case '3d':
+        return 72;
+      case '7d':
+        return 168;
+      default:
+        return 24;
+    }
+  }, [range]);
 
   const telemetryRef = useRef(device?.telemetry);
   useEffect(() => {
@@ -61,6 +79,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       const points = await thingsboard.getHistory(device.id, rangeHours);
       if (points && points.length > 0) {
         setHistoryData(points);
+        setLastBatchTime(new Date());
       } else {
         // Fallback: Generate points anchoring to current real telemetry if database has no history
         const currentTelemetry = telemetryRef.current;
@@ -70,7 +89,14 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         const liveBatt = currentTelemetry?.battery || 100;
 
         const generated: HistoricalTelemetryPoint[] = [];
-        const count = range === '12h' ? 12 : range === '24h' ? 16 : range === '3d' ? 20 : 28;
+        let count = 60;
+        if (range === '1h') count = 30;
+        else if (range === '6h') count = 48;
+        else if (range === '12h') count = 60;
+        else if (range === '24h') count = 72;
+        else if (range === '3d') count = 96;
+        else count = 120;
+
         const stepMs = (rangeHours * 3600 * 1000) / count;
 
         for (let i = count; i >= 0; i--) {
@@ -92,7 +118,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             timestamp: ptTs,
             timeFormatted: `${hours}:${minutes}`,
             dateFormatted: `${month}/${day} ${hours}:${minutes}`,
-            timeLabel: `${month}/${day} ${hours}:${minutes}`,
+            timeLabel: rangeHours <= 24 ? `${hours}:${minutes}` : `${month}/${day} ${hours}:${minutes}`,
             rh: currentPtRh,
             temp: currentPtTemp,
             tempC: Number(((currentPtTemp - 32) * (5 / 9)).toFixed(1)),
@@ -100,6 +126,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           });
         }
         setHistoryData(generated);
+        setLastBatchTime(new Date());
       }
     } catch {
       // ignore
@@ -108,8 +135,14 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     }
   }, [device?.id, rangeHours, range]);
 
+  // Trigger batch refresh immediately upon period selection or device change
+  // and maintain a 300-second (5 min) batch polling cycle
   useEffect(() => {
     loadHistory();
+    const intervalId = setInterval(() => {
+      loadHistory();
+    }, 300000); // 300 seconds (5 min)
+    return () => clearInterval(intervalId);
   }, [loadHistory]);
 
   const displayHistory = useMemo(() => {
@@ -205,7 +238,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
 
           {/* Time range selector */}
           <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
-            {(['12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
+            {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
@@ -224,10 +257,11 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           <button
             onClick={loadHistory}
             disabled={isLoading}
-            className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 transition cursor-pointer disabled:opacity-50"
-            title="Refresh History"
+            className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs"
+            title="Manual Batch Window Refresh (Grabs latest ThingsBoard timeseries)"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-400' : ''}`} />
+            <span className="hidden md:inline text-[11px] font-medium">Refresh</span>
           </button>
         </div>
       </div>
@@ -249,7 +283,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
 
             <XAxis
-              dataKey={range === '24h' ? 'timeFormatted' : 'dateFormatted'}
+              dataKey={['1h', '6h', '12h', '24h'].includes(range) ? 'timeFormatted' : 'dateFormatted'}
               stroke="#64748b"
               fontSize={10}
               tickLine={false}

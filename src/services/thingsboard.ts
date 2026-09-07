@@ -43,6 +43,7 @@ import {
 } from '../utils/authTokens';
 import { registerGlobalClientInterceptors } from './apiClientInit';
 import { alarmThresholdService } from './alarmThresholds';
+import { notificationService } from './notificationService';
 
 const CONFIG_STORAGE_KEY = 'humid1_thingsboard_config';
 const CLAIM_LOGS_STORAGE_KEY = 'humid1_tb_claim_logs';
@@ -1431,8 +1432,18 @@ class ThingsBoardService {
   /**
    * Get timeseries history for climate chart via ThingsBoard REST API
    * Formats data points with synchronized relative humidity and temperature.
+   * Uses batch windowed REST queries to /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries
    */
-  public async getHistory(deviceId: string, rangeHours: number = 72): Promise<HistoricalTelemetryPoint[]> {
+  public async getHistory(
+    deviceId: string,
+    rangeHours: number = 24,
+    options?: {
+      limit?: number;
+      agg?: 'NONE' | 'AVG' | 'MIN' | 'MAX' | 'SUM' | 'COUNT';
+      interval?: number;
+      orderBy?: 'ASC' | 'DESC';
+    }
+  ): Promise<HistoricalTelemetryPoint[]> {
     const token = this.getEffectiveToken();
     const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
     if (!token || !deviceId) return [];
@@ -1440,16 +1451,48 @@ class ThingsBoardService {
     try {
       const endTs = Date.now();
       const startTs = endTs - rangeHours * 3600 * 1000;
-      const limit = 1000;
+
+      // Calculate resolution limit according to selected display period
+      let defaultLimit = 250;
+      let bucketMs = 10 * 60 * 1000; // default 10m
+
+      if (rangeHours <= 1) {
+        defaultLimit = 120;
+        bucketMs = 60 * 1000; // 1 min bucket
+      } else if (rangeHours <= 6) {
+        defaultLimit = 180;
+        bucketMs = 3 * 60 * 1000; // 3 min bucket
+      } else if (rangeHours <= 12) {
+        defaultLimit = 240;
+        bucketMs = 5 * 60 * 1000; // 5 min bucket
+      } else if (rangeHours <= 24) {
+        defaultLimit = 300;
+        bucketMs = 10 * 60 * 1000; // 10 min bucket
+      } else if (rangeHours <= 72) {
+        defaultLimit = 400;
+        bucketMs = 20 * 60 * 1000; // 20 min bucket
+      } else {
+        defaultLimit = 500;
+        bucketMs = 30 * 60 * 1000; // 30 min bucket
+      }
+
+      const limit = options?.limit || defaultLimit;
+      const agg = options?.agg || 'NONE';
+      const orderBy = options?.orderBy || 'ASC';
+      const interval = options?.interval;
       const keys = 'rh,temp,battery,rssi';
 
       let rawData: any = null;
 
       // 1. Direct REST fetch to guaranteed timeseries endpoint
       try {
-        const url = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
+        let url = `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${encodeURIComponent(
           keys
-        )}&startTs=${startTs}&endTs=${endTs}&limit=${limit}&agg=NONE`;
+        )}&startTs=${startTs}&endTs=${endTs}&limit=${limit}&agg=${agg}&orderBy=${orderBy}`;
+
+        if (agg !== 'NONE' && interval) {
+          url += `&interval=${interval}`;
+        }
 
         const res = await fetch(url, {
           method: 'GET',
@@ -1479,7 +1522,8 @@ class ThingsBoardService {
             startTs,
             endTs,
             limit: String(limit),
-            agg: 'NONE',
+            agg,
+            orderBy,
           } as any,
           requestValidator: undefined,
           responseValidator: undefined,
@@ -1502,7 +1546,7 @@ class ThingsBoardService {
           return [];
         }
 
-        // Bucket by 10-minute intervals for clean synchronized plotting
+        // Bucket by range-specific intervals for clean synchronized plotting
         const timestampMap = new Map<
           number,
           { rh: number; temp: number; battery: number; rssi: number }
@@ -1511,7 +1555,7 @@ class ThingsBoardService {
         rhPoints.forEach((p) => {
           const val = parseFloat(p.value);
           if (!isNaN(val)) {
-            const bucket = Math.round(p.ts / (10 * 60 * 1000)) * (10 * 60 * 1000);
+            const bucket = Math.round(p.ts / bucketMs) * bucketMs;
             const entry = timestampMap.get(bucket) || { rh: val, temp: 70, battery: 100, rssi: -50 };
             entry.rh = val;
             timestampMap.set(bucket, entry);
@@ -1521,7 +1565,7 @@ class ThingsBoardService {
         tempPoints.forEach((p) => {
           let val = parseFloat(p.value);
           if (!isNaN(val)) {
-            const bucket = Math.round(p.ts / (10 * 60 * 1000)) * (10 * 60 * 1000);
+            const bucket = Math.round(p.ts / bucketMs) * bucketMs;
             const entry = timestampMap.get(bucket) || { rh: 68, temp: val, battery: 100, rssi: -50 };
             entry.temp = val;
             timestampMap.set(bucket, entry);
@@ -1531,7 +1575,7 @@ class ThingsBoardService {
         battPoints.forEach((p) => {
           const val = parseFloat(p.value);
           if (!isNaN(val)) {
-            const bucket = Math.round(p.ts / (10 * 60 * 1000)) * (10 * 60 * 1000);
+            const bucket = Math.round(p.ts / bucketMs) * bucketMs;
             const entry = timestampMap.get(bucket) || { rh: 68, temp: 70, battery: val, rssi: -50 };
             entry.battery = val;
             timestampMap.set(bucket, entry);
@@ -1541,7 +1585,7 @@ class ThingsBoardService {
         rssiPoints.forEach((p) => {
           const val = parseFloat(p.value);
           if (!isNaN(val)) {
-            const bucket = Math.round(p.ts / (10 * 60 * 1000)) * (10 * 60 * 1000);
+            const bucket = Math.round(p.ts / bucketMs) * bucketMs;
             const entry = timestampMap.get(bucket) || { rh: 68, temp: 70, battery: 100, rssi: val };
             entry.rssi = val;
             timestampMap.set(bucket, entry);
@@ -1560,7 +1604,7 @@ class ThingsBoardService {
               timestamp: ts,
               timeFormatted: `${hours}:${minutes}`,
               dateFormatted: `${month}/${day} ${hours}:${minutes}`,
-              timeLabel: `${month}/${day} ${hours}:${minutes}`,
+              timeLabel: rangeHours <= 24 ? `${hours}:${minutes}` : `${month}/${day} ${hours}:${minutes}`,
               rh: Number(val.rh.toFixed(1)),
               temp: Number(val.temp.toFixed(1)),
               tempC: Number(((val.temp - 32) * (5 / 9)).toFixed(1)),
@@ -1581,7 +1625,16 @@ class ThingsBoardService {
 
   private generateSyntheticHistory(rangeHours: number): HistoricalTelemetryPoint[] {
     const points: HistoricalTelemetryPoint[] = [];
-    const totalPoints = Math.min(rangeHours * 6, 120);
+    
+    // Scale count for rich resolution across 1h, 6h, 12h, 24h, 3d, 7d
+    let totalPoints = 60;
+    if (rangeHours <= 1) totalPoints = 60;
+    else if (rangeHours <= 6) totalPoints = 72;
+    else if (rangeHours <= 12) totalPoints = 96;
+    else if (rangeHours <= 24) totalPoints = 120;
+    else if (rangeHours <= 72) totalPoints = 144;
+    else totalPoints = 168;
+
     const intervalMs = (rangeHours * 3600 * 1000) / totalPoints;
     const now = Date.now();
 
@@ -1605,7 +1658,7 @@ class ThingsBoardService {
         timestamp: ts,
         timeFormatted: `${hours}:${minutes}`,
         dateFormatted: `${month}/${day} ${hours}:${minutes}`,
-        timeLabel: `${month}/${day} ${hours}:${minutes}`,
+        timeLabel: rangeHours <= 24 ? `${hours}:${minutes}` : `${month}/${day} ${hours}:${minutes}`,
         rh,
         temp: tempF,
         tempC,
@@ -1718,28 +1771,30 @@ class ThingsBoardService {
 
       const deviceAlarms = this.alarms.filter((a) => a.deviceId === device.id);
 
+      const addAlarm = (newAlarm: HumidorAlarm) => {
+        this.alarms = [newAlarm, ...this.alarms];
+        updated = true;
+        notificationService.notifyAlarm(newAlarm, device.name);
+      };
+
       // --- 1. Relative Humidity Alerts ---
       // A. RH Critical High
       const rhCritHigh = deviceAlarms.find((a) => a.type === 'RH_CRITICAL_HIGH');
       if (rh > th.rhHighCritical) {
         if (!rhCritHigh || !rhCritHigh.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-rh-hc-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'RH_CRITICAL_HIGH',
-              severity: 'CRITICAL',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Critical high humidity (${rh.toFixed(1)}%) exceeded ${th.rhHighCritical}% limit`,
-                rh,
-              },
+          addAlarm({
+            id: `alm-rh-hc-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'RH_CRITICAL_HIGH',
+            severity: 'CRITICAL',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Critical high humidity (${rh.toFixed(1)}%) exceeded ${th.rhHighCritical}% limit`,
+              rh,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (rhCritHigh && rhCritHigh.status.startsWith('ACTIVE')) {
         if (rh <= th.rhHighCritical - th.rhHist) {
@@ -1753,23 +1808,19 @@ class ThingsBoardService {
       const rhWarnHigh = deviceAlarms.find((a) => a.type === 'RH_HIGH_WARNING');
       if (rh > th.rhHighWarning && rh <= th.rhHighCritical) {
         if (!rhWarnHigh || !rhWarnHigh.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-rh-hw-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'RH_HIGH_WARNING',
-              severity: 'WARNING',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `High humidity warning (${rh.toFixed(1)}%) exceeded ${th.rhHighWarning}% limit`,
-                rh,
-              },
+          addAlarm({
+            id: `alm-rh-hw-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'RH_HIGH_WARNING',
+            severity: 'WARNING',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `High humidity warning (${rh.toFixed(1)}%) exceeded ${th.rhHighWarning}% limit`,
+              rh,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (rhWarnHigh && rhWarnHigh.status.startsWith('ACTIVE')) {
         if (rh <= th.rhHighWarning - th.rhHist) {
@@ -1783,23 +1834,19 @@ class ThingsBoardService {
       const rhWarnLow = deviceAlarms.find((a) => a.type === 'RH_LOW_WARNING');
       if (rh < th.rhLowWarning && rh >= th.rhLowCritical) {
         if (!rhWarnLow || !rhWarnLow.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-rh-lw-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'RH_LOW_WARNING',
-              severity: 'WARNING',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Low humidity warning (${rh.toFixed(1)}%) dropped below ${th.rhLowWarning}% limit`,
-                rh,
-              },
+          addAlarm({
+            id: `alm-rh-lw-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'RH_LOW_WARNING',
+            severity: 'WARNING',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Low humidity warning (${rh.toFixed(1)}%) dropped below ${th.rhLowWarning}% limit`,
+              rh,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (rhWarnLow && rhWarnLow.status.startsWith('ACTIVE')) {
         if (rh >= th.rhLowWarning + th.rhHist) {
@@ -1813,23 +1860,19 @@ class ThingsBoardService {
       const rhCritLow = deviceAlarms.find((a) => a.type === 'RH_CRITICAL_LOW');
       if (rh < th.rhLowCritical) {
         if (!rhCritLow || !rhCritLow.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-rh-lc-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'RH_CRITICAL_LOW',
-              severity: 'CRITICAL',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Critical low humidity (${rh.toFixed(1)}%) dropped below ${th.rhLowCritical}% limit`,
-                rh,
-              },
+          addAlarm({
+            id: `alm-rh-lc-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'RH_CRITICAL_LOW',
+            severity: 'CRITICAL',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Critical low humidity (${rh.toFixed(1)}%) dropped below ${th.rhLowCritical}% limit`,
+              rh,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (rhCritLow && rhCritLow.status.startsWith('ACTIVE')) {
         if (rh >= th.rhLowCritical + th.rhHist) {
@@ -1844,23 +1887,19 @@ class ThingsBoardService {
       const tempCritHigh = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_HIGH');
       if (temp > th.tempHighCritical) {
         if (!tempCritHigh || !tempCritHigh.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-temp-hc-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'TEMP_CRITICAL_HIGH',
-              severity: 'CRITICAL',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Critical high temperature (${temp.toFixed(1)}°F) exceeded ${th.tempHighCritical}°F limit`,
-                temp,
-              },
+          addAlarm({
+            id: `alm-temp-hc-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'TEMP_CRITICAL_HIGH',
+            severity: 'CRITICAL',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Critical high temperature (${temp.toFixed(1)}°F) exceeded ${th.tempHighCritical}°F limit`,
+              temp,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (tempCritHigh && tempCritHigh.status.startsWith('ACTIVE')) {
         if (temp <= th.tempHighCritical - th.tempHist) {
@@ -1874,23 +1913,19 @@ class ThingsBoardService {
       const tempWarnHigh = deviceAlarms.find((a) => a.type === 'TEMP_HIGH_WARNING');
       if (temp > th.tempHighWarning && temp <= th.tempHighCritical) {
         if (!tempWarnHigh || !tempWarnHigh.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-temp-hw-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'TEMP_HIGH_WARNING',
-              severity: 'WARNING',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}°F limit`,
-                temp,
-              },
+          addAlarm({
+            id: `alm-temp-hw-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'TEMP_HIGH_WARNING',
+            severity: 'WARNING',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}% limit`,
+              temp,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (tempWarnHigh && tempWarnHigh.status.startsWith('ACTIVE')) {
         if (temp <= th.tempHighWarning - th.tempHist) {
@@ -1904,23 +1939,19 @@ class ThingsBoardService {
       const tempWarnLow = deviceAlarms.find((a) => a.type === 'TEMP_LOW_WARNING');
       if (temp < th.tempLowWarning && temp >= th.tempLowCritical) {
         if (!tempWarnLow || !tempWarnLow.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-temp-lw-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'TEMP_LOW_WARNING',
-              severity: 'WARNING',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Low temperature warning (${temp.toFixed(1)}°F) dropped below ${th.tempLowWarning}°F limit`,
-                temp,
-              },
+          addAlarm({
+            id: `alm-temp-lw-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'TEMP_LOW_WARNING',
+            severity: 'WARNING',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Low temperature warning (${temp.toFixed(1)}°F) dropped below ${th.tempLowWarning}°F limit`,
+              temp,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (tempWarnLow && tempWarnLow.status.startsWith('ACTIVE')) {
         if (temp >= th.tempLowWarning + th.tempHist) {
@@ -1934,23 +1965,19 @@ class ThingsBoardService {
       const tempCritLow = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_LOW');
       if (temp < th.tempLowCritical) {
         if (!tempCritLow || !tempCritLow.status.startsWith('ACTIVE')) {
-          this.alarms = [
-            {
-              id: `alm-temp-lc-${device.id}-${now}`,
-              deviceId: device.id,
-              deviceName: device.name,
-              type: 'TEMP_CRITICAL_LOW',
-              severity: 'CRITICAL',
-              status: 'ACTIVE_UNACK',
-              createdTime: now,
-              details: {
-                message: `Critical low temperature (${temp.toFixed(1)}°F) dropped below ${th.tempLowCritical}°F limit`,
-                temp,
-              },
+          addAlarm({
+            id: `alm-temp-lc-${device.id}-${now}`,
+            deviceId: device.id,
+            deviceName: device.name,
+            type: 'TEMP_CRITICAL_LOW',
+            severity: 'CRITICAL',
+            status: 'ACTIVE_UNACK',
+            createdTime: now,
+            details: {
+              message: `Critical low temperature (${temp.toFixed(1)}°F) dropped below ${th.tempLowCritical}°F limit`,
+              temp,
             },
-            ...this.alarms,
-          ];
-          updated = true;
+          });
         }
       } else if (tempCritLow && tempCritLow.status.startsWith('ACTIVE')) {
         if (temp >= th.tempLowCritical + th.tempHist) {
@@ -1965,23 +1992,19 @@ class ThingsBoardService {
         const battCrit = deviceAlarms.find((a) => a.type === 'BATTERY_CRITICAL_LOW');
         if (battery < th.batteryLowCritical) {
           if (!battCrit || !battCrit.status.startsWith('ACTIVE')) {
-            this.alarms = [
-              {
-                id: `alm-batt-lc-${device.id}-${now}`,
-                deviceId: device.id,
-                deviceName: device.name,
-                type: 'BATTERY_CRITICAL_LOW',
-                severity: 'CRITICAL',
-                status: 'ACTIVE_UNACK',
-                createdTime: now,
-                details: {
-                  message: `Battery level (${battery}%) below critical threshold (<${th.batteryLowCritical}%)`,
-                  battery,
-                },
+            addAlarm({
+              id: `alm-batt-lc-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'BATTERY_CRITICAL_LOW',
+              severity: 'CRITICAL',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Battery level (${battery}%) below critical threshold (<${th.batteryLowCritical}%)`,
+                battery,
               },
-              ...this.alarms,
-            ];
-            updated = true;
+            });
           }
         } else if (battCrit && battCrit.status.startsWith('ACTIVE')) {
           if (battery >= th.batteryLowCritical + th.battHist) {
@@ -1994,23 +2017,19 @@ class ThingsBoardService {
         const battWarn = deviceAlarms.find((a) => a.type === 'BATTERY_LOW_WARNING');
         if (battery < th.batteryLowWarning && battery >= th.batteryLowCritical) {
           if (!battWarn || !battWarn.status.startsWith('ACTIVE')) {
-            this.alarms = [
-              {
-                id: `alm-batt-lw-${device.id}-${now}`,
-                deviceId: device.id,
-                deviceName: device.name,
-                type: 'BATTERY_LOW_WARNING',
-                severity: 'WARNING',
-                status: 'ACTIVE_UNACK',
-                createdTime: now,
-                details: {
-                  message: `Battery level (${battery}%) below warning threshold (<${th.batteryLowWarning}%)`,
-                  battery,
-                },
+            addAlarm({
+              id: `alm-batt-lw-${device.id}-${now}`,
+              deviceId: device.id,
+              deviceName: device.name,
+              type: 'BATTERY_LOW_WARNING',
+              severity: 'WARNING',
+              status: 'ACTIVE_UNACK',
+              createdTime: now,
+              details: {
+                message: `Battery level (${battery}%) below warning threshold (<${th.batteryLowWarning}%)`,
+                battery,
               },
-              ...this.alarms,
-            ];
-            updated = true;
+            });
           }
         } else if (battWarn && battWarn.status.startsWith('ACTIVE')) {
           if (battery >= th.batteryLowWarning + th.battHist) {
