@@ -6,9 +6,7 @@ import {
   Thermometer, 
   Battery, 
   Wifi, 
-  Sparkles,
-  Sliders,
-  AlertTriangle
+  Sliders
 } from 'lucide-react';
 
 interface ClimateGaugesProps {

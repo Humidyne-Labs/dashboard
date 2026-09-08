@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import {
-  Info,
   X,
   Flame,
   Shield,
-  Code2,
   Calendar,
   UserCheck,
   Sparkles,
-  ExternalLink,
   Layers,
-  Database,
-  Cpu,
   Check,
   Copy,
 } from 'lucide-react';

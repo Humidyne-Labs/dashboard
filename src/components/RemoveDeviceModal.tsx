@@ -9,7 +9,6 @@ import {
   Loader2,
   RotateCcw,
   ShieldAlert,
-  ShieldCheck,
   Info,
 } from 'lucide-react';
 
@@ -38,7 +37,6 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
 
   const currentUser = thingsboard.getCurrentUser();
   const isCustomerUser = currentUser?.authority === 'CUSTOMER_USER';
-  const isTenantOrSysAdmin = currentUser?.authority === 'TENANT_ADMIN' || currentUser?.authority === 'SYS_ADMIN';
 
   const deviceName = device.clientAttributes?.device_name || device.name;
   const isDeleteConfirmed = actionType === 'unclaim' || confirmText.trim().toUpperCase() === 'DELETE';

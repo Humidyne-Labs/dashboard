@@ -16,8 +16,6 @@ import {
   Check, 
   XCircle,
   Sliders,
-  Sparkles,
-  Info,
   Trash2
 } from 'lucide-react';
 

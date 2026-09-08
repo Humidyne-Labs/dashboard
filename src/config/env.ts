@@ -97,7 +97,7 @@ export function getAuthentikOidcAuthorizeUrl(customClientId?: string, customRetu
  */
 export function getThingsBoardOAuth2Url(
   serverUrl?: string,
-  customReturnUrl?: string,
+  _customReturnUrl?: string,
   customProviderPath?: string
 ): string {
   // Determine base dynamically: default to active origin in browser (for reverse proxy),

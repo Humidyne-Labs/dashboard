@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, ShieldAlert, Sparkles, X, ChevronRight, Bug } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, CheckCircle, ChevronRight, Bug } from 'lucide-react';
 import { APP_CONFIG } from '../config/env';
 
 interface DevelopmentWarningModalProps {

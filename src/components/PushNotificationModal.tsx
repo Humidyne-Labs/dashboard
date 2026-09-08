@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Bell,
   BellRing,
-  BellOff,
   CheckCircle,
-  AlertTriangle,
-  Flame,
-  ShieldCheck,
   Send,
   X,
   Smartphone,
-  ExternalLink,
-  Layers,
-  Sparkles,
 } from 'lucide-react';
 import {
   pushNotifications,

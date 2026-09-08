@@ -3,12 +3,8 @@ import { HumidorDevice } from '../types';
 import { 
   Cpu, 
   ArrowUpCircle, 
-  CheckCircle2, 
-  AlertCircle, 
   Loader2, 
-  RefreshCw, 
-  ShieldCheck,
-  HardDrive
+  ShieldCheck
 } from 'lucide-react';
 
 interface OtaUpdateCenterProps {
@@ -21,7 +17,6 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
   const [targetVersion] = useState('v1.2.5');
 
   const currentVersion = device.clientAttributes.fw_version;
-  const isUpToDate = currentVersion === targetVersion && !updating;
 
   const handleStartOta = () => {
     setUpdating(true);

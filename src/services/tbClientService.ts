@@ -1,11 +1,8 @@
 import {
   client,
   login,
-  logout,
-  setupAuth,
   getDeviceById,
   getLatestTimeseries,
-  getAttributesByScope,
   type Device,
 } from '@enerlab/thingsboard-client';
 import {

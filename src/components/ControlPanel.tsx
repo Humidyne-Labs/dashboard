@@ -5,9 +5,7 @@ import {
   alarmThresholdService, 
   THRESHOLD_PRESETS, 
   toDisplayTemp, 
-  fromDisplayTemp,
-  toDisplayDelta,
-  fromDisplayDelta
+  fromDisplayTemp
 } from '../services/alarmThresholds';
 import { 
   Sliders, 
@@ -27,10 +25,7 @@ import {
   Thermometer,
   ShieldCheck,
   Sparkles,
-  Layers,
-  Battery,
   HardDrive,
-  Mail,
   MailCheck,
   MailX
 } from 'lucide-react';
@@ -170,7 +165,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
-  const dispTempHist = toDisplayDelta(thresholds.tempHist, tempUnit);
 
   const tempMinSlider = tempUnit === 'C' ? 10 : 50;
   const tempMaxSlider = tempUnit === 'C' ? 32 : 90;

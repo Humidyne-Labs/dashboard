@@ -10,7 +10,6 @@ import {
   getAttributesByScope as apiGetAttributesByScope,
   saveDeviceAttributes as apiSaveDeviceAttributes,
   getAllAlarmsV2 as apiGetAllAlarmsV2,
-  getAllAlarms as apiGetAllAlarms,
   ackAlarm as apiAckAlarm,
   clearAlarm as apiClearAlarm,
   getUser as apiGetUser,
@@ -39,7 +38,6 @@ import {
   decodeJwtPayload,
   performSilentTokenRefresh,
   isAuthentikOidcToken,
-  isThingsBoardToken,
 } from '../utils/authTokens';
 import { registerGlobalClientInterceptors } from './apiClientInit';
 import { alarmThresholdService } from './alarmThresholds';
@@ -1480,7 +1478,7 @@ class ThingsBoardService {
   public async getHistory(
     deviceId: string,
     rangeHours: number = 24,
-    options?: {
+    _options?: {
       limit?: number;
       agg?: 'NONE' | 'AVG' | 'MIN' | 'MAX' | 'SUM' | 'COUNT';
       interval?: number;

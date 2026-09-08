@@ -19,7 +19,6 @@ import {
   Info,
   AlertTriangle,
   BellRing,
-  Smartphone,
   Menu,
   X
 } from 'lucide-react';
@@ -34,7 +33,7 @@ interface HeaderTickerProps {
   onOpenClaimModal: () => void;
   onOpenConfigModal: () => void;
   onOpenAlarmsModal: () => void;
-  onOpenAuthModal: () => void;
+  onOpenAuthModal?: () => void;
   onOpenApiInspector: () => void;
   onOpenAboutModal: () => void;
   onOpenDevWarning: () => void;
@@ -53,7 +52,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   onOpenClaimModal,
   onOpenConfigModal,
   onOpenAlarmsModal,
-  onOpenAuthModal,
+  onOpenAuthModal: _onOpenAuthModal,
   onOpenApiInspector,
   onOpenAboutModal,
   onOpenDevWarning,

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { HumidorDevice, HumidorAlarm, TempUnit } from './types';
-import { thingsboard, UserProfile } from './services/thingsboard';
+import { thingsboard } from './services/thingsboard';
 import { HeaderTicker } from './components/HeaderTicker';
 import { DeviceStatusHeader } from './components/DeviceStatusHeader';
 import { ClimateGauges } from './components/ClimateGauges';
@@ -21,7 +21,7 @@ import { PushNotificationModal } from './components/PushNotificationModal';
 import { AlarmThresholdsModal } from './components/AlarmThresholdsModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getEnv } from './utils/env';
-import { Flame, Cpu, Info, AlertTriangle, BellRing } from 'lucide-react';
+import { Flame, Cpu, Info, AlertTriangle } from 'lucide-react';
 
 function areDevicesEqual(a: HumidorDevice[], b: HumidorDevice[]): boolean {
   if (a === b) return true;
@@ -76,7 +76,6 @@ export default function App() {
   const [isDevWarningOpen, setIsDevWarningOpen] = useState(false);
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
   const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
-  const [tbAuthVersion, setTbAuthVersion] = useState(0);
 
   const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1-DASHBOARD');
   const appDesc = getEnv('VITE_APP_DESCRIPTION', 'Precision Humidor Monitoring & Telemetry Stack');
@@ -127,13 +126,8 @@ export default function App() {
       });
     });
 
-    const unsubAuth = thingsboard.subscribeAuth(() => {
-      setTbAuthVersion((v) => v + 1);
-    });
-
     return () => {
       unsubDevices();
-      unsubAuth();
     };
   }, []);
 

@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Thermometer,
   Droplets,
-  Wind,
   Wifi,
   Lock,
   Server,
@@ -18,7 +17,6 @@ import {
   ChevronUp,
   Database,
   Battery,
-  Layers,
   Clock,
   Volume2,
 } from 'lucide-react';
@@ -27,7 +25,6 @@ import {
   configureDefaultClient,
   loginThingsBoard,
   setManualTokenOverride,
-  createIsolatedThingsBoardClient,
 } from '../services/tbClientService';
 
 export interface HumidorTelemetryWidgetProps {
@@ -145,19 +142,6 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
   const rssiVal = telemetry['rssi']?.value !== undefined ? String(telemetry['rssi'].value) : '-64';
   const rhSafeLow = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhLowWarning ?? 65;
   const rhSafeHigh = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhHighWarning ?? 73;
-
-  // VPD calculation only: derived mathematically from ambient temp & RH
-  let vpdVal = '--';
-  if (humVal !== '--' && tempVal !== '--') {
-    const rh = parseFloat(humVal);
-    const tempF = parseFloat(tempVal);
-    if (!isNaN(rh) && !isNaN(tempF)) {
-      const tempC = ((tempF - 32) * 5) / 9;
-      const vpsat = 0.61078 * Math.exp((17.27 * tempC) / (tempC + 237.3));
-      const vpair = vpsat * (rh / 100);
-      vpdVal = Math.max(0, vpsat - vpair).toFixed(2);
-    }
-  }
 
   const rawKeysCount = Object.keys(telemetry).length;
 

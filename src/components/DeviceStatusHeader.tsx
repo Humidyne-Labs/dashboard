@@ -2,15 +2,10 @@ import React from 'react';
 import { HumidorDevice } from '../types';
 import { 
   Wifi, 
-  WifiOff, 
-  Cpu, 
   HardDrive, 
   Music, 
   Clock, 
-  Network, 
   ChevronDown, 
-  ShieldCheck, 
-  AlertCircle,
   Trash2,
 } from 'lucide-react';
 

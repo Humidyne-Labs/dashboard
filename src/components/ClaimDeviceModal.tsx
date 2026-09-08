@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { thingsboard } from '../services/thingsboard';
-import { X, Plus, KeyRound, Radio, Cpu, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Plus, Radio, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 interface ClaimDeviceModalProps {
   isOpen: boolean;

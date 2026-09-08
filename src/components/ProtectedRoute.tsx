@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from 'react-oidc-context';
-import { thingsboard, UserProfile } from '../services/thingsboard';
+import { thingsboard } from '../services/thingsboard';
 import { getResolvedOidcParams } from '../services/oidcConfig';
 import { getThingsBoardOAuth2Url } from '../config/env';
 import { isAuthentikOidcToken } from '../utils/authTokens';
@@ -10,14 +10,12 @@ import {
   AlertCircle, 
   Key, 
   Settings, 
-  CheckCircle2, 
   Loader2, 
   ExternalLink, 
   Radio, 
   Eye,
   EyeOff,
   Terminal,
-  HelpCircle,
   Play,
   Info
 } from 'lucide-react';
@@ -36,7 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [diagnosticsTab, setDiagnosticsTab] = useState<'logs' | 'token'>('logs');
   const [txCount, setTxCount] = useState(0);
-  const [tbAuthVersion, setTbAuthVersion] = useState(0);
+  const [, setTbAuthVersion] = useState(0);
 
   // Direct login form state
   const [username, setUsername] = useState('');
@@ -82,23 +80,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     });
     return unsub;
   }, []);
-
-  const isAuth = auth.isAuthenticated;
-  const oidcSub = auth.user?.profile?.sub;
-  const oidcEmail = auth.user?.profile?.email;
-  const oidcName = auth.user?.profile?.name || auth.user?.profile?.preferred_username;
-
-  const tbProfile = thingsboard.getCurrentUser();
-  const userProfile =
-    tbProfile ||
-    (isAuth && (oidcSub || oidcEmail)
-      ? {
-          id: (oidcSub as string) || 'oidc-user',
-          name: oidcName || oidcEmail || 'Humid1 User',
-          email: oidcEmail || 'user@humid1.com',
-          role: 'Authenticated User',
-        }
-      : null);
 
   const activeToken = thingsboard.getAuthToken();
 
