@@ -32,6 +32,7 @@ export interface SharedAttributes {
   sound_enabled: boolean;     // UI disables this when clientAttributes.has_sd_card === false
   auto_update_enabled: boolean;
   manual_ota_trigger: boolean;
+  email_alerts_enabled?: boolean; // Device Email Alerts opt-out toggle for ThingsBoard Rule Chain
   alarm_thresholds?: AlarmThresholds;
   [key: string]: any;
 }

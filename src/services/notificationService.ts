@@ -14,7 +14,7 @@ class NotificationService {
     soundEnabled: true,
   };
   private subscribers: Array<(settings: NotificationSettings, perm: NotificationPermission) => void> = [];
-  private notifiedAlarmIds = new Set<string>();
+  private notifiedAlarmSeverities = new Map<string, string>();
   private audioContext: AudioContext | null = null;
 
   constructor() {
@@ -174,18 +174,30 @@ class NotificationService {
   }
 
   public notifyAlarm(alarm: HumidorAlarm, deviceName?: string): void {
-    // Deduplicate so we don't spam for the exact same alarm instance
-    if (this.notifiedAlarmIds.has(alarm.id)) return;
-    this.notifiedAlarmIds.add(alarm.id);
+    const prevSeverity = this.notifiedAlarmSeverities.get(alarm.id);
 
-    // Keep set bounded
-    if (this.notifiedAlarmIds.size > 200) {
-      const arr = Array.from(this.notifiedAlarmIds);
-      this.notifiedAlarmIds = new Set(arr.slice(arr.length - 100));
+    // Deduplicate if already notified at this exact severity level
+    if (prevSeverity === alarm.severity) return;
+
+    const isEscalation = prevSeverity && prevSeverity !== alarm.severity && alarm.severity === 'CRITICAL';
+    this.notifiedAlarmSeverities.set(alarm.id, alarm.severity);
+
+    // Keep map bounded
+    if (this.notifiedAlarmSeverities.size > 200) {
+      const keys = Array.from(this.notifiedAlarmSeverities.keys());
+      const toRemove = keys.slice(0, keys.length - 100);
+      for (const k of toRemove) {
+        this.notifiedAlarmSeverities.delete(k);
+      }
     }
 
-    const title = `🚨 [${alarm.severity}] ${alarm.type.replace(/_/g, ' ')}`;
-    const body = `${deviceName || alarm.deviceName || 'Humidor'}: ${alarm.details?.message || 'Climate condition violated threshold envelope'}`;
+    const title = isEscalation
+      ? `🚨 [ESCALATED TO CRITICAL] ${alarm.type.replace(/_/g, ' ')}`
+      : `🚨 [${alarm.severity}] ${alarm.type.replace(/_/g, ' ')}`;
+
+    const body = `${deviceName || alarm.deviceName || 'Humidor'}: ${
+      alarm.details?.message || 'Climate condition violated threshold envelope'
+    }`;
 
     this.playAlarmSound(alarm.severity);
 
@@ -194,7 +206,7 @@ class NotificationService {
         new Notification(title, {
           body,
           icon: '/favicon.svg',
-          tag: `humid1-${alarm.id}`,
+          tag: `humid1-${alarm.id}-${alarm.severity}`,
           requireInteraction: alarm.severity === 'CRITICAL',
           silent: true, // Disable host OS / browser default chime to prevent double sound alerts
         });

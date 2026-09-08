@@ -29,7 +29,10 @@ import {
   Sparkles,
   Layers,
   Battery,
-  HardDrive
+  HardDrive,
+  Mail,
+  MailCheck,
+  MailX
 } from 'lucide-react';
 
 interface ControlPanelProps {
@@ -71,6 +74,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   );
   const [manualOta, setManualOta] = useState<boolean>(
     device.sharedAttributes.manual_ota_trigger ?? false
+  );
+  const [emailAlerts, setEmailAlerts] = useState<boolean>(
+    device.sharedAttributes.email_alerts_enabled ?? true
   );
 
   const [isSaving, setIsSaving] = useState(false);
@@ -116,6 +122,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         sound_enabled: hasSdCard ? soundEnabled : false,
         auto_update_enabled: autoUpdate,
         manual_ota_trigger: manualOta,
+        email_alerts_enabled: emailAlerts,
         alarm_thresholds: thresholds,
       });
 
@@ -559,6 +566,43 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                     autoUpdate ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Device Email Alerts Toggle (Shared Attribute: email_alerts_enabled) */}
+            <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${emailAlerts ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'}`}>
+                  {emailAlerts ? <MailCheck className="w-3.5 h-3.5" /> : <MailX className="w-3.5 h-3.5" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-200">Device Email Alerts</span>
+                    <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                      email_alerts_enabled
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">
+                    {emailAlerts 
+                      ? 'Enabled — ThingsBoard Rule Chain sends email alerts for active alarm triggers' 
+                      : 'Opted out — ThingsBoard Rule Chain suppresses automated email alerts'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setEmailAlerts(!emailAlerts)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                  emailAlerts ? 'bg-sky-500' : 'bg-slate-800'
+                }`}
+                title="Toggle Device Email Alerts in ThingsBoard"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    emailAlerts ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>

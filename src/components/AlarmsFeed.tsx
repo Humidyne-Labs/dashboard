@@ -37,7 +37,10 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
     notificationService.getPermission()
   );
   const [isPurging, setIsPurging] = useState(false);
+  const [isAckingAll, setIsAckingAll] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const [purgeFeedback, setPurgeFeedback] = useState<string | null>(null);
+  const [alarmFilter, setAlarmFilter] = useState<'ALL' | 'ACTIVE' | 'CLEARED'>('ALL');
 
   useEffect(() => {
     const unsubThresholds = alarmThresholdService.subscribe(setThresholds);
@@ -74,13 +77,45 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
     setPurgeFeedback(null);
     try {
       const res = await thingsboard.clearInactiveAlarms(true);
-      setPurgeFeedback(`Purged ${res.purgedCount} alarm(s) via ThingsBoard REST API`);
-      setTimeout(() => setPurgeFeedback(null), 4000);
+      setPurgeFeedback(
+        res.purgedCount > 0
+          ? `Purged ${res.purgedCount} inactive/cleared alarm(s) from ThingsBoard server & local history`
+          : 'Server alarm history is already completely clean (0 inactive alarms).'
+      );
+      setTimeout(() => setPurgeFeedback(null), 5000);
     } catch {
       setPurgeFeedback('Failed to purge server alarm records');
-      setTimeout(() => setPurgeFeedback(null), 4000);
+      setTimeout(() => setPurgeFeedback(null), 5000);
     } finally {
       setIsPurging(false);
+    }
+  };
+
+  const handleAckAll = async () => {
+    setIsAckingAll(true);
+    try {
+      const res = await thingsboard.acknowledgeAllAlarms();
+      setPurgeFeedback(`Acknowledged ${res.ackedCount} alarm(s)`);
+      setTimeout(() => setPurgeFeedback(null), 4000);
+    } catch {
+      setPurgeFeedback('Failed to acknowledge alarms');
+      setTimeout(() => setPurgeFeedback(null), 4000);
+    } finally {
+      setIsAckingAll(false);
+    }
+  };
+
+  const handleClearAllActive = async () => {
+    setIsClearingAll(true);
+    try {
+      const res = await thingsboard.clearAllActiveAlarms();
+      setPurgeFeedback(`Cleared ${res.clearedCount} active alarm(s)`);
+      setTimeout(() => setPurgeFeedback(null), 4000);
+    } catch {
+      setPurgeFeedback('Failed to clear active alarms');
+      setTimeout(() => setPurgeFeedback(null), 4000);
+    } finally {
+      setIsClearingAll(false);
     }
   };
 
@@ -118,6 +153,13 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
 
   const activeAlarms = alarms.filter((a) => a.status.startsWith('ACTIVE'));
   const inactiveAlarms = alarms.filter((a) => !a.status.startsWith('ACTIVE'));
+  const unackAlarms = alarms.filter((a) => a.status.endsWith('UNACK'));
+
+  const displayedAlarms = alarms.filter((alarm) => {
+    if (alarmFilter === 'ACTIVE') return alarm.status.startsWith('ACTIVE');
+    if (alarmFilter === 'CLEARED') return !alarm.status.startsWith('ACTIVE');
+    return true;
+  });
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
@@ -186,18 +228,17 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
             )}
           </button>
 
-          {inactiveAlarms.length > 0 && (
-            <button
-              type="button"
-              onClick={handlePurgeInactive}
-              disabled={isPurging}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
-              title="Delete all resolved/cleared alarms directly on ThingsBoard REST API (DELETE /api/alarm/{id}) to shrink response payloads"
-            >
-              <Trash2 className={`w-3.5 h-3.5 text-rose-400 ${isPurging ? 'animate-spin' : ''}`} />
-              <span>{isPurging ? 'Purging Server...' : `Purge Cleared (${inactiveAlarms.length})`}</span>
-            </button>
-          )}
+          {/* Purge All Inactive Alarms (Deletes all cleared records from ThingsBoard server) */}
+          <button
+            type="button"
+            onClick={handlePurgeInactive}
+            disabled={isPurging}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
+            title="Search ThingsBoard server for all cleared/resolved alarms and permanently delete them via DELETE /api/alarm/{id}"
+          >
+            <Trash2 className={`w-3.5 h-3.5 text-rose-400 ${isPurging ? 'animate-spin' : ''}`} />
+            <span>{isPurging ? 'Purging Server...' : inactiveAlarms.length > 0 ? `Purge All Cleared (${inactiveAlarms.length})` : 'Purge Cleared (All)'}</span>
+          </button>
 
           {onOpenThresholds && (
             <button
@@ -224,6 +265,74 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
         </div>
       )}
 
+      {/* Filter Tabs & Bulk Action Controls Bar */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <button
+            type="button"
+            onClick={() => setAlarmFilter('ALL')}
+            className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+              alarmFilter === 'ALL'
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            All ({alarms.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAlarmFilter('ACTIVE')}
+            className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+              alarmFilter === 'ACTIVE'
+                ? 'bg-rose-950/80 text-rose-300 border border-rose-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Active ({activeAlarms.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAlarmFilter('CLEARED')}
+            className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+              alarmFilter === 'CLEARED'
+                ? 'bg-slate-800 text-slate-200 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Cleared ({inactiveAlarms.length})
+          </button>
+        </div>
+
+        {/* Secondary Bulk Actions: Ack All & Clear All */}
+        <div className="flex items-center gap-1.5">
+          {unackAlarms.length > 0 && (
+            <button
+              type="button"
+              onClick={handleAckAll}
+              disabled={isAckingAll}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-medium flex items-center gap-1 transition cursor-pointer border border-slate-700 disabled:opacity-50"
+              title="Acknowledge all active unacknowledged alarms"
+            >
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span>{isAckingAll ? 'Acking...' : `Ack All (${unackAlarms.length})`}</span>
+            </button>
+          )}
+
+          {activeAlarms.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllActive}
+              disabled={isClearingAll}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-medium flex items-center gap-1 transition cursor-pointer border border-slate-700 disabled:opacity-50"
+              title="Transition all active alarms to cleared"
+            >
+              <XCircle className="w-3 h-3 text-rose-400" />
+              <span>{isClearingAll ? 'Clearing...' : `Clear All Active (${activeAlarms.length})`}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Active Threshold Strip Banner */}
       <div className="mb-4 p-2.5 bg-slate-950/60 border border-slate-800/80 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
         <div className="flex items-center gap-2">
@@ -244,9 +353,9 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
         )}
       </div>
 
-      {alarms.length > 0 ? (
+      {displayedAlarms.length > 0 ? (
         <div className="divide-y divide-slate-800/80 max-h-[320px] overflow-y-auto pr-1">
-          {alarms.map((alarm) => {
+          {displayedAlarms.map((alarm) => {
             const isActive = alarm.status.startsWith('ACTIVE');
             const isUnack = alarm.status.endsWith('UNACK');
 

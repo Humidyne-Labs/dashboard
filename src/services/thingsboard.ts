@@ -257,6 +257,7 @@ class ThingsBoardService {
           sound_enabled: true,
           auto_update_enabled: true,
           manual_ota_trigger: false,
+          email_alerts_enabled: true,
         },
         fw_state: 'VERIFIED',
         fw_progress: 100,
@@ -288,6 +289,7 @@ class ThingsBoardService {
           sound_enabled: false,
           auto_update_enabled: true,
           manual_ota_trigger: false,
+          email_alerts_enabled: true,
         },
         fw_state: 'VERIFIED',
         fw_progress: 100,
@@ -319,6 +321,7 @@ class ThingsBoardService {
           sound_enabled: true,
           auto_update_enabled: true,
           manual_ota_trigger: false,
+          email_alerts_enabled: true,
         },
         fw_state: 'IDLE',
         fw_progress: 0,
@@ -923,6 +926,7 @@ class ThingsBoardService {
             sound_enabled: true,
             auto_update_enabled: true,
             manual_ota_trigger: false,
+            email_alerts_enabled: true,
           };
 
           // Fetch real latest timeseries via apiGetLatestTimeseries
@@ -1103,7 +1107,7 @@ class ThingsBoardService {
     }
 
     const txId = 'alm-' + Math.random().toString(36).substring(2, 9);
-    const pageSize = options?.pageSize || 30;
+    const pageSize = options?.pageSize || 100;
     const page = options?.page || 0;
     // Default to 'ANY' so cleared alarms remain logged in the user's history until explicitly purged
     const searchStatus = options?.searchStatus || 'ANY';
@@ -1338,6 +1342,7 @@ class ThingsBoardService {
           sound_enabled: true,
           auto_update_enabled: true,
           manual_ota_trigger: false,
+          email_alerts_enabled: true,
         },
       };
       this.devices.push(newDev);
@@ -2368,41 +2373,83 @@ class ThingsBoardService {
 
   /**
    * Purge all inactive/cleared alarms from the ThingsBoard server via REST API.
-   * Sends DELETE /api/alarm/{alarmId} for each cleared alarm entity, reducing payload overhead.
+   * Discovers all cleared alarms across the server (up to 500) and sends DELETE /api/alarm/{alarmId}
+   * concurrently in batches of 15 to completely purge test history in seconds.
    */
   public async purgeServerAlarmHistory(): Promise<{ purgedCount: number; errors: number }> {
-    const inactiveAlarms = this.alarms.filter((alm) => !alm.status.startsWith('ACTIVE'));
-    let purgedCount = 0;
-    let errors = 0;
-
     const token = this.getEffectiveToken();
     const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    const alarmIdsToPurge = new Set<string>();
 
-    for (const alarm of inactiveAlarms) {
+    // 1. Gather all local inactive alarms
+    this.alarms
+      .filter((alm) => !alm.status.startsWith('ACTIVE'))
+      .forEach((alm) => alarmIdsToPurge.add(alm.id));
+
+    // 2. Query ThingsBoard REST API for any additional cleared alarm entities stored on the server
+    if (token) {
       try {
-        if (token) {
-          const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarm.id)}`;
-          const res = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'X-Authorization': `Bearer ${token}`,
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (res.ok) {
-            purgedCount++;
-          } else {
-            errors++;
-          }
-        } else {
-          purgedCount++;
+        const res = await apiGetAllAlarmsV2({
+          query: {
+            pageSize: 500,
+            page: 0,
+            sortProperty: 'createdTime',
+            sortOrder: 'DESC',
+            searchStatus: 'CLEARED',
+          } as any,
+          requestValidator: undefined,
+          responseValidator: undefined,
+        } as any);
+
+        const serverCleared = (res.data as any)?.data || [];
+        for (const item of serverCleared) {
+          const id = item.id?.id || item.id;
+          if (id) alarmIdsToPurge.add(id);
         }
-      } catch {
-        errors++;
+      } catch (err) {
+        console.warn('Could not query server cleared alarms for bulk purge:', err);
       }
     }
 
-    this.alarms = this.alarms.filter((alm) => alm.status.startsWith('ACTIVE'));
+    const idList = Array.from(alarmIdsToPurge);
+    let purgedCount = 0;
+    let errors = 0;
+
+    // 3. Concurrently delete in parallel chunks of 15
+    const CHUNK_SIZE = 15;
+    for (let i = 0; i < idList.length; i += CHUNK_SIZE) {
+      const chunk = idList.slice(i, i + CHUNK_SIZE);
+      const results = await Promise.all(
+        chunk.map(async (alarmId) => {
+          if (!token) return true;
+          try {
+            const url = `${serverUrl}/api/alarm/${encodeURIComponent(alarmId)}`;
+            const res = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'X-Authorization': `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            return res.ok;
+          } catch {
+            return false;
+          }
+        })
+      );
+
+      for (const ok of results) {
+        if (ok) purgedCount++;
+        else errors++;
+      }
+    }
+
+    // 4. Remove purged alarms from memory and re-sync
+    this.alarms = this.alarms.filter((alm) => !alarmIdsToPurge.has(alm.id));
+    if (token) {
+      // Re-fetch to ensure canonical state
+      await this.fetchRealAlarms().catch(() => {});
+    }
     this.notifySubscribers();
     return { purgedCount, errors };
   }
@@ -2418,6 +2465,32 @@ class ThingsBoardService {
     this.alarms = this.alarms.filter((alm) => alm.status.startsWith('ACTIVE'));
     this.notifySubscribers();
     return { purgedCount: count, errors: 0 };
+  }
+
+  /**
+   * Bulk Acknowledge all currently unacknowledged alarms
+   */
+  public async acknowledgeAllAlarms(): Promise<{ ackedCount: number }> {
+    const unacked = this.alarms.filter((a) => a.status.endsWith('UNACK'));
+    let count = 0;
+    for (const alm of unacked) {
+      await this.acknowledgeAlarm(alm.id);
+      count++;
+    }
+    return { ackedCount: count };
+  }
+
+  /**
+   * Bulk Clear all currently active alarms (transitions them to CLEARED)
+   */
+  public async clearAllActiveAlarms(): Promise<{ clearedCount: number }> {
+    const active = this.alarms.filter((a) => a.status.startsWith('ACTIVE'));
+    let count = 0;
+    for (const alm of active) {
+      await this.clearAlarm(alm.id);
+      count++;
+    }
+    return { clearedCount: count };
   }
 }
 
