@@ -6,7 +6,7 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 
 [![Donate to Humid1](https://custom-icon-badges.demolab.com/badge/Donate-Humid1.com-4A154B?style=plastic&logo=signupgenius&logoColor=white)](https://tools.signupgenius.com/c/support-humid1-project)  
 
-### 🎞️ [Screen Captures](/SNAPSHOTS.md)
+### 🎞️ [Screen Captures (Beta Preview)](/SNAPSHOTS.md)
 
 ## 🏛️ Architecture Overview
 
