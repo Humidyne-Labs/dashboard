@@ -4,8 +4,6 @@
 
 HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScript, Tailwind CSS, and Vite. It connects directly to the ThingsBoard IoT engine and Authentik Identity Provider to provide real-time climate monitoring, dual-axis telemetry visualization, hardware claiming, shared-attribute remote controls, over-the-air (OTA) firmware update orchestration, and real-time alarms.
 
----
-
 [![Donate to Humid1](https://custom-icon-badges.demolab.com/badge/Donate-Humid1.com-4A154B?style=plastic&logo=signupgenius&logoColor=white)](https://tools.signupgenius.com/c/support-humid1-project)
 
 ## 🏛️ Architecture Overview
@@ -169,3 +167,10 @@ npm run build
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+## 👥 Contributors
+
+[![none](https://wsrv.nl/?url=github.com/Humiditron.png&w=32&h=32&fit=cover&mask=circle&filt=greyscale "@Humiditron")](https://github.com/Humiditron/)
+[![none](https://wsrv.nl/?url=github.com/google-gemini.png&w=32&h=32&fit=cover&mask=circle&filt=greyscale "@google-gemini")](https://github.com/google-gemini/)
+
+© 2026 **Humidyne-Labs**
