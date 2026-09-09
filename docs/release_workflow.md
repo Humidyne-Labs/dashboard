@@ -395,15 +395,3 @@ jobs:
 
 </details>
 
----
-
-## 4. Release Checklist for Developers
-
-- [ ] **Web Dashboard Release**:
-  1. Verify the `version` block is up-to-date in `package.json`.
-  2. Merge the approved branch to `main`.
-  3. Create and push the dashboard release tag:
-     ```bash
-     git tag v1.2.0
-     git push origin v1.2.0
-     ```
