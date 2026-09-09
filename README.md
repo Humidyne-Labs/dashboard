@@ -126,6 +126,10 @@ Container runtime variables are dynamically compiled into `window.__HUMID1_CONFI
 | `VITE_DASHBOARD_URL` | `https://dash.humid1.com` | Origin URL for this dashboard instance |
 | `VITE_APP_REDIRECT_URI` | `https://dash.humid1.com/auth/callback` | OIDC redirect callback URL |
 | `VITE_DEFAULT_DEVICE_NAME`| `CEDAR-CABINET-X9` | Default hardware unit identifier when none claimed |
+| `VITE_APP_TITLE' | `HUMID1` | Application Title |
+| `VITE_APP_DESCRIPTION` | `<SEE ENV FILE>` | Application description |
+| `VITE_DASHBOARD_VERSION` | `1.0.6-beta` | Current release build version |
+| `VITE_DASHBOARD_REVISION` | `dev` | Current revision name |
 
 ---
 
