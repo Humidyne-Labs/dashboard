@@ -34,8 +34,8 @@ export const APP_CONFIG: Humid1Config = {
   thingsboardOAuthProviderPath: '/oauth2/authorization/1efd3960-a10b-11f1-b530-9b9631e0c365',
   defaultDeviceName: getEnv('VITE_DEFAULT_DEVICE_NAME', 'HUMID1-CABINET-01'),
   isSimulatedDefault: false,
-  version: getEnv('VITE_DASHBOARD_VERSION', '1.2.0-beta'),
-  revision: getEnv('VITE_DASHBOARD_REVISION', 'rev-dev-continuous'),
+  version: getEnv('VITE_DASHBOARD_VERSION', '1.0.6-beta'),
+  revision: getEnv('VITE_DASHBOARD_REVISION', 'dev'),
 };
 
 
