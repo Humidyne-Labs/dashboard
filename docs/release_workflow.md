@@ -1,6 +1,6 @@
 # HUMID1 — Git Branching & CI/CD Release Workflow
 
-This document details the branch lifecycle, automated build routines, and release integration guidelines utilized within the **HUMID1** ecosystem to deploy web assets and microcontroller firmware.
+This document details the branch lifecycle, automated build routines, and release integration guidelines utilized within the **HUMID1** ecosystem to deploy web assets.
 
 ---
 
@@ -13,14 +13,14 @@ feature/branch ──> PR / Code Review ──> main (Protected)
                                           │
                                           ├── Tag: vX.Y.Z (Triggers Web PWA & Android TWA Build)
                                           │
-                                          └── Tag: fw-vX.Y.Z (Triggers ESP32 Firmware Build & ThingsBoard OTA Push)
+                                          └── Tag: 'none' (Triggers Docker Container Build)
 ```
 
 * **`main`**: Protected branch. Requires passing automated validation checks (linters, static analyses, and compilation suites) before pull requests are merged.
 * **`feature/*` / `fix/*`**: Temporary local branches branched from `main` to implement enhancements or fix defects.
 * **Release Tags**:
   * **`vX.Y.Z`** $\rightarrow$ Triggers compilation of the Web Dashboard, production static deployment, and the native Android TWA package build.
-  * **`fw-vX.Y.Z`** $\rightarrow$ Triggers ESP32 microcontroller firmware compilation and auto-uploads binaries to the ThingsBoard OTA Package repository.
+  * **`none`** $\rightarrow$ Triggers only the docker container build, development package gets uploaded to ghcr.io for deployment.
 
 ---
 
@@ -41,7 +41,121 @@ When a web app tag is pushed (e.g. `git tag v1.2.0 && git push origin v1.2.0`):
              └──► Output production .apk and .aab assets to GitHub Release attachments
 ```
 
+### GitHub Actions Workflow: `.github/workflows/build-docker.yml`
+
+<details>
+  <summary>build-docker.yml</summary>
+  
+```yaml
+name: Build and Deploy HUMID1 Dashboard
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push Docker Image to GHCR'
+        required: true
+        type: boolean
+        default: true
+      image_tag:
+        description: 'Custom Image Tag (leave empty for default latest/sha)'
+        required: false
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  validate:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run TypeScript validation & lint
+        run: npm run lint
+
+      - name: Build production bundle test
+        run: npm run build
+
+  docker-build-push:
+    name: Build & Push Docker Image
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (Multi-platform emulation)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        if: github.event_name != 'pull_request' || github.event.inputs.push_image == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata & tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=${{ github.event.inputs.image_tag }},enable=${{ github.event.inputs.image_tag != '' }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+```
+
+</details>
+
+---
+
 ### GitHub Actions Workflow: `.github/workflows/android-twa.yml`
+
+<details>
+  <summary>android-twa.yml</summary>
 
 ```yaml
 name: Build Android TWA (APK & AAB)
@@ -78,10 +192,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Validate & Build Web PWA
         run: npm run build
@@ -98,6 +211,7 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      # Non-interactive configuration for Bubblewrap
       - name: Configure Bubblewrap Paths
         run: |
           mkdir -p ~/.bubblewrap
@@ -126,9 +240,10 @@ jobs:
             echo "has_secret=false" >> $GITHUB_OUTPUT
           fi
           
-          echo "=== SHA-256 CERTIFICATE FINGERPRINT ==="
+          # Extract and log SHA-256 fingerprint for Digital Asset Links verification
+          echo "=== SHA-256 CERTIFICATE FINGERPRINT FOR ASSETLINKS.JSON ==="
           keytool -list -v -keystore android-build/android-keystore.jks -alias "$KEY_ALIAS" -storepass "$KEYSTORE_PASS" | grep "SHA256:"
-          echo "======================================="
+          echo "=========================================================="
 
       - name: Build Android TWA Project with Bubblewrap
         env:
@@ -137,13 +252,19 @@ jobs:
           BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
+          # Copy twa-manifest.json pulling assets directly from the public repo
           mkdir -p android-build
           cp twa-manifest.json android-build/twa-manifest.json
+          
           cd android-build
+          
+          # Generate native files non-interactively using public repo assets
           yes | bubblewrap update          
+          
+          # Build APK with Bubblewrap
           bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
 
-      - name: Build Android App Bundle (.aab)
+      - name: Build Android App Bundle (.aab) for Google Play Store
         if: github.event.inputs.build_bundle != 'false'
         env:
           BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
@@ -152,13 +273,14 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
           cd android-build
-          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || echo "Bundle skipped"
+          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || echo "Bundle generation complete or skipped"
 
       - name: Rename and Stage Artifacts
         run: |
           mkdir -p output
           find android-build -name "*.apk" -exec cp {} output/ \;
           find android-build -name "*.aab" -exec cp {} output/ \; || true
+          ls -la output/
 
       - name: Upload APK & AAB Artifacts
         uses: actions/upload-artifact@v4
@@ -167,7 +289,7 @@ jobs:
           path: output/
           retention-days: 14
 
-      - name: Attach Assets to GitHub Release
+      - name: Attach APK and AAB to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
@@ -177,7 +299,12 @@ jobs:
           prerelease: false
 ```
 
+</details>
+
 ---
+
+<details>
+  <summary>Not A REAL Thing</summary>
 
 ## 3. Firmware Release Pipeline (`fw-vX.Y.Z`)
 
@@ -266,18 +393,11 @@ jobs:
             -F "file=@.pio/build/esp32dev/firmware.bin"
 ```
 
+</details>
+
 ---
 
 ## 4. Release Checklist for Developers
-
-- [ ] **Microcontroller Firmware Release**:
-  1. Bump `VERSION` constants inside the firmware source code config and `platformio.ini`.
-  2. Merge the approved feature/bugfix branch into `main`.
-  3. Create and push the firmware tag:
-     ```bash
-     git tag fw-v1.2.0
-     git push origin fw-v1.2.0
-     ```
 
 - [ ] **Web Dashboard Release**:
   1. Verify the `version` block is up-to-date in `package.json`.
