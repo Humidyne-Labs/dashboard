@@ -534,6 +534,9 @@ Dispatches interactive requests to the device. These block synchronously (with a
 
 ---
 
+<details>
+  <summary>Not Actually Implemented</summary>
+
 ## 6. Over-The-Air (OTA) Updates Triggering
 
 The dashboard initiates hardware over-the-air firmware updates via a simple shared attribute transaction. 
@@ -549,3 +552,5 @@ Rather than managing intricate server-side binary uploads, clicking **"Push OTA 
   }
   ```
 - **Response Status:** `200 OK`
+
+</details>
