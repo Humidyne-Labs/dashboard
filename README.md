@@ -12,12 +12,11 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 
 ```
 ├── public/                             # Static assets, Web Manifest, Favicons, Runtime Config Placeholders
-├── docs/                               # Architecture, App Specs, and Workflow Documentation
-│   ├── api_manifest.md                 # Complete JSON transaction & payload reference manifest
-│   ├── dashboard_spec.md
-│   ├── architecture.md
-│   ├── release_workflow.md
-│   └── thingsboard_spec.md
+├── docs/                               # Clean, coherent production architecture and workflow guides
+│   ├── architecture.md                 # System topology, visual design identity, data schemas
+│   ├── api_manifest.md                 # Complete JSON request/response reference manifest
+│   ├── twa_bubblewrap_guide.md         # Android TWA & Bubblewrap build steps
+│   └── release_workflow.md             # CI/CD git tags & automatic OTA uploads
 ├── src/
 │   ├── components/                     # Modular, isolated UI and modal components
 │   │   ├── AlarmsFeed.tsx              # Active & historic alarms feed with Ack/Clear actions
@@ -145,7 +144,7 @@ HUMID1 is fully compliant with Google PWA and **Trusted Web Activity (TWA)** spe
 
 A full catalog of real request/response payloads, headers, curl examples, and WebSocket formats across ThingsBoard REST, Authentik OIDC PKCE, ESP32 telemetry ingestion, shared attribute sync, device claiming, and 2-way RPC commands is documented in:
 
-👉 **[`docs/api_transaction_manifest.md`](docs/api_transaction_manifest.md)**
+👉 **[`docs/api_manifest.md`](docs/api_manifest.md)**
 
 ---
 

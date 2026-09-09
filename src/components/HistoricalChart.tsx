@@ -367,9 +367,9 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   }, [isZoomed, activeStartTs, activeEndTs]);
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
+    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 lg:p-6 shadow-xl backdrop-blur-sm w-full">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3.5 sm:mb-5">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
             <Activity className="w-5 h-5" />
@@ -470,59 +470,6 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             ))}
           </div>
 
-          {/* Zoom & Navigation Button Group */}
-          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
-            <button
-              onClick={() => handlePan('left')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              title="Pan Left (Shift Back in Time)"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={handleZoomIn}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              title="Zoom In (+25%)"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={handleZoomOut}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              title="Zoom Out (-25%)"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => handlePan('right')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              title="Pan Right (Shift Forward in Time)"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-            {isZoomed && (
-              <button
-                onClick={handleResetZoom}
-                className="px-1.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1 text-[11px]"
-                title="Reset to Full Range"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span className="hidden lg:inline">Reset</span>
-              </button>
-            )}
-            <button
-              onClick={() => setShowBrush(!showBrush)}
-              className={`p-1.5 rounded-lg transition cursor-pointer ${
-                showBrush
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Toggle Timeline Scroll & Range Slider"
-            >
-              <MoveHorizontal className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
           {/* Manual Refresh Button */}
           <button
             onClick={loadHistory}
@@ -536,28 +483,12 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         </div>
       </div>
 
-      {/* Interactive Helper Banner when selection or zoom is active */}
-      <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 mb-1.5">
-        <span className="text-[10px] text-slate-500">
-          💡 Click and drag across the chart to zoom into any time region. Scroll with navigation controls or slider below.
-        </span>
-        {isZoomed && (
-          <button
-            onClick={handleResetZoom}
-            className="text-[10px] text-amber-400 hover:underline cursor-pointer flex items-center gap-1"
-          >
-            <RotateCcw className="w-2.5 h-2.5" />
-            Reset Zoom View
-          </button>
-        )}
-      </div>
-
       {/* Main Dual-Axis Chart Area */}
-      <div className="h-[270px] sm:h-[350px] w-full pt-1 select-none">
+      <div className="h-[320px] sm:h-[400px] lg:h-[460px] w-full pt-1 select-none">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={displayHistory}
-            margin={{ top: 12, right: 12, left: -10, bottom: showBrush ? 20 : 0 }}
+            margin={{ top: 12, right: 6, left: -14, bottom: showBrush ? 20 : 0 }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -814,6 +745,80 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             )}
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Interactive Time Graph Control Bar (Zoom, Pan, Slider & Reset placed above legend in bottom-left) */}
+      <div className="mt-2 pt-2 flex flex-wrap items-center justify-between gap-2.5 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Zoom & Navigation Button Cluster */}
+          <div className="flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 shadow-sm">
+            <button
+              onClick={() => handlePan('left')}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Pan Left (Shift Back in Time)"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleZoomIn}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Zoom In (+25%)"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Zoom Out (-25%)"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handlePan('right')}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              title="Pan Right (Shift Forward in Time)"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+            {isZoomed && (
+              <button
+                onClick={handleResetZoom}
+                className="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1 text-[11px] font-medium"
+                title="Reset to Full Range"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset Zoom</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowBrush(!showBrush)}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                showBrush
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Toggle Timeline Scroll & Range Slider"
+            >
+              <MoveHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <span className="text-[11px] text-slate-500 hidden sm:inline">
+            💡 Drag across chart or use buttons to pan & zoom
+          </span>
+        </div>
+
+        {isZoomed && (
+          <div className="text-[11px] font-mono text-amber-400/90 flex items-center gap-1.5 bg-amber-950/40 px-2 py-1 rounded-lg border border-amber-500/20">
+            <span>Custom Zoom Window</span>
+            <button
+              onClick={handleResetZoom}
+              className="text-amber-300 hover:underline cursor-pointer flex items-center gap-0.5 ml-1"
+            >
+              (Reset)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Footer Legend / Threshold Envelope Summary */}

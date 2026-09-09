@@ -1,96 +1,50 @@
-# HUMID1 — Comprehensive API Transaction Manifest & JSON Reference
+# HUMID1 — REST API Manifest & JSON Reference
 
-This manifest provides a complete, structured catalog of the exact HTTP request/response JSON payloads, headers, query parameters, and WebSocket event structures used across the HUMID1 telemetry stack (ThingsBoard CE IoT Core, Authentik Identity Provider, and the Frontend Dashboard).
-
----
-
-## Table of Contents
-
-1. [Authentication & Session Lifecycle](#1-authentication--session-lifecycle)
-   - [1.1 ThingsBoard REST Login (`POST /api/auth/login`)](#11-thingsboard-rest-login)
-   - [1.2 Silent Token Refresh (`POST /api/auth/token/refresh`)](#12-silent-token-refresh)
-   - [1.3 Authentik OIDC Authorization & Token Exchange](#13-authentik-oidc-authorization--token-exchange)
-   - [1.4 ThingsBoard OAuth2 SSO Redirect (`GET /oauth2/authorization/{providerId}`)](#14-thingsboard-oauth2-sso-redirect)
-   - [1.5 Current User Profile (`GET /api/auth/user`)](#15-current-user-profile)
-2. [Telemetry & Time-Series Data](#2-telemetry--time-series-data)
-   - [2.1 Fetch Latest Real-Time Telemetry (`GET /api/plugins/telemetry/...`)](#21-fetch-latest-real-time-telemetry)
-   - [2.2 Query Historical Time-Series (`GET /api/plugins/telemetry/.../values/timeseries`)](#22-query-historical-time-series)
-   - [2.3 Hardware Telemetry Ingest (`POST /api/v1/{ACCESS_TOKEN}/telemetry`)](#23-hardware-telemetry-ingest)
-3. [Device Attributes (Client & Shared)](#3-device-attributes-client--shared)
-   - [3.1 Fetch Device Attributes (`GET /api/plugins/telemetry/.../values/attributes`)](#31-fetch-device-attributes)
-   - [3.2 Update Shared Attributes (`POST /api/plugins/telemetry/.../SHARED_SCOPE`)](#32-update-shared-attributes)
-   - [3.3 Hardware Client Attributes Ingest (`POST /api/v1/{ACCESS_TOKEN}/attributes`)](#33-hardware-client-attributes-ingest)
-4. [Device Discovery, Claiming & Management](#4-device-discovery-claiming--management)
-   - [4.1 Fetch Claimed / Customer Devices (`GET /api/customer/.../devices` or `GET /api/tenant/devices`)](#41-fetch-claimed--customer-devices)
-   - [4.2 Claim Hardware Device (`POST /api/customer/device/claim`)](#42-claim-hardware-device)
-   - [4.3 Delete / Unclaim Device (`DELETE /api/customer/device/{deviceId}`)](#43-delete--unclaim-device)
-5. [RPC (Remote Procedure Calls)](#5-rpc-remote-procedure-calls)
-   - [5.1 Two-Way RPC Command to Device (`POST /api/rpc/twoway/{deviceId}`)](#51-two-way-rpc-command-to-device)
-   - [5.2 ESP32 Boot Epoch Time Sync RPC (`POST /api/v1/{ACCESS_TOKEN}/rpc`)](#52-esp32-boot-epoch-time-sync-rpc)
-6. [Alarms Management Lifecycle](#6-alarms-management-lifecycle)
-   - [6.1 Query Active & Historic Alarms (`GET /api/alarm/DEVICE/{deviceId}`)](#61-query-active--historic-alarms)
-   - [6.2 Acknowledge Alarm (`POST /api/alarm/{alarmId}/ack`)](#62-acknowledge-alarm)
-   - [6.3 Clear Alarm (`POST /api/alarm/{alarmId}/clear`)](#63-clear-alarm)
-7. [OTA (Over-The-Air) Firmware Updates](#7-ota-over-the-air-firmware-updates)
-   - [7.1 List Available OTA Firmware Packages (`GET /api/otaPackages/DEVICE`)](#71-list-available-ota-firmware-packages)
-   - [7.2 Assign Firmware to Device (`POST /api/device`)](#72-assign-firmware-to-device)
-   - [7.3 Device Firmware Status Telemetry (`fw_state`, `fw_version`)](#73-device-firmware-status-telemetry)
+This document serves as the authoritative, technically precise reference of the **actual ThingsBoard CE REST API integrations and JSON payloads** executed by the HUMID1 Dashboard frontend. Every transaction documented here maps directly to the active services and components implemented in `/src/services/thingsboard.ts` and the UI controls.
 
 ---
 
 ## 1. Authentication & Session Lifecycle
 
-### 1.1 ThingsBoard REST Login
-Authenticates a user via email/username and password directly against the ThingsBoard REST API.
+The dashboard connects to ThingsBoard CE utilizing a secure dual-access mechanism: direct username/password credential authentication or OpenID Connect (OIDC) Single Sign-On (SSO) redirects mapped from Authentik.
 
-- **Endpoint:** `POST https://app.humid1.com/api/auth/login`
-- **Headers:**
+### 1.1 Direct REST Login
+Authenticates a tenant administrator or customer user directly, returning a short-lived access JWT and a long-lived refresh token.
+
+- **Endpoint:** `POST /api/auth/login`
+- **Request Headers:**
   ```http
   Content-Type: application/json
   Accept: application/json
   ```
-- **Request Body:**
+- **Request Payload:**
   ```json
   {
     "username": "user@humid1.com",
     "password": "SecurePassword123!"
   }
   ```
-- **Response (200 OK):**
+- **Response Payload (200 OK):**
   ```json
   {
     "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQGh1bWlkMS5jb20iLCJzY29wZXMiOlsic3VzZXIiXSwidXNlcklkIjoiMWVmZDM5NjAtYTEwYi0xMWYxLWI1MzAtOWI5NjMxZTBjMzY1IiwidGVuYW50SWQiOiIxZWZkMzk2MC1hMTBiLTExZjEtYjUzMC05Yjk2MzFlMGMzNjUiLCJpc3MiOiJUaGluZ3NCb2FyZCIsImlhdCI6MTc4ODA1NTIwMCwiZXhwIjoxNzg4MDU4ODAwfQ.xyz...",
     "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQGh1bWlkMS5jb20iLCJzY29wZXMiOlsicmVmcmVzaCJdLCJ1c2VySWQiOiIxZWZkMzk2MC1hMTBiLTExZjEtYjUzMC05Yjk2MzFlMGMzNjUiLCJpc3MiOiJUaGluZ3NCb2FyZCIsImlhdCI6MTc4ODA1NTIwMCwiZXhwIjoxNzg4NjYwMDAwfQ.abc..."
   }
   ```
-- **Error Response (401 Unauthorized):**
-  ```json
-  {
-    "status": 401,
-    "message": "Invalid username or password",
-    "errorCode": 10,
-    "timestamp": 1788055205123
-  }
-  ```
 
 ---
 
 ### 1.2 Silent Token Refresh
-Renews an expired short-lived access JWT using the long-lived refresh token.
+The dashboard's centralized Axios response interceptor (`apiClientInit.ts`) automatically intercepts HTTP `401 Unauthorized` token expiration errors, requests a new access token, and retries the original request seamlessly.
 
-- **Endpoint:** `POST https://app.humid1.com/api/auth/token/refresh`
-- **Headers:**
-  ```http
-  Content-Type: application/json
-  Accept: application/json
-  ```
-- **Request Body:**
+- **Endpoint:** `POST /api/auth/token/refresh`
+- **Request Payload:**
   ```json
   {
     "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQGh1bWlkMS5jb20iLCJzY29wZXMiOlsicmVmcmVzaCJd..."
   }
   ```
-- **Response (200 OK):**
+- **Response Payload (200 OK):**
   ```json
   {
     "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyQGh1bWlkMS5jb20iLCJzY29wZXMiOlsic3VzZXIiXSwiaWF0IjoxNzg4MDU4ODAwLCJleHAiOjE3ODgwNjI0MDB9...",
@@ -100,554 +54,284 @@ Renews an expired short-lived access JWT using the long-lived refresh token.
 
 ---
 
-### 1.3 Authentik OIDC Authorization & Token Exchange
-Initiates OpenID Connect with PKCE (Proof Key for Code Exchange) via Authentik.
+### 1.3 User Profile Query
+Obtains current active session details, authority structures (`CUSTOMER_USER` or `TENANT_ADMIN`), and customer identifiers.
 
-#### Step A: Authorization Request (Browser Redirect)
-- **URL:** `https://auth.humid1.com/application/o/authorize/`
-- **Query Parameters:**
-  ```
-  client_id=7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI
-  &response_type=code
-  &redirect_uri=https://dash.humid1.com/
-  &scope=openid profile email
-  &code_challenge=E9Melhoa2OwvFrGMTJguCH5rtG647NCA91823_xyz
-  &code_challenge_method=S256
-  &state=abc123state
-  ```
-
-#### Step B: Token Exchange Request (`POST /application/o/token/`)
-- **Endpoint:** `POST https://auth.humid1.com/application/o/token/`
-- **Headers:**
+- **Endpoint:** `GET /api/auth/user`
+- **Request Headers:**
   ```http
-  Content-Type: application/x-www-form-urlencoded
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Body:**
-  ```
-  grant_type=authorization_code
-  &client_id=7nvidWHfM8C3wE3VKGqFNGFNnl9aou46mL5kporI
-  &code=SPL7394KDLSMN923
-  &redirect_uri=https://dash.humid1.com/
-  &code_verifier=dBjftJeZ4CVP-mB92Kks83jla_random_verifier_string
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2F1dGguaHVtaWQxLmNvbS9hcHBsaWNhdGlvbi9vL2h1bWlkMS1kYXNoLyIsInN1YiI6IjEyMzQ1NiIsImVtYWlsIjoidXNlckBodW1pZDEuY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoidXNlciJ9...",
-    "token_type": "Bearer",
-    "expires_in": 3600,
-    "scope": "openid profile email"
-  }
-  ```
-
----
-
-### 1.4 ThingsBoard OAuth2 SSO Redirect
-Redirects the user to ThingsBoard's internal OAuth2 client handler which provisions the user in ThingsBoard via Authentik:
-
-- **Browser Navigation:** `GET https://app.humid1.com/oauth2/authorization/1efd3960-a10b-11f1-b530-9b9631e0c365`
-- **Result:** ThingsBoard redirects to Authentik login, then returns to ThingsBoard with a session cookie and ThingsBoard JWT tokens in local storage (`jwt_token`).
-
----
-
-### 1.5 Current User Profile
-Retrieves the logged-in user identity, tenant, and customer assignment.
-
-- **Endpoint:** `GET https://app.humid1.com/api/auth/user`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
+- **Response Payload (200 OK):**
   ```json
   {
     "id": {
-      "id": "78a9c000-a10b-11f1-8a90-00163e123456",
-      "entityType": "USER"
+      "entityType": "USER",
+      "id": "1efd3960-a10b-11f1-b530-9b9631e0c365"
     },
-    "createdTime": 1788000000000,
+    "createdTime": 1700000000000,
     "tenantId": {
-      "id": "1efd3960-a10b-11f1-b530-9b9631e0c365",
-      "entityType": "TENANT"
+      "entityType": "TENANT",
+      "id": "1efd3960-a10b-11f1-b530-9b9631e0c365"
     },
     "customerId": {
-      "id": "3bc24190-a10b-11f1-9abc-123456789abc",
-      "entityType": "CUSTOMER"
+      "entityType": "CUSTOMER",
+      "id": "2efd4510-b21c-22f2-c640-8c8732e1d472"
     },
-    "email": "admin@humid1.com",
+    "email": "user@humid1.com",
     "authority": "CUSTOMER_USER",
-    "firstName": "HUMID1",
-    "lastName": "Operator",
-    "name": "admin@humid1.com",
-    "additionalInfo": {
-      "userCredentialsEnabled": true,
-      "defaultDashboardId": null
-    }
+    "firstName": "John",
+    "lastName": "Doe"
   }
   ```
 
 ---
 
-## 2. Telemetry & Time-Series Data
+## 2. Device Registry & Claiming Operations
 
-### 2.1 Fetch Latest Real-Time Telemetry
-Retrieves the most recent telemetry values for an active device.
+The dashboard manages the lifecycle of customer-owned humidor units.
 
-- **Endpoint:** `GET https://app.humid1.com/api/plugins/telemetry/DEVICE/78a9c000-a10b-11f1-8a90-00163e123456/values/timeseries?keys=rh,temp,battery,rssi,diff_rh,diff_temp,door_open,vpd`
-- **Headers:**
+### 2.1 Fetch Claimed / Customer Devices
+Discovers and lists hardware devices bounded to the logged-in user profile. If authenticated as a Customer, it targets customer-specific endpoints; otherwise, it falls back to tenant administrator endpoints.
+
+- **Endpoint (Customer Users):** `GET /api/customer/{customerId}/deviceInfos?pageSize=100&page=0`
+- **Alternative Endpoint (Fallback):** `GET /api/customer/{customerId}/devices?pageSize=100&page=0`
+- **Endpoint (Tenant Admins):** `GET /api/deviceInfos?pageSize=100&page=0`
+- **Request Headers:**
   ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Response (200 OK):**
+- **Response Payload (200 OK):**
   ```json
   {
-    "rh": [
-      { "ts": 1788055200000, "value": "69.4" }
+    "data": [
+      {
+        "id": {
+          "entityType": "DEVICE",
+          "id": "3efd88a0-c32d-33f3-d750-7d7632e1f822"
+        },
+        "createdTime": 1715000000000,
+        "name": "humid1-esp32-001",
+        "type": "default",
+        "label": "Front Counter Cabinet",
+        "customerId": {
+          "entityType": "CUSTOMER",
+          "id": "2efd4510-b21c-22f2-c640-8c8732e1d472"
+        }
+      }
     ],
-    "temp": [
-      { "ts": 1788055200000, "value": "68.2" }
-    ],
-    "battery": [
-      { "ts": 1788055200000, "value": "92" }
-    ],
-    "rssi": [
-      { "ts": 1788055200000, "value": "-58" }
-    ],
-    "diff_rh": [
-      { "ts": 1788055200000, "value": "0.8" }
-    ],
-    "diff_temp": [
-      { "ts": 1788055200000, "value": "0.4" }
-    ],
-    "door_open": [
-      { "ts": 1788055200000, "value": "false" }
-    ],
-    "vpd": [
-      { "ts": 1788055200000, "value": "0.74" }
-    ]
+    "totalPages": 1,
+    "totalElements": 1,
+    "hasNext": false
   }
   ```
 
 ---
 
-### 2.2 Query Historical Time-Series
-Queries aggregated telemetry across a timeframe (e.g. past 24 hours).
+### 2.2 Claim Hardware Device
+Associates a new ESP32 humidor device with the user's customer account. The dashboard supports optional security validation via a secret PIN or key.
 
-- **Endpoint:** `GET https://app.humid1.com/api/plugins/telemetry/DEVICE/78a9c000-a10b-11f1-8a90-00163e123456/values/timeseries?keys=rh,temp,battery,rssi&startTs=1787968800000&endTs=1788055200000&interval=3600000&limit=1000&agg=AVG`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "rh": [
-      { "ts": 1787968800000, "value": "68.8" },
-      { "ts": 1787972400000, "value": "69.0" },
-      { "ts": 1787976000000, "value": "69.2" },
-      { "ts": 1788055200000, "value": "69.4" }
-    ],
-    "temp": [
-      { "ts": 1787968800000, "value": "67.9" },
-      { "ts": 1787972400000, "value": "68.1" },
-      { "ts": 1787976000000, "value": "68.0" },
-      { "ts": 1788055200000, "value": "68.2" }
-    ],
-    "battery": [
-      { "ts": 1787968800000, "value": "93" },
-      { "ts": 1788055200000, "value": "92" }
-    ],
-    "rssi": [
-      { "ts": 1787968800000, "value": "-57" },
-      { "ts": 1788055200000, "value": "-58" }
-    ]
-  }
-  ```
-
----
-
-### 2.3 Hardware Telemetry Ingest
-Sent by the ESP32 microcontroller upon waking up from deep sleep.
-
-- **Endpoint:** `POST https://app.humid1.com/api/v1/YOUR_DEVICE_ACCESS_TOKEN/telemetry`
-- **Headers:**
+- **Endpoint:** `POST /api/customer/device/{deviceName}/claim`
+- **Request Headers:**
   ```http
   Content-Type: application/json
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Request Body (Single or Multi-Sample with Timestamps):**
+- **Request Payload:**
   ```json
   {
-    "ts": 1788055200000,
-    "values": {
-      "rh": 69.4,
-      "temp": 68.2,
-      "battery": 92,
-      "rssi": -58,
-      "diff_rh": 0.8,
-      "diff_temp": 0.4,
-      "door_open": false,
-      "vpd": 0.74,
-      "sensor_top_rh": 69.8,
-      "sensor_top_temp": 68.4,
-      "sensor_bottom_rh": 69.0,
-      "sensor_bottom_temp": 68.0
-    }
+    "secretKey": "123456"
   }
   ```
-- **Response (200 OK):**
+- **Response Payload (200 OK / 201 Created):**
   ```json
-  {}
+  {
+    "response": "SUCCESS",
+    "device": {
+      "id": {
+        "entityType": "DEVICE",
+        "id": "3efd88a0-c32d-33f3-d750-7d7632e1f822"
+      },
+      "name": "humid1-esp32-001",
+      "type": "default",
+      "label": "humid1-esp32-001"
+    }
+  }
   ```
 
 ---
 
-## 3. Device Attributes (Client & Shared)
+### 2.3 Unclaim / Release Device
+Gracefully unbinds a hardware unit from the customer user's registry.
 
-### 3.1 Fetch Device Attributes
-Retrieves static device parameters, client attributes (reported by hardware), and shared attributes (set by user/dashboard).
-
-- **Endpoint:** `GET https://app.humid1.com/api/plugins/telemetry/DEVICE/78a9c000-a10b-11f1-8a90-00163e123456/values/attributes`
-- **Headers:**
+- **Endpoint:** `DELETE /api/customer/device/{deviceName}/claim`
+- **Request Headers:**
   ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Response (200 OK):**
+- **Response Status:** `200 OK` (Indicates unclaiming execution succeeded)
+
+---
+
+## 3. Telemetry & Attribute Synchronization
+
+This section defines how climate readings are gathered and configuration attributes are controlled.
+
+### 3.1 Fetch Latest Telemetry Timeseries
+Retrieves the most recent environmental metrics recorded by the selected device.
+
+- **Endpoint:** `GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries`
+- **Request Headers:**
+  ```http
+  Authorization: Bearer <JWT_Access_Token>
+  ```
+- **Response Payload (200 OK):**
+  ```json
+  {
+    "rh": [
+      {
+        "ts": 1788055200000,
+        "value": "69.4"
+      }
+    ],
+    "temp": [
+      {
+        "ts": 1788055200000,
+        "value": "71.2"
+      }
+    ],
+    "battery": [
+      {
+        "ts": 1788055195000,
+        "value": "88"
+      }
+    ],
+    "rssi": [
+      {
+        "ts": 1788055195000,
+        "value": "-65"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 3.2 Query Historical Telemetry for Charting
+Queries high-resolution historical timeseries points within the user-defined time range (e.g. 1 hour, 6 hours, 24 hours, 3 days). To ensure precision, the dashboard enforces `agg=NONE` to bypass coarse server-side averages.
+
+- **Endpoint:** `GET /api/plugins/telemetry/DEVICE/{deviceId}/values/timeseries?keys=rh,temp,battery,rssi&startTs={startTs}&endTs={endTs}&limit=50000&agg=NONE&orderBy=ASC`
+- **Request Headers:**
+  ```http
+  Authorization: Bearer <JWT_Access_Token>
+  ```
+- **Response Payload (200 OK):**
+  ```json
+  {
+    "rh": [
+      { "ts": 1788051600000, "value": "68.2" },
+      { "ts": 1788055200000, "value": "69.4" }
+    ],
+    "temp": [
+      { "ts": 1788051600000, "value": "70.5" },
+      { "ts": 1788055200000, "value": "71.2" }
+    ],
+    "battery": [
+      { "ts": 1788051600000, "value": "89" },
+      { "ts": 1788055200000, "value": "88" }
+    ],
+    "rssi": [
+      { "ts": 1788051600000, "value": "-67" },
+      { "ts": 1788055200000, "value": "-65" }
+    ]
+  }
+  ```
+
+---
+
+### 3.3 Fetch Device Attributes (Client & Shared)
+Fetches configuration values and hardware diagnostic details.
+
+- **Endpoint (Client Status):** `GET /api/plugins/telemetry/DEVICE/{deviceId}/values/attributes?scope=CLIENT_SCOPE`
+- **Endpoint (Shared Parameters):** `GET /api/plugins/telemetry/DEVICE/{deviceId}/values/attributes?scope=SHARED_SCOPE`
+- **Request Headers:**
+  ```http
+  Authorization: Bearer <JWT_Access_Token>
+  ```
+- **Response (CLIENT_SCOPE):**
   ```json
   [
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "fw_version",
-      "value": "v1.2.0"
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "device_name",
-      "value": "HUMID1-CABINET-01"
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "mac_address",
-      "value": "30:AE:A4:01:23:45"
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "ssid",
-      "value": "Humidor-IoT-Mesh"
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "ip_address",
-      "value": "192.168.1.145"
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "has_sd_card",
-      "value": true
-    },
-    {
-      "lastUpdateTs": 1788055200000,
-      "key": "audio_synced",
-      "value": true
-    },
-    {
-      "lastUpdateTs": 1788054000000,
-      "key": "sleep_interval_sec",
-      "value": 900
-    },
-    {
-      "lastUpdateTs": 1788054000000,
-      "key": "device_theme",
-      "value": "DARK"
-    },
-    {
-      "lastUpdateTs": 1788054000000,
-      "key": "sound_enabled",
-      "value": true
-    },
-    {
-      "lastUpdateTs": 1788054000000,
-      "key": "auto_update_enabled",
-      "value": true
-    }
+    { "key": "fw_version", "value": "v1.2.0" },
+    { "key": "device_name", "value": "humid1-esp32-001" },
+    { "key": "mac_address", "value": "A1:B2:C3:D4:E5:F6" },
+    { "key": "ssid", "value": "Humidyne Labs HQ" },
+    { "key": "ip_address", "value": "192.168.1.144" },
+    { "key": "has_sd_card", "value": true },
+    { "key": "audio_synced", "value": true }
+  ]
+  ```
+- **Response (SHARED_SCOPE):**
+  ```json
+  [
+    { "key": "sleep_interval_sec", "value": 900 },
+    { "key": "device_theme", "value": "DARK" },
+    { "key": "sound_enabled", "value": true },
+    { "key": "auto_update_enabled", "value": true },
+    { "key": "manual_ota_trigger", "value": false }
   ]
   ```
 
 ---
 
-### 3.2 Update Shared Attributes
-Pushed from the web dashboard to update device configuration settings.
+### 3.4 Save / Update Shared Attributes
+Pushes threshold updates, sleep duration controls, or toggle configurations back to the device.
 
-- **Endpoint:** `POST https://app.humid1.com/api/plugins/telemetry/DEVICE/78a9c000-a10b-11f1-8a90-00163e123456/SHARED_SCOPE`
-- **Headers:**
-  ```http
-  Content-Type: application/json
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Request Body:**
+- **Endpoint:** `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE`
+- **Request Payload:**
   ```json
   {
-    "sleep_interval_sec": 600,
-    "device_theme": "DARK",
-    "sound_enabled": true,
-    "auto_update_enabled": true,
-    "target_rh_min": 65.0,
-    "target_rh_max": 72.0,
-    "temp_alert_threshold": 74.0
+    "sleep_interval_sec": 1200,
+    "sound_enabled": false,
+    "device_theme": "STEALTH",
+    "auto_update_enabled": true
   }
   ```
-- **Response (200 OK):**
-  ```json
-  {}
-  ```
+- **Response Status:** `200 OK` (Attribute update successful)
 
 ---
 
-### 3.3 Hardware Client Attributes Ingest
-Reported by the ESP32 on boot to announce hardware capabilities.
+## 4. Alarms Management
 
-- **Endpoint:** `POST https://app.humid1.com/api/v1/YOUR_DEVICE_ACCESS_TOKEN/attributes`
-- **Headers:**
+Enables viewing and modifying system alarms directly inside the dashboard alarms feed.
+
+### 4.1 Fetch Active & Historical Alarms
+Queries real-time alarms linked to the active tenant/customer devices.
+
+- **Endpoint:** `GET /api/v2/alarms?pageSize=100&page=0&sortProperty=createdTime&sortOrder=DESC&searchStatus=ANY`
+- **Request Headers:**
   ```http
-  Content-Type: application/json
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Request Body:**
-  ```json
-  {
-    "fw_version": "v1.2.0",
-    "device_name": "HUMID1-CABINET-01",
-    "mac_address": "30:AE:A4:01:23:45",
-    "ssid": "Humidor-IoT-Mesh",
-    "ip_address": "192.168.1.145",
-    "has_sd_card": true,
-    "audio_synced": true,
-    "battery_charge_cycles": 14
-  }
-  ```
-- **Response (200 OK):**
-  ```json
-  {}
-  ```
-
----
-
-## 4. Device Discovery, Claiming & Management
-
-### 4.1 Fetch Claimed / Customer Devices
-Fetches the list of all hardware devices linked to the logged-in customer/tenant.
-
-- **Endpoint:** `GET https://app.humid1.com/api/customer/3bc24190-a10b-11f1-9abc-123456789abc/devices?pageSize=100&page=0&sortProperty=name&sortOrder=ASC`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
+- **Response Payload (200 OK):**
   ```json
   {
     "data": [
       {
         "id": {
-          "id": "78a9c000-a10b-11f1-8a90-00163e123456",
-          "entityType": "DEVICE"
+          "entityType": "ALARM",
+          "id": "5efd91b0-d43e-44f4-e860-8e8732e1f999"
         },
-        "createdTime": 1787000000000,
-        "tenantId": {
-          "id": "1efd3960-a10b-11f1-b530-9b9631e0c365",
-          "entityType": "TENANT"
-        },
-        "customerId": {
-          "id": "3bc24190-a10b-11f1-9abc-123456789abc",
-          "entityType": "CUSTOMER"
-        },
-        "name": "HUMID1-CABINET-01",
-        "type": "HUMIDOR_MONITOR",
-        "label": "Master Vault",
-        "deviceProfileId": {
-          "id": "92da1000-a10b-11f1-a123-00163e654321",
-          "entityType": "DEVICE_PROFILE"
-        },
-        "additionalInfo": {
-          "gateway": false,
-          "description": "Primary Spanish Cedar Tower"
-        }
-      }
-    ],
-    "totalPages": 1,
-    "totalElements": 1,
-    "hasNext": false
-  }
-  ```
-
----
-
-### 4.2 Claim Hardware Device
-Links a newly purchased or provisioned ESP32 hardware device to the current user's customer account using its claiming secret key.
-
-- **Endpoint:** `POST https://app.humid1.com/api/customer/device/claim`
-- **Headers:**
-  ```http
-  Content-Type: application/json
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Request Body:**
-  ```json
-  {
-    "deviceName": "HUMID1-CABINET-02",
-    "secretKey": "HUMID-SEC-9874"
-  }
-  ```
-- **Response (200 OK - Claim Success):**
-  ```json
-  {
-    "response": "SUCCESS",
-    "deviceInfo": {
-      "id": {
-        "id": "89b0d100-a10b-11f1-9b12-00163e789012",
-        "entityType": "DEVICE"
-      },
-      "name": "HUMID1-CABINET-02",
-      "type": "HUMIDOR_MONITOR"
-    }
-  }
-  ```
-- **Response (400 Bad Request / Claim Failed):**
-  ```json
-  {
-    "response": "FAILURE",
-    "message": "Device not found or invalid claiming secret"
-  }
-  ```
-
----
-
-### 4.3 Unclaim Device (Customer User)
-Releases a claimed hardware device back to the unassigned pool so it can be claimed again. This is the designated endpoint for `CUSTOMER_USER` accounts.
-
-- **Endpoint:** `DELETE https://app.humid1.com/api/customer/device/{deviceName}/claim`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
-  ```json
-  {}
-  ```
-
-### 4.4 Delete Device Entity Permanently (Tenant Administrator Only)
-Permanently deletes a device entity and all associated telemetry from the ThingsBoard database. Requires `TENANT_ADMIN` authority (returns HTTP 403 Forbidden for `CUSTOMER_USER` accounts).
-
-- **Endpoint:** `DELETE https://app.humid1.com/api/device/{deviceId}`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
-  ```json
-  {}
-  ```
-- **Error Response (403 Forbidden for Customer User):**
-  ```json
-  {
-    "status": 403,
-    "message": "You don't have permission to perform this operation",
-    "errorCode": 20
-  }
-  ```
-
----
-
-## 5. RPC (Remote Procedure Calls)
-
-### 5.1 Two-Way RPC Command to Device
-Sends an immediate diagnostic or calibration command to an active online unit.
-
-- **Endpoint:** `POST https://app.humid1.com/api/rpc/twoway/78a9c000-a10b-11f1-8a90-00163e123456`
-- **Headers:**
-  ```http
-  Content-Type: application/json
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Request Body:**
-  ```json
-  {
-    "method": "triggerCalibration",
-    "params": {
-      "reference_rh": 75.0,
-      "sensor_channel": "ALL"
-    },
-    "timeout": 5000
-  }
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "status": "CALIBRATION_STARTED",
-    "offset_applied_rh": 0.4,
-    "battery_mv": 3940
-  }
-  ```
-
----
-
-### 5.2 ESP32 Boot Epoch Time Sync RPC
-Called by the ESP32 on wake to set its internal hardware RTC without an NTP server.
-
-- **Endpoint:** `POST https://app.humid1.com/api/v1/YOUR_DEVICE_ACCESS_TOKEN/rpc`
-- **Headers:**
-  ```http
-  Content-Type: application/json
-  ```
-- **Request Body:**
-  ```json
-  {
-    "method": "getCurrentTime",
-    "params": {}
-  }
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "epoch_ms": 1788055200142,
-    "server_timezone": "UTC"
-  }
-  ```
-
----
-
-## 6. Alarms Management Lifecycle
-
-### 6.1 Query Active & Historic Alarms
-Fetches triggered humidor climate and hardware threshold violations.
-
-- **Endpoint:** `GET https://app.humid1.com/api/alarm/DEVICE/78a9c000-a10b-11f1-8a90-00163e123456?searchStatus=ANY&pageSize=20&page=0&sortProperty=createdTime&sortOrder=DESC`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "data": [
-      {
-        "id": {
-          "id": "e4f8a000-a10b-11f1-9abc-00163eabcdef",
-          "entityType": "ALARM"
-        },
-        "createdTime": 1788054000000,
-        "type": "HUMIDITY_LOW_ALERT",
+        "createdTime": 1788055205000,
         "originator": {
-          "id": "78a9c000-a10b-11f1-8a90-00163e123456",
-          "entityType": "DEVICE"
+          "entityType": "DEVICE",
+          "id": "3efd88a0-c32d-33f3-d750-7d7632e1f822"
         },
-        "originatorName": "HUMID1-CABINET-01",
+        "originatorName": "Front Counter Cabinet",
+        "type": "HUMIDITY_LOW_ALERT",
         "severity": "WARNING",
         "status": "ACTIVE_UNACK",
-        "ackTs": 0,
-        "clearTs": 0,
         "details": {
-          "current_rh": 63.8,
-          "threshold_min": 65.0,
-          "recommendation": "Inspect sponge reservoir or refill Boveda packs"
+          "message": "Relative humidity dropped below warning threshold: 61.2% (Target: 69.0%)"
         }
       }
     ],
@@ -659,151 +343,109 @@ Fetches triggered humidor climate and hardware threshold violations.
 
 ---
 
-### 6.2 Acknowledge Alarm
-Marks an active alarm as acknowledged by the user.
+### 4.2 Acknowledge Active Alarm
+Acknowledges an unresolved alert, indicating to other operators that attention has been directed.
 
-- **Endpoint:** `POST https://app.humid1.com/api/alarm/e4f8a000-a10b-11f1-9abc-00163eabcdef/ack`
-- **Headers:**
+- **Endpoint:** `POST /api/alarm/{alarmId}/ack`
+- **Request Headers:**
   ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Response (200 OK):**
-  ```json
-  {
-    "id": {
-      "id": "e4f8a000-a10b-11f1-9abc-00163eabcdef",
-      "entityType": "ALARM"
-    },
-    "status": "ACTIVE_ACK",
-    "ackTs": 1788055210000
-  }
-  ```
+- **Response Status:** `200 OK`
 
 ---
 
-### 6.3 Clear Alarm
-Clears an alarm manually or verifies rule-engine resolution.
+### 4.3 Clear Resolved Alarm
+Purges or clears an active alarm, resolving its visual warning status.
 
-- **Endpoint:** `POST https://app.humid1.com/api/alarm/e4f8a000-a10b-11f1-9abc-00163eabcdef/clear`
-- **Headers:**
+- **Endpoint:** `POST /api/alarm/{alarmId}/clear`
+- **Request Headers:**
   ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Response (200 OK):**
-  ```json
-  {
-    "id": {
-      "id": "e4f8a000-a10b-11f1-9abc-00163eabcdef",
-      "entityType": "ALARM"
-    },
-    "status": "CLEARED_ACK",
-    "clearTs": 1788055220000
-  }
-  ```
+- **Response Status:** `200 OK`
 
 ---
 
-## 7. OTA (Over-The-Air) Firmware Updates
+## 5. ThingsBoard Remote Procedure Calls (RPC)
 
-### 7.1 List Available OTA Firmware Packages
-Fetches firmware binaries ready for deployment.
+Dispatches on-demand commands to the microcontroller.
 
-- **Endpoint:** `GET https://app.humid1.com/api/otaPackages/DEVICE?type=FIRMWARE&pageSize=10&page=0&sortProperty=title&sortOrder=DESC`
-- **Headers:**
-  ```http
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
-  ```
-- **Response (200 OK):**
-  ```json
-  {
-    "data": [
-      {
-        "id": {
-          "id": "f5a12000-a10b-11f1-8123-00163e998877",
-          "entityType": "OTA_PACKAGE"
-        },
-        "createdTime": 1787800000000,
-        "type": "FIRMWARE",
-        "title": "HUMID1 ESP32 Production Binary",
-        "version": "v1.2.0",
-        "fileName": "humid1_firmware_v1.2.0.bin",
-        "checksumAlgorithm": "SHA256",
-        "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "dataSize": 1428570
-      }
-    ],
-    "totalPages": 1,
-    "totalElements": 1,
-    "hasNext": false
-  }
-  ```
+### 5.1 Two-Way Request-Response RPC Command
+Dispatches interactive requests to the device. These block synchronously (with a 4-second timeout) awaiting confirmation back from the hardware.
 
----
-
-### 7.2 Assign Firmware to Device
-Assigns an OTA firmware binary to a device to trigger a background update on its next wake cycle.
-
-- **Endpoint:** `POST https://app.humid1.com/api/device`
-- **Headers:**
+- **Endpoint:** `POST /api/plugins/rpc/twoway/{deviceId}`
+- **Request Headers:**
   ```http
   Content-Type: application/json
-  X-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+  Authorization: Bearer <JWT_Access_Token>
   ```
-- **Request Body:**
+- **Request Payload (Ping Example):**
   ```json
   {
-    "id": {
-      "id": "78a9c000-a10b-11f1-8a90-00163e123456",
-      "entityType": "DEVICE"
-    },
-    "name": "HUMID1-CABINET-01",
-    "type": "HUMIDOR_MONITOR",
-    "firmwareId": {
-      "id": "f5a12000-a10b-11f1-8123-00163e998877",
-      "entityType": "OTA_PACKAGE"
-    }
+    "method": "ping",
+    "params": {},
+    "timeout": 4000
   }
   ```
-- **Response (200 OK):**
+- **Response Payload (200 OK - Device Acknowledged):**
   ```json
   {
-    "id": {
-      "id": "78a9c000-a10b-11f1-8a90-00163e123456",
-      "entityType": "DEVICE"
+    "response": "pong",
+    "rssi": -62,
+    "uptime_sec": 38450
+  }
+  ```
+
+- **Request Payload (Buzzer Test Example):**
+  ```json
+  {
+    "method": "testBuzzer",
+    "params": {
+      "durationMs": 500
     },
-    "name": "HUMID1-CABINET-01",
-    "type": "HUMIDOR_MONITOR",
-    "firmwareId": {
-      "id": "f5a12000-a10b-11f1-8123-00163e998877",
-      "entityType": "OTA_PACKAGE"
-    }
+    "timeout": 4000
+  }
+  ```
+- **Response Payload (200 OK):**
+  ```json
+  {
+    "response": "BUZZ_ACK"
+  }
+  ```
+
+- **Request Payload (Time Synchronization Example):**
+  ```json
+  {
+    "method": "syncTime",
+    "params": {
+      "epoch": 1788055200
+    },
+    "timeout": 4000
+  }
+  ```
+- **Response Payload (200 OK):**
+  ```json
+  {
+    "response": "RTC_SYNC_SUCCESS",
+    "offset_ms": 12
   }
   ```
 
 ---
 
-### 7.3 Device Firmware Status Telemetry
-Reported by the ESP32 to ThingsBoard during OTA flashing:
+## 6. Over-The-Air (OTA) Updates Triggering
 
-- **Attributes/Telemetry Ingest (`POST /api/v1/{ACCESS_TOKEN}/telemetry`):**
+The dashboard initiates hardware over-the-air firmware updates via a simple shared attribute transaction. 
+
+### 6.1 Manual OTA Trigger
+Rather than managing intricate server-side binary uploads, clicking **"Push OTA Update Now"** inside the *OTA Update Center* card simply updates the `manual_ota_trigger` shared attribute on the device to `true`. On its next wakeup, the ESP32 registers this trigger, downloads its bin package, completes the flashing routine, and resets the attribute upon successful boot.
+
+- **Endpoint:** `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE`
+- **Request Payload:**
   ```json
   {
-    "values": {
-      "fw_state": "DOWNLOADING",
-      "fw_title": "HUMID1 ESP32 Production Binary",
-      "fw_version": "v1.2.0",
-      "fw_progress": 48,
-      "fw_error": null
-    }
+    "manual_ota_trigger": true
   }
   ```
-- **Final Verification State on Reboot:**
-  ```json
-  {
-    "values": {
-      "fw_state": "VERIFIED",
-      "fw_version": "v1.2.0",
-      "fw_progress": 100
-    }
-  }
-  ```
+- **Response Status:** `200 OK`

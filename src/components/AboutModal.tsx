@@ -29,19 +29,22 @@ export const AboutModal: React.FC<AboutModalProps> = ({
   if (!isOpen) return null;
 
   const version = APP_CONFIG.version;
+  const revision = APP_CONFIG.revision;
   const buildDate = getEnv('VITE_BUILD_DATE', 'September 2026 (Continuous Build)');
   const authors = 'HUMID1 Engineering Team';
   const contributors = [
     'HUMID1 Core Developers',
-    'Google DeepMind Antigravity AI Coding Assistant',
+    'Google AI Studio',
+    'Gemini API',
   ];
-  const copyright = `© ${new Date().getFullYear()} HUMID1 Systems LLC. All rights reserved.`;
+  const copyright = `© ${new Date().getFullYear()} HUMIDYNE LABS. All rights reserved.`;
   const license = 'MIT License';
   const dataRetention = '7 Days (604,800 seconds)';
 
   const aboutJson = {
     appName: 'HUMID1 Telemetry Dashboard',
     version,
+    revision,
     buildDate,
     authors,
     contributors,
@@ -141,6 +144,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               </div>
               <div className="text-xs text-slate-200 font-mono">
                 Version: <span className="text-amber-300 font-bold">{version}</span>
+              </div>
+              <div className="text-xs text-slate-200 font-mono">
+                Revision: <span className="text-amber-400 font-bold">{revision}</span>
               </div>
               <div className="text-xs text-slate-400 font-mono">
                 Build Date: <span className="text-slate-300">{buildDate}</span>

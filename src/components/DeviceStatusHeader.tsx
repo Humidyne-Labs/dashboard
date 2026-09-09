@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HumidorDevice } from '../types';
+import { thingsboard } from '../services/thingsboard';
+import { pushNotifications, NotificationPermissionState } from '../services/pushNotifications';
+import { notificationService, NotificationSettings } from '../services/notificationService';
 import { 
   Wifi, 
   HardDrive, 
-  Music, 
   Clock, 
   ChevronDown, 
   Trash2,
+  MailCheck,
+  MailX,
+  BellRing,
+  Volume2,
+  VolumeX,
+  Loader2,
 } from 'lucide-react';
 
 interface DeviceStatusHeaderProps {
@@ -14,6 +22,7 @@ interface DeviceStatusHeaderProps {
   allDevices: HumidorDevice[];
   onSelectDevice: (deviceId: string) => void;
   onRemoveDevice?: () => void;
+  onOpenPushModal?: () => void;
 }
 
 export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
@@ -21,7 +30,63 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
   allDevices,
   onSelectDevice,
   onRemoveDevice,
+  onOpenPushModal,
 }) => {
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [pushPerm, setPushPerm] = useState<NotificationPermissionState>(
+    pushNotifications.getPermission()
+  );
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(
+    notificationService.getSettings()
+  );
+
+  useEffect(() => {
+    const unsubPush = pushNotifications.subscribe((perm) => {
+      setPushPerm(perm);
+    });
+    const unsubSound = notificationService.subscribe((settings) => {
+      setNotifSettings(settings);
+    });
+    return () => {
+      unsubPush();
+      unsubSound();
+    };
+  }, []);
+
+  const emailAlertsEnabled = device.sharedAttributes?.email_alerts_enabled ?? true;
+  const pushSoundEnabled = notifSettings.soundEnabled;
+
+  const handleToggleEmailAlerts = async () => {
+    if (isUpdatingEmail) return;
+    setIsUpdatingEmail(true);
+    try {
+      await thingsboard.updateSharedAttributes(device.id, {
+        email_alerts_enabled: !emailAlertsEnabled,
+      });
+    } catch (err) {
+      console.warn('Failed to update email alert preference:', err);
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+
+  const handleTogglePushSound = () => {
+    const next = !pushSoundEnabled;
+    notificationService.updateSettings({ soundEnabled: next });
+    if (next) {
+      notificationService.playAlarmSound('WARNING');
+    }
+  };
+
+  const handlePushClick = async () => {
+    if (onOpenPushModal) {
+      onOpenPushModal();
+    } else {
+      const result = await pushNotifications.requestPermission();
+      setPushPerm(result);
+    }
+  };
+
   const getRssiVisual = (rssi: number) => {
     let quality = 'Weak';
     let color = 'text-rose-400';
@@ -62,6 +127,8 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     return `${Math.floor(diff / 3600)}h ago`;
   };
+
+  const isPushActive = pushPerm === 'granted';
 
   return (
     <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/20 backdrop-blur-sm">
@@ -110,54 +177,104 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Hardware & Connection Diagnostic Badges */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Wi-Fi & RSSI */}
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl px-3 py-2 flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-slate-300">
-              <Wifi className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-medium truncate max-w-[110px]">{device.clientAttributes.ssid}</span>
+        {/* Right: Hardware & Connection Diagnostic Badges + Alerts Action Group */}
+        <div className="flex flex-col items-start lg:items-end gap-2.5">
+          {/* Top Diagnostics Row: Wi-Fi & RSSI, SD Card, Remove button */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Wi-Fi & RSSI */}
+            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl px-3 py-1.5 flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                <Wifi className="w-3.5 h-3.5 text-slate-400" />
+                <span className="font-medium truncate max-w-[110px]">{device.clientAttributes.ssid}</span>
+              </div>
+              <div className="h-3 w-px bg-slate-800" />
+              {getRssiVisual(device.telemetry.rssi)}
             </div>
-            <div className="h-3 w-px bg-slate-800" />
-            {getRssiVisual(device.telemetry.rssi)}
+
+            {/* SD Card Status Badge */}
+            <div 
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 ${
+                device.clientAttributes.has_sd_card
+                  ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/20'
+                  : 'bg-amber-950/40 text-amber-300 border-amber-500/20'
+              }`}
+            >
+              <HardDrive className="w-3.5 h-3.5" />
+              <span>{device.clientAttributes.has_sd_card ? 'SD: OK' : 'SD: Missing'}</span>
+            </div>
+
+            {/* Remove / Unclaim Device Button */}
+            {onRemoveDevice && (
+              <button
+                type="button"
+                onClick={onRemoveDevice}
+                className="h-7.5 px-2.5 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                title="Remove or unclaim this humidor device"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                <span>Remove</span>
+              </button>
+            )}
           </div>
 
-          {/* SD Card Status Badge */}
-          <div 
-            className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-1.5 ${
-              device.clientAttributes.has_sd_card
-                ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/20'
-                : 'bg-amber-950/40 text-amber-300 border-amber-500/20'
-            }`}
-          >
-            <HardDrive className="w-3.5 h-3.5" />
-            <span>{device.clientAttributes.has_sd_card ? 'SD Card: Inserted' : 'SD Card: Not Detected'}</span>
-          </div>
-
-          {/* Audio Synced Badge */}
-          <div 
-            className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-1.5 ${
-              device.clientAttributes.audio_synced
-                ? 'bg-indigo-950/40 text-indigo-300 border-indigo-500/20'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
-            }`}
-          >
-            <Music className="w-3.5 h-3.5" />
-            <span>{device.clientAttributes.audio_synced ? 'Audio Synced' : 'Audio Pending'}</span>
-          </div>
-
-          {/* Remove / Unclaim Device Button */}
-          {onRemoveDevice && (
+          {/* Bottom Row: Grouped Alert & Audio Controls (placed under the Wi-Fi/diagnostics row) */}
+          <div className="flex items-center gap-2 bg-slate-950/70 p-1 rounded-2xl border border-slate-800 shadow-inner">
+            {/* 1. Push Alerts Action Element */}
             <button
               type="button"
-              onClick={onRemoveDevice}
-              className="h-8.5 px-3 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-              title="Remove or unclaim this humidor device"
+              onClick={handlePushClick}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
+                isPushActive
+                  ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
+                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
+              }`}
+              title={`Web Push & TWA Notifications: ${isPushActive ? 'Active' : 'Click to configure/enable'}`}
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span>Remove</span>
+              <BellRing className={`w-3.5 h-3.5 ${isPushActive ? 'text-amber-400' : 'text-slate-500'}`} />
+              <span>{isPushActive ? 'Push: ON' : 'Push: Setup'}</span>
             </button>
-          )}
+
+            {/* 2. Email Alerts Action Element (Modeled directly after Push Alerts) */}
+            <button
+              type="button"
+              onClick={handleToggleEmailAlerts}
+              disabled={isUpdatingEmail}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
+                emailAlertsEnabled
+                  ? 'bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 border-sky-500/30'
+                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
+              }`}
+              title={`ThingsBoard Rule Chain Email Alerts: ${emailAlertsEnabled ? 'Active' : 'Opted Out'}. Click to toggle.`}
+            >
+              {isUpdatingEmail ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+              ) : emailAlertsEnabled ? (
+                <MailCheck className="w-3.5 h-3.5 text-sky-400" />
+              ) : (
+                <MailX className="w-3.5 h-3.5 text-slate-500" />
+              )}
+              <span>{emailAlertsEnabled ? 'Email: ON' : 'Email: OFF'}</span>
+            </button>
+
+            {/* 3. Browser Push Alerts Sound / Chimes Action Element */}
+            <button
+              type="button"
+              onClick={handleTogglePushSound}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
+                pushSoundEnabled
+                  ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
+                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
+              }`}
+              title={`Push Alert Sound & Chimes: ${pushSoundEnabled ? 'Active' : 'Muted'}. Click to toggle.`}
+            >
+              {pushSoundEnabled ? (
+                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+              )}
+              <span>{pushSoundEnabled ? 'Sound: ON' : 'Sound: Muted'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -191,3 +308,4 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
     </div>
   );
 };
+

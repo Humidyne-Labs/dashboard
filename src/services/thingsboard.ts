@@ -1749,21 +1749,53 @@ class ThingsBoardService {
   }
 
   /**
-   * Update shared attributes via /src_lib/client apiSaveDeviceAttributes
+   * Update shared attributes via SDK or direct REST API
+   * Supports updating '1' attribute as easily as all attributes
    */
   public async updateSharedAttributes(deviceId: string, attributes: Partial<SharedAttributes>): Promise<void> {
     const token = this.getEffectiveToken();
-    if (token) {
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    let saved = false;
+
+    if (token && deviceId) {
       try {
-        await apiSaveDeviceAttributes({
+        const res = await apiSaveDeviceAttributes({
           path: {
             deviceId,
             scope: 'SHARED_SCOPE',
           },
           body: attributes as Record<string, any>,
-        });
+        } as any);
+
+        if (res.response && res.response.status >= 200 && res.response.status < 300) {
+          saved = true;
+        } else if (!res.error) {
+          saved = true;
+        }
       } catch (err) {
-        console.warn('ThingsBoard API Shared Attribute push failed:', err);
+        // Direct REST fallback
+      }
+
+      if (!saved) {
+        try {
+          const directRes = await fetch(
+            `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/SHARED_SCOPE`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Authorization': `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(attributes),
+            }
+          );
+          if (directRes.ok) {
+            saved = true;
+          }
+        } catch (directErr) {
+          console.warn('ThingsBoard Shared Attribute push failed:', directErr);
+        }
       }
     }
 

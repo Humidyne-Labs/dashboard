@@ -2,21 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { HumidorAlarm } from '../types';
 import { thingsboard } from '../services/thingsboard';
 import { alarmThresholdService, AlarmThresholds } from '../services/alarmThresholds';
-import { notificationService, NotificationSettings } from '../services/notificationService';
 import { 
   Bell, 
-  BellRing,
-  BellOff,
-  Volume2,
-  VolumeX,
   AlertTriangle, 
   CheckCircle2, 
   Clock, 
   ShieldAlert, 
   Check, 
-  XCircle,
-  Sliders,
-  Trash2
+  XCircle, 
+  Sliders, 
+  Trash2 
 } from 'lucide-react';
 
 interface AlarmsFeedProps {
@@ -28,12 +23,6 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
     alarmThresholdService.getThresholds()
   );
-  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(
-    notificationService.getSettings()
-  );
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
-    notificationService.getPermission()
-  );
   const [isPurging, setIsPurging] = useState(false);
   const [isAckingAll, setIsAckingAll] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);
@@ -42,33 +31,10 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
 
   useEffect(() => {
     const unsubThresholds = alarmThresholdService.subscribe(setThresholds);
-    const unsubNotifs = notificationService.subscribe((settings, perm) => {
-      setNotifSettings(settings);
-      setNotifPermission(perm);
-    });
     return () => {
       unsubThresholds();
-      unsubNotifs();
     };
   }, []);
-
-  const handleTogglePush = async () => {
-    if (notifPermission !== 'granted') {
-      const res = await notificationService.requestPermission();
-      if (res === 'granted') {
-        notificationService.updateSettings({ pushEnabled: true });
-      }
-    } else {
-      notificationService.updateSettings({ pushEnabled: !notifSettings.pushEnabled });
-    }
-  };
-
-  const handleToggleSound = () => {
-    notificationService.updateSettings({ soundEnabled: !notifSettings.soundEnabled });
-    if (!notifSettings.soundEnabled) {
-      notificationService.playAlarmSound('WARNING');
-    }
-  };
 
   const handlePurgeInactive = async () => {
     setIsPurging(true);
@@ -177,55 +143,6 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          {/* Push Notification Toggle */}
-          <button
-            type="button"
-            onClick={handleTogglePush}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
-              notifSettings.pushEnabled && notifPermission === 'granted'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border-slate-700'
-            }`}
-            title={
-              notifPermission !== 'granted'
-                ? 'Click to grant browser push notification permissions for microclimate alarms'
-                : notifSettings.pushEnabled
-                ? 'Push notifications enabled - click to disable'
-                : 'Push notifications disabled - click to enable'
-            }
-          >
-            {notifSettings.pushEnabled && notifPermission === 'granted' ? (
-              <BellRing className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-            ) : (
-              <BellOff className="w-3.5 h-3.5 text-slate-400" />
-            )}
-            <span>
-              {notifPermission !== 'granted'
-                ? 'Enable Push Alerts'
-                : notifSettings.pushEnabled
-                ? 'Push Armed'
-                : 'Push Muted'}
-            </span>
-          </button>
-
-          {/* Sound Chime Toggle */}
-          <button
-            type="button"
-            onClick={handleToggleSound}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1 transition cursor-pointer shadow-sm ${
-              notifSettings.soundEnabled
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'
-            }`}
-            title={notifSettings.soundEnabled ? 'Alarm chimes enabled' : 'Alarm chimes muted'}
-          >
-            {notifSettings.soundEnabled ? (
-              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-            ) : (
-              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
-            )}
-          </button>
-
           {/* Purge All Inactive Alarms (Deletes all cleared records from ThingsBoard server) */}
           <button
             type="button"

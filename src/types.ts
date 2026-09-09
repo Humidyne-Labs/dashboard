@@ -33,6 +33,7 @@ export interface SharedAttributes {
   auto_update_enabled: boolean;
   manual_ota_trigger: boolean;
   email_alerts_enabled?: boolean; // Device Email Alerts opt-out toggle for ThingsBoard Rule Chain
+  temp_unit?: TempUnit | 'F' | 'C'; // 'F' | 'C' shared attribute for degree unit in alert emails & display
   alarm_thresholds?: AlarmThresholds;
   [key: string]: any;
 }

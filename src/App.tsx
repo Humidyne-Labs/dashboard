@@ -14,7 +14,6 @@ import { ServerConfigModal } from './components/ServerConfigModal';
 import { AuthModal } from './components/AuthModal';
 import { ApiInspectorModal } from './components/ApiInspectorModal';
 import { RemoveDeviceModal } from './components/RemoveDeviceModal';
-import { HumidorTelemetryWidget } from './components/HumidorTelemetryWidget';
 import { DevelopmentWarningModal } from './components/DevelopmentWarningModal';
 import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
@@ -133,12 +132,29 @@ export default function App() {
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0];
 
+  // Synchronize unit with device's shared attribute temp_unit if configured
+  useEffect(() => {
+    if (selectedDevice?.sharedAttributes?.temp_unit) {
+      const u = selectedDevice.sharedAttributes.temp_unit;
+      if (u === 'F' || u === 'C') {
+        setTempUnit(u);
+      }
+    }
+  }, [selectedDevice?.id, selectedDevice?.sharedAttributes?.temp_unit]);
+
   const handleSelectDevice = (deviceId: string) => {
     setSelectedDeviceId(deviceId);
   };
 
   const handleToggleTempUnit = () => {
-    setTempUnit((prev) => (prev === 'F' ? 'C' : 'F'));
+    const nextUnit: TempUnit = tempUnit === 'F' ? 'C' : 'F';
+    setTempUnit(nextUnit);
+    if (selectedDevice?.id) {
+      // Update only the 'temp_unit' shared attribute in ThingsBoard
+      thingsboard.updateSharedAttributes(selectedDevice.id, {
+        temp_unit: nextUnit,
+      });
+    }
   };
 
   const userEmail =
@@ -174,15 +190,16 @@ export default function App() {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <main className="flex-1 max-w-[1536px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {devices.length > 0 && selectedDevice ? (
             <>
-              {/* Primary Device Status & Quick Metrics */}
+              {/* Primary Device Status & Quick Metrics with Grouped Alert Controls */}
               <DeviceStatusHeader
                 device={selectedDevice}
                 allDevices={devices}
                 onSelectDevice={handleSelectDevice}
                 onRemoveDevice={() => setIsRemoveModalOpen(true)}
+                onOpenPushModal={() => setIsPushModalOpen(true)}
               />
 
               {/* Climate Gauges Grid (RH%, Temp, Battery, RSSI) */}
@@ -192,24 +209,17 @@ export default function App() {
                 onToggleTempUnit={handleToggleTempUnit}
               />
 
-              {/* Direct @enerlab/thingsboard-client Telemetry & Session Monitor */}
-              <HumidorTelemetryWidget
-                deviceId={selectedDevice.id}
-                serverUrl={thingsboard.getConfig().serverUrl}
-                deviceName={selectedDevice.name}
-              />
-
               {/* Historical Telemetry Chart */}
               <HistoricalChart device={selectedDevice} tempUnit={tempUnit} />
 
-              {/* Hardware Device & Alarm Parameters Control Panel */}
+              {/* Hardware Device & Alarm Parameters Control Panel (Collapsible & Windowed) */}
               <ControlPanel 
                 device={selectedDevice} 
                 tempUnit={tempUnit}
                 onOpenThresholds={() => setIsThresholdsModalOpen(true)} 
               />
 
-              {/* OTA Firmware Management Center */}
+              {/* OTA Firmware Management Center (Collapsible & Windowed) */}
               <OtaUpdateCenter device={selectedDevice} />
 
               {/* Live ThingsBoard Alarms Feed */}
@@ -243,7 +253,7 @@ export default function App() {
 
         {/* Footer */}
         <footer className="border-t border-slate-800/80 bg-slate-950/80 py-6 text-xs text-slate-500">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-amber-500" />
               <button

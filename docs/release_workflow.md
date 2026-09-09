@@ -1,136 +1,48 @@
-# HUMID1 - Git Branching & CI/CD Release Workflow
+# HUMID1 — Git Branching & CI/CD Release Workflow
+
+This document details the branch lifecycle, automated build routines, and release integration guidelines utilized within the **HUMID1** ecosystem to deploy web assets and microcontroller firmware.
+
+---
 
 ## 1. Branching Strategy (Trunk-Based with Semantic Tags)
 
-We use a lightweight, tag-driven Trunk-Based workflow:
+To maintain maximum development velocity, we use a lightweight, tag-driven Trunk-Based workflow:
 
 ```
 feature/branch ──> PR / Code Review ──> main (Protected)
                                           │
-                                          ├── Tag: v1.2.0 (Triggers Web PWA & Android TWA Build)
+                                          ├── Tag: vX.Y.Z (Triggers Web PWA & Android TWA Build)
                                           │
-                                          ├── Tag: fw-v1.2.0 (Triggers ESP32 Firmware Build & ThingsBoard OTA Push)
-                                          │
-                                          └── Tag: audio-v1.2.0 (Triggers Audio Manifest & Asset Sync)
+                                          └── Tag: fw-vX.Y.Z (Triggers ESP32 Firmware Build & ThingsBoard OTA Push)
 ```
 
-- **`main`**: Protected branch. Requires passing CI checks (linting, typechecks, compilation) and PR approvals before merging.
-- **`feature/*` / `fix/*`**: Ephemeral branches branched off `main`.
-- **Release Tags**:
-  - `vX.Y.Z` $\rightarrow$ Web App / PWA / Android TWA releases.
-  - `fw-vX.Y.Z` $\rightarrow$ ESP32 Microcontroller firmware releases.
-  - `audio-vX.Y.Z` $\rightarrow$ Audio soundpack & manifest updates.
+* **`main`**: Protected branch. Requires passing automated validation checks (linters, static analyses, and compilation suites) before pull requests are merged.
+* **`feature/*` / `fix/*`**: Temporary local branches branched from `main` to implement enhancements or fix defects.
+* **Release Tags**:
+  * **`vX.Y.Z`** $\rightarrow$ Triggers compilation of the Web Dashboard, production static deployment, and the native Android TWA package build.
+  * **`fw-vX.Y.Z`** $\rightarrow$ Triggers ESP32 microcontroller firmware compilation and auto-uploads binaries to the ThingsBoard OTA Package repository.
 
 ---
 
-## 2. Firmware Release Pipeline (`fw-vX.Y.Z`)
+## 2. Web App, PWA & Android TWA Release Pipeline (`vX.Y.Z`)
 
-When a firmware tag is pushed (e.g. `git tag fw-v1.0.4 && git push origin fw-v1.0.4`):
-
-```
-[Git Tag: fw-v*] 
-       │
-       ├──> [GitHub Actions: PlatformIO Build] ──> Compiles firmware.bin
-       │
-       ├──> [Artifact Verification] ─────────────> Generates SHA-256 checksum & binary size
-       │
-       ├──> [GitHub Releases] ───────────────────> Publishes release with firmware.bin attached
-       │
-       └──> [ThingsBoard OTA Package API Push] ──> POST /api/otaPackage
-                                                   - Uploads firmware.bin
-                                                   - Sets tag = v1.0.4, type = FIRMWARE
-```
-
-### GitHub Actions Workflow: `.github/workflows/firmware-release.yml`
-```yaml
-name: Release Firmware & Push to ThingsBoard OTA
-
-on:
-  push:
-    tags:
-      - 'fw-v*'
-
-jobs:
-  build-and-release-firmware:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install PlatformIO
-        run: pip install platformio
-
-      - name: Extract Version Tag
-        id: vars
-        run: echo "FW_VERSION=${GITHUB_REF#refs/tags/fw-}" >> $GITHUB_OUTPUT
-
-      - name: Compile ESP32 Binary
-        run: pio run -e esp32dev
-
-      - name: Calculate Checksum & Size
-        id: meta
-        run: |
-          BIN_PATH=".pio/build/esp32dev/firmware.bin"
-          echo "CHECKSUM=$(sha256sum $BIN_PATH | awk '{print $1}')" >> $GITHUB_OUTPUT
-          echo "SIZE=$(stat -c%s $BIN_PATH)" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: .pio/build/esp32dev/firmware.bin
-          body: |
-            ### HUMID1_OS Firmware ${{ steps.vars.outputs.FW_VERSION }}
-            - **Binary:** `firmware.bin`
-            - **SHA-256:** `${{ steps.meta.outputs.CHECKSUM }}`
-            - **Size:** `${{ steps.meta.outputs.SIZE }} bytes`
-
-      - name: Upload Binary to ThingsBoard OTA
-        env:
-          TB_URL: ${{ secrets.THINGSBOARD_SERVER_URL }}
-          TB_TOKEN: ${{ secrets.THINGSBOARD_ADMIN_JWT }}
-        run: |
-          # 1. Create OTA Package Entry
-          PACKAGE_ID=$(curl -s -X POST "$TB_URL/api/otaPackage" \
-            -H "X-Authorization: Bearer $TB_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "title": "HUMID1_OS '${{ steps.vars.outputs.FW_VERSION }}'",
-              "version": "'${{ steps.vars.outputs.FW_VERSION }}'",
-              "type": "FIRMWARE",
-              "hasData": false
-            }' | jq -r '.id.id')
-
-          # 2. Upload the Binary
-          curl -X POST "$TB_URL/api/otaPackage/$PACKAGE_ID?checksum=${{ steps.meta.outputs.CHECKSUM }}&checksumAlgorithm=SHA256" \
-            -H "X-Authorization: Bearer $TB_TOKEN" \
-            -F "file=@.pio/build/esp32dev/firmware.bin"
-```
-
----
-
-## 3. Web App, PWA & Android TWA Release Pipeline (`vX.Y.Z`)
-
-When a web app tag is pushed (e.g. `git tag v1.0.4 && git push origin v1.0.4`):
+When a web app tag is pushed (e.g. `git tag v1.2.0 && git push origin v1.2.0`):
 
 ```
 [Git Tag: v*]
        │
-       ├──> [Vite Build & Typecheck] ────────────> Generates /dist (HTML/JS/CSS + PWA Manifest)
+       ├──► [Vite Build & Typecheck] ────────────► Generates /dist (HTML/JS/CSS + PWA Manifest)
        │
-       ├──> [Deploy Web / PWA to Caddy Host] ────> Rsync / S3 / Static Web Server
+       ├──► [Deploy Web / PWA to Host] ──────────► Uploads static assets to production host
        │
-       └──> [Build Android TWA APK via Bubblewrap]
+       └──► [Build Android TWA APK via Bubblewrap]
              │
-             ├──> Verify .well-known/assetlinks.json against keystore SHA-256
-             └──> Output unsigned & signed .apk / .aab artifacts to GitHub Releases
+             ├──► Verify .well-known/assetlinks.json against signature keystore
+             └──► Output production .apk and .aab assets to GitHub Release attachments
 ```
 
 ### GitHub Actions Workflow: `.github/workflows/android-twa.yml`
+
 ```yaml
 name: Build Android TWA (APK & AAB)
 
@@ -186,7 +98,6 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      # Non-interactive configuration for Bubblewrap
       - name: Configure Bubblewrap Paths
         run: |
           mkdir -p ~/.bubblewrap
@@ -215,10 +126,9 @@ jobs:
             echo "has_secret=false" >> $GITHUB_OUTPUT
           fi
           
-          # Extract and log SHA-256 fingerprint for Digital Asset Links verification
-          echo "=== SHA-256 CERTIFICATE FINGERPRINT FOR ASSETLINKS.JSON ==="
+          echo "=== SHA-256 CERTIFICATE FINGERPRINT ==="
           keytool -list -v -keystore android-build/android-keystore.jks -alias "$KEY_ALIAS" -storepass "$KEYSTORE_PASS" | grep "SHA256:"
-          echo "=========================================================="
+          echo "======================================="
 
       - name: Build Android TWA Project with Bubblewrap
         env:
@@ -227,19 +137,13 @@ jobs:
           BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
-          # Copy twa-manifest.json pulling assets directly from the public repo
           mkdir -p android-build
           cp twa-manifest.json android-build/twa-manifest.json
-          
           cd android-build
-          
-          # Generate native files non-interactively using public repo assets
           yes | bubblewrap update          
-          
-          # Build APK with Bubblewrap
           bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
 
-      - name: Build Android App Bundle (.aab) for Google Play Store
+      - name: Build Android App Bundle (.aab)
         if: github.event.inputs.build_bundle != 'false'
         env:
           BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
@@ -248,14 +152,13 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
         run: |
           cd android-build
-          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || echo "Bundle generation complete or skipped"
+          bubblewrap build --manifest=twa-manifest.json --skipPwaValidation --bundle || echo "Bundle skipped"
 
       - name: Rename and Stage Artifacts
         run: |
           mkdir -p output
           find android-build -name "*.apk" -exec cp {} output/ \;
           find android-build -name "*.aab" -exec cp {} output/ \; || true
-          ls -la output/
 
       - name: Upload APK & AAB Artifacts
         uses: actions/upload-artifact@v4
@@ -264,7 +167,7 @@ jobs:
           path: output/
           retention-days: 14
 
-      - name: Attach APK and AAB to GitHub Release
+      - name: Attach Assets to GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
@@ -276,43 +179,111 @@ jobs:
 
 ---
 
-## 4. Audio Assets & Manifest Sync Pipeline (`audio-vX.Y.Z`)
+## 3. Firmware Release Pipeline (`fw-vX.Y.Z`)
 
-When sound packs or prompt audio files are updated:
+When a hardware firmware tag is pushed (e.g., `git tag fw-v1.0.4 && git push origin fw-v1.0.4`), the CI system compiles the binary and deploys it directly to ThingsBoard CE:
 
-1. **Calculate Hashes:** Compute MD5 / SHA-256 checksums and file sizes for all `.mp3` files in `/audio/`.
-2. **Auto-Generate `manifest.json`:**
-   ```json
-   {
-     "version": "1.0.2",
-     "generated_at": 1788055200,
-     "files": [
-       {
-         "name": "humidity_low.mp3",
-         "size": 24520,
-         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-       },
-       {
-         "name": "humidity_critical.mp3",
-         "size": 31200,
-         "sha256": "5c92c90666042a694317a66cd5f553a15ec97011d31a5eb23b0365774a382ca5"
-       }
-     ]
-   }
-   ```
-3. **Deploy to CDN / Caddy Server:** Upload `/audio/` files and `manifest.json` directly to `https://humid1.com/audio/` so ESP32 devices can sync the new soundpack.
+```
+[Git Tag: fw-v*]
+       │
+       ├──► [PlatformIO Build Engine] ───────────► Compiles hardware-optimized firmware.bin
+       │
+       ├──► [Metadata Extraction] ──────────────► Calculates SHA-256 and binary size metrics
+       │
+       ├──► [ThingsBoard REST Ingestion] ────────► Uploads binary directly into ThingsBoard CE
+       │                                           OTA Package repository
+       └──► [GitHub Releases] ───────────────────► Creates GitHub release containing binary
+```
+
+### GitHub Actions Workflow: `.github/workflows/firmware-release.yml`
+
+```yaml
+name: Release Firmware & Push to ThingsBoard OTA
+
+on:
+  push:
+    tags:
+      - 'fw-v*'
+
+jobs:
+  build-and-release-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Extract Version Tag
+        id: vars
+        run: echo "FW_VERSION=${GITHUB_REF#refs/tags/fw-}" >> $GITHUB_OUTPUT
+
+      - name: Compile ESP32 Binary
+        run: pio run -e esp32dev
+
+      - name: Calculate Checksum & Size
+        id: meta
+        run: |
+          BIN_PATH=".pio/build/esp32dev/firmware.bin"
+          echo "CHECKSUM=$(sha256sum $BIN_PATH | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "SIZE=$(stat -c%s $BIN_PATH)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: .pio/build/esp32dev/firmware.bin
+          body: |
+            ### HUMID1 ESP32 Firmware ${{ steps.vars.outputs.FW_VERSION }}
+            - **Binary File:** `firmware.bin`
+            - **SHA-256 Checksum:** `${{ steps.meta.outputs.CHECKSUM }}`
+            - **Size:** `${{ steps.meta.outputs.SIZE }} bytes`
+
+      - name: Upload Binary to ThingsBoard OTA Repository
+        env:
+          TB_URL: ${{ secrets.THINGSBOARD_SERVER_URL }}
+          TB_TOKEN: ${{ secrets.THINGSBOARD_ADMIN_JWT }}
+        run: |
+          # 1. Register OTA Package Record in ThingsBoard
+          PACKAGE_ID=$(curl -s -X POST "$TB_URL/api/otaPackage" \
+            -H "X-Authorization: Bearer $TB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "title": "HUMID1_OS_'$GITHUB_REF_NAME'",
+              "version": "'${{ steps.vars.outputs.FW_VERSION }}'",
+              "type": "FIRMWARE",
+              "hasData": false
+            }' | jq -r '.id.id')
+
+          # 2. Stream Binary and Register Valid Checksums
+          curl -X POST "$TB_URL/api/otaPackage/$PACKAGE_ID?checksum=${{ steps.meta.outputs.CHECKSUM }}&checksumAlgorithm=SHA256" \
+            -H "X-Authorization: Bearer $TB_TOKEN" \
+            -F "file=@.pio/build/esp32dev/firmware.bin"
+```
 
 ---
 
-## 5. Release Checklist for Developers
+## 4. Release Checklist for Developers
 
-- [ ] **Firmware Release:** Bump `VERSION` in `platformio.ini` $\rightarrow$ Merge to `main` $\rightarrow$ Run `git tag fw-vX.Y.Z && git push origin fw-vX.Y.Z`.
-- [ ] **Web / App Release:** Bump `version` in `package.json` $\rightarrow$ Merge to `main` $\rightarrow$ Run `git tag vX.Y.Z && git push origin vX.Y.Z`.
-- [ ] **Audio Release:** Add/update `.mp3` files $\rightarrow$ Merge to `main` $\rightarrow$ Run `git tag audio-vX.Y.Z && git push origin audio-vX.Y.Z`.
+- [ ] **Microcontroller Firmware Release**:
+  1. Bump `VERSION` constants inside the firmware source code config and `platformio.ini`.
+  2. Merge the approved feature/bugfix branch into `main`.
+  3. Create and push the firmware tag:
+     ```bash
+     git tag fw-v1.2.0
+     git push origin fw-v1.2.0
+     ```
 
----
-
-### How Everything Connects
-1. **Developer pushes tag `fw-v1.0.5`** $\rightarrow$ GitHub Actions builds the ESP32 binary and pushes it directly into ThingsBoard's OTA Package manager.
-2. **Developer pushes tag `v1.0.5`** $\rightarrow$ GitHub Actions compiles the PWA, deploys it to your Caddy static web folder, builds the Android APK, and attaches the APK to the GitHub Release.
-3. **User opens the Web App / Android TWA** $\rightarrow$ Sees new firmware available, clicks **"Push OTA Update Now"**, and the device updates on its next wake cycle!
+- [ ] **Web Dashboard Release**:
+  1. Verify the `version` block is up-to-date in `package.json`.
+  2. Merge the approved branch to `main`.
+  3. Create and push the dashboard release tag:
+     ```bash
+     git tag v1.2.0
+     git push origin v1.2.0
+     ```

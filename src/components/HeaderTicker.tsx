@@ -206,7 +206,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-[1536px] mx-auto px-3 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand & Identity */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button

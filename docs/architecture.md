@@ -1,65 +1,83 @@
-# HUMID1 Architecture & System Specification
+# HUMID1 Frontend Dashboard Architecture & Design Spec
 
-## 1. System Overview
+Welcome to the frontend system architecture and engineering specification for **HUMID1**, designed and engineered by **HUMIDYNE LABS**. This document outlines the actual structure, state management, security boundaries, and rendering engines powering the HUMID1 client dashboard.
 
-HUMID1 is a self-hosted humidor monitoring and telemetry stack built on ESP32 hardware, ThingsBoard CE, and Caddy. It monitors relative humidity, temperature, battery, and signal strength, syncs audio prompts over HTTP, and provides real-time control via a customer-scoped React PWA / Android TWA dashboard.
+---
 
-## 2. Unified Data & Attribute Schema
+## 1. System Topology & Decoupled Frontend
 
-| **Category** | **Key** | **Type** | **Flow / Scope** | **Description** |
-| :--- | :--- | :--- | :--- | :--- |
-| **Telemetry** | `rh` | Numeric (%) | Device $\rightarrow$ TB | Relative humidity reading (evaluated against 65%–75% safe bounds). |
-| **Telemetry** | `temp` | Numeric (°F) | Device $\rightarrow$ TB | Temperature reading (evaluated against 75°F alert ceiling). |
-| **Telemetry** | `battery` | Numeric (%) | Device $\rightarrow$ TB | Remaining battery percentage; triggers low-power alert at <20%. |
-| **Telemetry** | `rssi` | Numeric (dBm) | Device $\rightarrow$ TB | Wi-Fi Received Signal Strength Indicator. |
-| **Client Attribute** | `fw_version` | String | Device $\rightarrow$ TB | Active firmware version build identifier (e.g. `v1.0.4`). |
-| **Client Attribute** | `device_name` | String | Device $\rightarrow$ TB | Hostname / display identifier for the device. |
-| **Client Attribute** | `mac_address` | String | Device $\rightarrow$ TB | Hardware MAC address for networking diagnostics. |
-| **Client Attribute** | `ssid` | String | Device $\rightarrow$ TB | Connected Wi-Fi Access Point name. |
-| **Client Attribute** | `ip_address` | String | Device $\rightarrow$ TB | Assigned local IPv4 address. |
-| **Client Attribute** | `has_sd_card` | Boolean | Device $\rightarrow$ TB | Hardware detection flag for microSD card slot presence. |
-| **Client Attribute** | `audio_synced` | Boolean | Device $\rightarrow$ TB | Set to `true` once device downloads and verifies all audio assets. |
-| **Shared Attribute** | `sleep_interval_sec` | Numeric (s) | TB $\rightarrow$ Device | Deep-sleep duration between active telemetry cycles (Default: 900s). |
-| **Shared Attribute** | `device_theme` | String/Enum | TB $\rightarrow$ Device | Local visual mode (`DARK`, `LIGHT`, `STEALTH`). |
-| **Shared Attribute** | `sound_enabled` | Boolean | TB $\rightarrow$ Device | Audio toggle; locked `false` if `has_sd_card` OR `audio_synced` is `false`. |
-| **Shared Attribute** | `auto_update_enabled` | Boolean | TB $\rightarrow$ Device | Opt-in toggle for automatic background OTA firmware updates. |
-| **Shared Attribute** | `manual_ota_trigger` | Boolean | TB $\rightarrow$ Device | Web app sets `true` to force immediate OTA firmware update on next wake. |
+The HUMID1 Dashboard is a production-grade, highly-optimized React Single Page Application (SPA). Rather than directly interfacing with an application database or managing hardware nodes, the dashboard operates as a decoupled, stateless client that interfaces with ThingsBoard CE (IoT Core) and Authentik (Identity Provider) over standard HTTPS and REST interfaces:
 
-## 3. Microcontroller Power & Hardware Architecture
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        HUMID1 DASHBOARD CORE (React)                   │
+├───────────────────────┬───────────────────────┬────────────────────────┤
+│     Auth & Session    │     Device Registry   │     Telemetry Feed     │
+│   (Authentik OIDC /   │    (Claiming Engine / │    (Latest values &    │
+│    ThingsBoard JWT)   │    Discovery Fetch)   │    Historical Charts)  │
+└──────────┬────────────┴───────────┬───────────┴───────────┬────────────┘
+           │                        │                       │
+           ▼                        ▼                       ▼
+    [Authentik IdP]          [ThingsBoard CE]        [ThingsBoard CE]
+     SSO Portal /             Device Claiming/        Telemetry Engine/
+     PKCE Tokens              Unclaim REST APIs       Historical Database
+```
 
-### Fast Wi-Fi Re-Association Strategy
-To maximize battery life during deep-sleep wake cycles, the ESP32 caches BSSID, channel, and IP parameters in RTC fast memory:
-1. **Boot:** Read BSSID, Wi-Fi channel, and static network settings from RTC fast memory.
-2. **Fast Connect:** Execute `WiFi.begin(ssid, pass, channel, bssid)` to skip full spectrum scanning (<800 ms connection time).
-3. **Time Sync:** Extract server epoch timestamp from HTTP response headers or RPC (`getCurrentTime`) and set internal RTC via `settimeofday()`.
-4. **Payload Push:** Transmit telemetry (`rh`, `temp`, `battery`, `rssi`) and client attributes to ThingsBoard via MQTT/HTTP.
-5. **Sleep State:** Power down radio and peripherals; return to RTC deep sleep.
+* **Client Engine**: Runs entirely in the user's browser, built on React 18, TypeScript, Vite, and styled with Tailwind CSS.
+* **API Isolation**: All outbound network communications are abstracted through the central `ThingsBoardService` and `apiClientInit` global interceptors, allowing seamless runtime endpoint binding.
+* **Simulated Demo Sandbox**: Implements an interactive **Demo Mode** with realistic synthetic telemetry generation and alarm modeling if external services are unreachable, providing instant trial usability.
 
-### Button Interrupt (EXT0)
-- RTC GPIO wake interrupt (`EXT0`) allows a physical button press to immediately wake the ESP32 outside scheduled sleep intervals for an on-demand measurement and sync.
+---
 
-## 4. Audio Synchronization Pipeline
-- **Server Hosting:** Audio assets and manifest located at `https://humid1.com/audio/`.
-- **Hardware Detection & Sync:**
-  - **No SD Card:** Device reports `has_sd_card = false`, disables audio drivers, and reports `audio_synced = false`.
-  - **SD Card Present:** Device fetches `https://humid1.com/audio/manifest.json`, checks hashes against local `/sd/audio/`, downloads missing `.mp3` files, and sets client attribute `audio_synced = true`.
+## 2. Decoupled Visual Identity & UI Hierarchy
 
-## 5. Automation & Rule Engine Pipeline
-- **Environmental Alarms:** Filter nodes evaluate incoming telemetry (`rh < 65%` or `rh > 75%`, `temp > 75°F`) to raise/clear alarms and trigger browser Web Push notifications.
-- **Low Battery Alert:** Filter node routes payloads where `battery < 20%` to generate warning alarms.
-- **OTA Lifecycle Handling:** Rule Chain captures `fw_version` attribute updates upon reboot to verify update success, and processes `manual_ota_trigger` commands.
+HUMID1’s visual architecture is focused on readability, high-contrast diagnostics, and an aesthetic suited for premium humidor units (slate tones with amber/gold accents):
 
-## 6. Dashboard & User Interface Architecture
-- **News-Channel Ticker:** Horizontal scrolling header displaying live status chips for all customer devices.
-- **Device Claiming:** Modal to bind unassigned hardware via `deviceName` and secret PIN.
-- **Header Diagnostics:** Displays `device_name`, `mac_address`, `ip_address`, `ssid`, `fw_version`, `rssi` meter, and microSD status badge.
-- **Historical Data Visualizer:** Synchronized dual-axis line chart plotting `rh` and `temp` with a 3-day rolling default and highlighted 65%–75% comfort band.
-- **Real-Time Cards:** Live gauges for `rh`, `temp` (°F/°C toggle), and `battery`.
-- **Control Panel:** Interactive controls for `sleep_interval_sec`, `device_theme`, `auto_update_enabled`, and `sound_enabled` (locked out unless `has_sd_card` & `audio_synced` are both `true`).
-- **Manual OTA Center:** One-click OTA deployment trigger and live progress tracking (`fw_progress`).
+* **Color Foundations**: Uses rich dark tones (`#020617` to `#0f172a`) with subtle warm gray dividers (`#1e293b`) to represent Cedarwood structures, combined with amber alerts (`#f59e0b`).
+* **Bento Grid Architecture**: Responsive layout that scales from small mobile screens to large desktop monitors. The widgets are decoupled, containing internal state containers:
+  1. **Stock-Ticker Marquee (`HeaderTicker.tsx`)**: An ambient scrolling banner displaying real-time global unit counts, active system-wide alerts, and active connections.
+  2. **Device Selection Header (`DeviceStatusHeader.tsx`)**: High-fidelity metadata bar summarizing connection health, active Wi-Fi AP SSID, battery percentage, and firmware build version.
+  3. **Precision Climate Gauges (`ClimateGauges.tsx`)**: Displays relative humidity (RH%) and temperature (°F) inside custom-rendered responsive SVG dial indicators.
+  4. **Dynamic Historical Chart (`HistoricalChart.tsx`)**: Implements dual-axis timeseries rendering using `recharts`. Displays temperature and humidity on individual Y-axes with customizable time-windows (1h to 3d) and un-aggregated (`agg=NONE`) high-fidelity data feeds.
+  5. **Unit Parameter Controls (`ControlPanel.tsx`)**: Handles on-the-fly parameter tuning (deep-sleep intervals, hardware theme presets, audibles) and triggers interactive hardware RPC commands (`ping`, `testBuzzer`, `syncTime`).
+  6. **Over-The-Air Update Center (`OtaUpdateCenter.tsx`)**: Houses firmware version matrix status panels and renders dynamic OTA download/flash progress loops.
+  7. **Alarms Management Feed (`AlarmsFeed.tsx`)**: Reports active and historic hardware warnings, integrating visual trigger bells and manual operators to acknowledge (`POST /api/alarm/{id}/ack`) or clear (`POST /api/alarm/{id}/clear`) alerts.
 
-## 7. Implementation Roadmap
-1. **Phase 1 (Server Assets & TB Setup):** Deploy `manifest.json` and `.mp3` files to audio server. Digital Asset Links (`assetlinks.json`), and ThingsBoard Rule Chains.
-2. **Phase 2 (Frontend Dashboard / PWA):** Build React app with Authentik SSO, device claiming, news ticker, dual-axis Recharts, and Web Push notifications. Wrap as Android TWA via Bubblewrap.
-3. **Phase 3 (ESP32 Firmware):** Implement RTC fast Wi-Fi re-association, epoch time sync on boot, EXT0 button interrupt, SD manifest sync, and OTA state machine.
-4. **Phase 4 (CI/CD Pipelines):** Configure GitHub Actions workflows for automated firmware binary compilation/ThingsBoard OTA push and PWA/Android TWA releases.
+---
+
+## 3. Real-Time State & Synchronization Lifecycle
+
+The dashboard maintains synchronized device configurations and environmental metrics using reactive polling:
+
+```
+[Dashboard Initialized] ──► [Fetch Customer Devices] ──► [Loop: Poll Telemetry (Every 8s)]
+                                                                  │
+   ┌──────────────────────────────────────────────────────────────┘
+   ├─► Query Latest Telemetry (rh, temp, battery, rssi)
+   ├─► Query Device Attributes (Client Version, Wi-Fi SSID, Has SD)
+   ├─► Query Active & Historical System Alarms
+   └─► Trigger Reactive Screen Notification / Sound Alerts on New Alarms
+```
+
+* **Memoized Attributes Cache**: To avoid API request flooding, client and shared attributes are cached with a 10-minute Time-To-Live (TTL), except during manual parameter updates which invalidate the cache instantly.
+* **Flexible Device Discovery**: Detects the active user profile authority. If a `CUSTOMER_USER`, it queries sandboxed customer directories; if a `TENANT_ADMIN`, it queries global tenant-level indices, completely preventing permission/SSO mismatch exceptions.
+
+---
+
+## 4. OIDC & JWT Authentication Flow
+
+The dashboard implements double-gated token verification to guarantee session security and role-aware features:
+
+1. **Authentik OIDC Protocol**: Users complete authentication directly on the Authentik single-sign-on portal using Authorization Code Flow with PKCE.
+2. **ThingsBoard SSO Redirects**: Upon redirect, the dashboard captures native ThingsBoard access JWT and refresh tokens injected in the URL hash/query, storing them securely in local storage.
+3. **Reactive Interceptor Routine**: The Axios pipeline monitors outbound network traffic. If an expired token causes an HTTP `401 Unauthorized` response, the interceptor pauses the request pipeline, triggers a token refresh (`POST /api/auth/token/refresh`), updates the local session, and replays the original requests with zero user interruption.
+
+---
+
+## 5. Build, Platform, & Progressive Web App Integration
+
+The frontend code compiles into a standard static distribution or packages into mobile app drawers:
+
+* **Progressive Web App (PWA)**: Implements standard web manifests, offline app shell caching, and responsive viewport guidelines.
+* **Android Trusted Web Activity (TWA)**: Wraps the compiled static assets in a full-screen, address-bar-free native Android shell powered by Chrome Custom Tabs, verified with Digital Asset Links (`.well-known/assetlinks.json`).
+* **Docker Containerization**: decouples build-time and runtime configurations. At container startup, `docker-entrypoint.sh` injects target environments (`VITE_THINGSBOARD_URL`, `VITE_DASHBOARD_VERSION`, `VITE_DASHBOARD_REVISION`) directly into `window.__ENV__`, allowing the exact same image to run across Dev, Staging, and Production stages.
