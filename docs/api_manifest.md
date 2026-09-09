@@ -261,23 +261,105 @@ Fetches configuration values and hardware diagnostic details.
 - **Response (CLIENT_SCOPE):**
   ```json
   [
-    { "key": "fw_version", "value": "v1.2.0" },
-    { "key": "device_name", "value": "humid1-esp32-001" },
-    { "key": "mac_address", "value": "A1:B2:C3:D4:E5:F6" },
-    { "key": "ssid", "value": "Humidyne Labs HQ" },
-    { "key": "ip_address", "value": "192.168.1.144" },
-    { "key": "has_sd_card", "value": true },
-    { "key": "audio_synced", "value": true }
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "device_name",
+      "value": "Test-Sensor-34cf77"
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "mac_address",
+      "value": "AA:BB:CC:DD:EE:FF"
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "ip_address",
+      "value": "192.168.1.150"
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "ssid",
+      "value": "Home-Network-5G"
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "fw_version",
+      "value": "v1.0.4"
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "has_sd_card",
+      "value": true
+    },
+    {
+      "lastUpdateTs": 1788860841914,
+      "key": "audio_synced",
+      "value": true
+    }
   ]
   ```
 - **Response (SHARED_SCOPE):**
   ```json
   [
-    { "key": "sleep_interval_sec", "value": 900 },
-    { "key": "device_theme", "value": "DARK" },
-    { "key": "sound_enabled", "value": true },
-    { "key": "auto_update_enabled", "value": true },
-    { "key": "manual_ota_trigger", "value": false }
+    {
+      "lastUpdateTs": 1788861164670,
+      "key": "email_alerts_enabled",
+      "value": true
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "sound_enabled",
+      "value": false
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "device_theme",
+      "value": "light"
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "sleep_interval_sec",
+      "value": 900
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "auto_update_enabled",
+      "value": true
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "manual_ota_trigger",
+      "value": false
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "sleep_interval_min",
+      "value": 15
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "temp_unit",
+      "value": "F"
+    },
+    {
+      "lastUpdateTs": 1788928144573,
+      "key": "alarm_thresholds",
+      "value": {
+        "rhLowCritical": 62,
+        "rhLowWarning": 65,
+        "rhHighWarning": 73,
+        "rhHighCritical": 76,
+        "tempLowCritical": 58,
+        "tempLowWarning": 64,
+        "tempHighWarning": 72,
+        "tempHighCritical": 75,
+        "batteryLowCritical": 15,
+        "batteryLowWarning": 25,
+        "rhHist": 1.5,
+        "tempHist": 1,
+        "battHist": 2
+      }
+    }
   ]
   ```
 
@@ -289,12 +371,30 @@ Pushes threshold updates, sleep duration controls, or toggle configurations back
 - **Endpoint:** `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE`
 - **Request Payload:**
   ```json
-  {
-    "sleep_interval_sec": 1200,
-    "sound_enabled": false,
-    "device_theme": "STEALTH",
-    "auto_update_enabled": true
-  }
+  "requestPayload": {
+        "sleep_interval_min": 15,
+        "sleep_interval_sec": 900,
+        "device_theme": "light",
+        "auto_update_enabled": true,
+        "manual_ota_trigger": false,
+        "sound_enabled": false,
+        "temp_unit": "F",
+        "alarm_thresholds": {
+          "rhLowCritical": 62,
+          "rhLowWarning": 65,
+          "rhHighWarning": 73,
+          "rhHighCritical": 76,
+          "tempLowCritical": 58,
+          "tempLowWarning": 64,
+          "tempHighWarning": 72,
+          "tempHighCritical": 75,
+          "batteryLowCritical": 15,
+          "batteryLowWarning": 25,
+          "rhHist": 1.5,
+          "tempHist": 1,
+          "battHist": 2
+        }
+      }
   ```
 - **Response Status:** `200 OK` (Attribute update successful)
 
@@ -382,54 +482,54 @@ Dispatches interactive requests to the device. These block synchronously (with a
   ```
 - **Request Payload (Ping Example):**
   ```json
-  {
-    "method": "ping",
-    "params": {},
-    "timeout": 4000
-  }
+    "requestPayload": {
+      "method": "ping",
+      "params": {},
+      "timeout": 4000
+    }
   ```
 - **Response Payload (200 OK - Device Acknowledged):**
   ```json
-  {
-    "response": "pong",
-    "rssi": -62,
-    "uptime_sec": 38450
-  }
+    "responsePayload": {
+      "status": "error",
+      "message": "Unknown method"
+    }
   ```
 
 - **Request Payload (Buzzer Test Example):**
   ```json
-  {
-    "method": "testBuzzer",
-    "params": {
-      "durationMs": 500
-    },
-    "timeout": 4000
-  }
+    "requestPayload": {
+      "method": "testBuzzer",
+      "params": {
+        "durationMs": 500
+      },
+      "timeout": 4000
+    }
   ```
 - **Response Payload (200 OK):**
   ```json
-  {
-    "response": "BUZZ_ACK"
-  }
+    "responsePayload": {
+      "status": "error",
+      "message": "Unknown method"
+    }
   ```
 
 - **Request Payload (Time Synchronization Example):**
   ```json
-  {
-    "method": "syncTime",
-    "params": {
-      "epoch": 1788055200
-    },
-    "timeout": 4000
-  }
+    "requestPayload": {
+      "method": "syncTime",
+      "params": {
+        "epoch": 1788929078
+      },
+      "timeout": 4000
+    }
   ```
 - **Response Payload (200 OK):**
   ```json
-  {
-    "response": "RTC_SYNC_SUCCESS",
-    "offset_ms": 12
-  }
+    "responsePayload": {
+      "status": "error",
+      "message": "Unknown method"
+    }
   ```
 
 ---
