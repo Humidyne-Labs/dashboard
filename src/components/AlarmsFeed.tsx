@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { HumidorAlarm } from '../types';
+import { HumidorAlarm, TempUnit } from '../types';
 import { thingsboard } from '../services/thingsboard';
-import { alarmThresholdService, AlarmThresholds } from '../services/alarmThresholds';
+import { alarmThresholdService, AlarmThresholds, toDisplayTemp } from '../services/alarmThresholds';
 import { 
   Bell, 
   AlertTriangle, 
@@ -10,16 +10,15 @@ import {
   ShieldAlert, 
   Check, 
   XCircle, 
-  Sliders, 
   Trash2 
 } from 'lucide-react';
 
 interface AlarmsFeedProps {
   alarms: HumidorAlarm[];
-  onOpenThresholds?: () => void;
+  tempUnit?: TempUnit;
 }
 
-export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds }) => {
+export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, tempUnit = 'F' }) => {
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
     alarmThresholdService.getThresholds()
   );
@@ -155,18 +154,6 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
             <span>{isPurging ? 'Purging Server...' : inactiveAlarms.length > 0 ? `Purge All Cleared (${inactiveAlarms.length})` : 'Purge Cleared (All)'}</span>
           </button>
 
-          {onOpenThresholds && (
-            <button
-              type="button"
-              onClick={onOpenThresholds}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-              title="Configure live alarm threshold constants"
-            >
-              <Sliders className="w-3.5 h-3.5 text-amber-400" />
-              <span>Set Thresholds</span>
-            </button>
-          )}
-
           <span className="text-xs font-mono font-medium text-slate-400 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800">
             {activeAlarms.length} Active
           </span>
@@ -256,16 +243,8 @@ export const AlarmsFeed: React.FC<AlarmsFeedProps> = ({ alarms, onOpenThresholds
           <span className="text-slate-600">•</span>
           <span className="text-rose-400">RH Critical &gt;{thresholds.rhHighCritical}%</span>
           <span className="text-slate-600 hidden xs:inline">•</span>
-          <span className="text-sky-300 hidden xs:inline">Temp Critical &gt;{thresholds.tempHighCritical}°F</span>
+          <span className="text-sky-300 hidden xs:inline">Temp Critical &gt;{toDisplayTemp(thresholds.tempHighCritical, tempUnit)}°{tempUnit}</span>
         </div>
-        {onOpenThresholds && (
-          <button
-            onClick={onOpenThresholds}
-            className="text-amber-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer"
-          >
-            Adjust
-          </button>
-        )}
       </div>
 
       {displayedAlarms.length > 0 ? (

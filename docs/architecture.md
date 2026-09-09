@@ -37,15 +37,16 @@ HUMID1’s visual architecture is focused on readability, high-contrast diagnost
 * **Bento Grid Architecture**: Responsive layout that scales from small mobile screens to large desktop monitors. The widgets are decoupled, containing internal state containers:
   1. **Stock-Ticker Marquee (`HeaderTicker.tsx`)**: An ambient scrolling banner displaying real-time global unit counts, active system-wide alerts, and active connections.
   2. **Device Selection Header (`DeviceStatusHeader.tsx`)**: High-fidelity metadata bar summarizing connection health, active Wi-Fi AP SSID, battery percentage, and firmware build version.
-  3. **Precision Climate Gauges (`ClimateGauges.tsx`)**: Displays relative humidity (RH%) and temperature (°F) inside custom-rendered responsive SVG dial indicators.
-  4. **Dynamic Historical Chart (`HistoricalChart.tsx`)**: Implements dual-axis timeseries rendering using `recharts`. Displays temperature and humidity on individual Y-axes with customizable time-windows (1h to 3d) and un-aggregated (`agg=NONE`) high-fidelity data feeds.
-  5. **Unit Parameter Controls (`ControlPanel.tsx`)**: Handles on-the-fly parameter tuning (deep-sleep intervals, hardware theme presets, audibles) and triggers interactive hardware RPC commands (`ping`, `testBuzzer`, `syncTime`).
+  3. **Precision Climate Gauges (`ClimateGauges.tsx`)**: Displays relative humidity (RH%) and temperature (°F / °C) inside custom-rendered responsive SVG dial indicators with dynamic display unit translation.
+  4. **Dynamic Historical Chart (`HistoricalChart.tsx`)**: Implements dual-axis timeseries rendering using `recharts` with Largest-Triangle-Three-Buckets (LTTB) downsampling (`downsample.ts`) for smooth chart performance. Displays temperature and humidity on individual Y-axes with customizable time-windows (1h to 7d) and un-aggregated (`agg=NONE`) high-fidelity data feeds.
+  5. **Unit Parameter Controls & Threshold Tuning (`ControlPanel.tsx`)**: Handles on-the-fly parameter tuning (deep-sleep intervals, hardware theme presets, threshold bounds, audibles) and triggers interactive hardware RPC commands (`ping`, `testBuzzer`, `syncTime`).
   6. **Over-The-Air Update Center (`OtaUpdateCenter.tsx`)**: Houses firmware version matrix status panels and renders dynamic OTA download/flash progress loops.
   7. **Alarms Management Feed (`AlarmsFeed.tsx`)**: Reports active and historic hardware warnings, integrating visual trigger bells and manual operators to acknowledge (`POST /api/alarm/{id}/ack`) or clear (`POST /api/alarm/{id}/clear`) alerts.
+  8. **Notification & Modal Suite**: Features `PushNotificationModal.tsx` (Web Push API subscription management), `PWAInstallButton.tsx` (native PWA install prompt), `AboutModal.tsx` (system release metadata & credits), and `DevelopmentWarningModal.tsx` (environment diagnostics).
 
 ---
 
-## 3. Real-Time State & Synchronization Lifecycle
+## 3. Real-Time State, Canonical Thresholds & Synchronization Lifecycle
 
 The dashboard maintains synchronized device configurations and environmental metrics using reactive polling:
 
@@ -54,11 +55,14 @@ The dashboard maintains synchronized device configurations and environmental met
                                                                   │
    ┌──────────────────────────────────────────────────────────────┘
    ├─► Query Latest Telemetry (rh, temp, battery, rssi)
-   ├─► Query Device Attributes (Client Version, Wi-Fi SSID, Has SD)
+   ├─► Query Device Attributes (Client Version, Wi-Fi SSID, Has SD, Temp Unit, Alarm Thresholds)
    ├─► Query Active & Historical System Alarms
    └─► Trigger Reactive Screen Notification / Sound Alerts on New Alarms
 ```
 
+* **Canonical Kelvin Threshold Engine (`alarmThresholds.ts`)**: Temperature alarm thresholds are stored canonically in Kelvin (K) in both local runtime state and ThingsBoard shared attributes (`alarm_thresholds`). User-facing display is strictly presented in °F or °C (`toDisplayTemp` / `fromDisplayTemp`), preserving threshold integrity and unit-agnostic ThingsBoard rule chain evaluation without rounding drift.
+* **LTTB Downsampling Engine (`downsample.ts`)**: High-density time-series history arrays are downsampled client-side using the Largest-Triangle-Three-Buckets (LTTB) visual downsampling algorithm before passing data to Recharts, ensuring 60fps rendering even over multi-day spans.
+* **Web Push & Audio Synthesizer (`pushNotifications.ts`, `notificationService.ts`)**: In-app synthesized audio alerts and Web Push API service worker push notifications alert users when humidity or temperature breaches warning/critical envelopes.
 * **Memoized Attributes Cache**: To avoid API request flooding, client and shared attributes are cached with a 10-minute Time-To-Live (TTL), except during manual parameter updates which invalidate the cache instantly.
 * **Flexible Device Discovery**: Detects the active user profile authority. If a `CUSTOMER_USER`, it queries sandboxed customer directories; if a `TENANT_ADMIN`, it queries global tenant-level indices, completely preventing permission/SSO mismatch exceptions.
 

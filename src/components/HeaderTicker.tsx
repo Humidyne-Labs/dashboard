@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { HumidorDevice, TempUnit } from '../types';
 import { UserProfile, thingsboard } from '../services/thingsboard';
+import { toDisplayTemp, toKelvinTemp } from '../services/alarmThresholds';
 import { getSafeHost } from '../utils/url';
 import { getEnv } from '../utils/env';
 import { APP_CONFIG } from '../config/env';
@@ -115,11 +116,10 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
     }
   };
 
-  const formatTemp = (tempF: number) => {
-    if (tempUnit === 'C') {
-      return `${(((tempF - 32) * 5) / 9).toFixed(1)}°C`;
-    }
-    return `${tempF.toFixed(1)}°F`;
+  const formatTemp = (rawTemp: number) => {
+    const kTemp = toKelvinTemp(rawTemp);
+    const disp = toDisplayTemp(kTemp, tempUnit);
+    return `${disp.toFixed(1)}°${tempUnit}`;
   };
 
   const getStatusBadge = (status: HumidorDevice['status']) => {

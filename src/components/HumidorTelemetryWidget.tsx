@@ -27,11 +27,14 @@ import {
   setManualTokenOverride,
 } from '../services/tbClientService';
 
+import { TempUnit } from '../types';
+
 export interface HumidorTelemetryWidgetProps {
   deviceId: string;
   serverUrl?: string;
   initialToken?: string;
   deviceName?: string;
+  tempUnit?: TempUnit;
   onDeviceSelect?: (deviceId: string) => void;
 }
 
@@ -40,6 +43,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
   serverUrl = 'https://app.humid1.com',
   initialToken,
   deviceName,
+  tempUnit,
 }) => {
   const [token, setToken] = useState<string>(
     initialToken || localStorage.getItem('tb_token') || localStorage.getItem('tb_jwt_override') || ''
@@ -136,8 +140,17 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
   };
 
   // 4 Active Telemetry Keys: rh, temp, battery, rssi
+  const activeUnit = humidorDevice?.sharedAttributes?.temp_unit || tempUnit || 'F';
   const humVal = getMetricValue('rh');
-  const tempVal = getMetricValue('temp');
+  
+  const rawTempNum = typeof telemetry['temp']?.value === 'number'
+    ? telemetry['temp'].value
+    : (typeof humidorDevice?.telemetry?.temp === 'number' ? humidorDevice.telemetry.temp : null);
+  
+  const tempVal = rawTempNum !== null
+    ? (activeUnit === 'C' ? (((rawTempNum - 32) * 5) / 9).toFixed(1) : rawTempNum.toFixed(1))
+    : '--';
+
   const batteryVal = getMetricValue('battery');
   const rssiVal = telemetry['rssi']?.value !== undefined ? String(telemetry['rssi'].value) : '-64';
   const rhSafeLow = humidorDevice?.sharedAttributes?.alarm_thresholds?.rhLowWarning ?? 65;
@@ -327,7 +340,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             <span className="text-2xl font-bold font-mono text-amber-300">
               {tempVal}
             </span>
-            <span className="text-xs font-mono text-slate-400">°F</span>
+            <span className="text-xs font-mono text-slate-400">°{activeUnit}</span>
           </div>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400">
             <span>Curing Temp</span>

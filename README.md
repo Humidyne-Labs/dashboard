@@ -12,40 +12,48 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 
 ```
 ├── public/                             # Static assets, Web Manifest, Favicons, Runtime Config Placeholders
-├── docs/                               # Clean, coherent production architecture and workflow guides
+├── docs/                               # Production architecture, API manifest, and workflow guides
 │   ├── architecture.md                 # System topology, visual design identity, data schemas
 │   ├── api_manifest.md                 # Complete JSON request/response reference manifest
 │   ├── twa_bubblewrap_guide.md         # Android TWA & Bubblewrap build steps
-│   └── release_workflow.md             # CI/CD git tags & automatic OTA uploads
+│   └── release_workflow.md             # CI/CD git tags & automatic build workflows
 ├── src/
 │   ├── components/                     # Modular, isolated UI and modal components
+│   │   ├── AboutModal.tsx              # System release details, credits, and support modal
 │   │   ├── AlarmsFeed.tsx              # Active & historic alarms feed with Ack/Clear actions
-│   │   ├── AlarmThresholdsModal.tsx    # Runtime climate & alert threshold tuning interface
 │   │   ├── ApiInspectorModal.tsx       # Live HTTP transaction inspector, raw logs & token decoder
 │   │   ├── AuthModal.tsx               # ThingsBoard REST & SSO authentication manager
 │   │   ├── ClaimDeviceModal.tsx        # Hardware device claiming workflow modal
 │   │   ├── ClimateGauges.tsx           # Real-time RH%, Temperature, Battery, and RSSI gauges
-│   │   ├── ControlPanel.tsx            # Remote hardware parameters (sleep interval, audio, theme)
+│   │   ├── ControlPanel.tsx            # Remote hardware parameters & threshold adjustment panel
+│   │   ├── DevelopmentWarningModal.tsx # Demo mode and mock environment alert banner
 │   │   ├── DeviceStatusHeader.tsx      # Active hardware unit selector & health diagnostics
 │   │   ├── HeaderTicker.tsx            # Stock-ticker style live multi-device status marquee
-│   │   ├── HistoricalChart.tsx         # Synchronized Recharts dual-axis climate history
+│   │   ├── HistoricalChart.tsx         # Synchronized Recharts dual-axis climate history with LTTB downsampling
 │   │   ├── HumidorTelemetryWidget.tsx  # Direct @enerlab/thingsboard-client timeseries monitor
 │   │   ├── OtaUpdateCenter.tsx         # OTA firmware release manager and live progress bar
 │   │   ├── ProtectedRoute.tsx          # Auth-guard gate supporting Authentik OIDC & ThingsBoard JWT
+│   │   ├── PushNotificationModal.tsx   # Web Push API configuration and test trigger dialog
+│   │   ├── PWAInstallButton.tsx        # Dynamic Progressive Web App install prompt button
 │   │   ├── RemoveDeviceModal.tsx       # Device unclaim / delete confirmation dialog
 │   │   └── ServerConfigModal.tsx       # Runtime endpoints & domain configuration modal
 │   ├── config/
 │   │   └── env.ts                      # Domain aggregator & runtime environment loader
 │   ├── hooks/
+│   │   ├── usePWAInstall.ts            # PWA install prompt lifecycle and event listener
 │   │   └── useThingsBoardTelemetry.ts  # Typed telemetry hook with delta-detection & sleep tracking
 │   ├── services/
+│   │   ├── alarmThresholds.ts          # Canonical Kelvin threshold engine, presets & °F/°C/K converters
 │   │   ├── apiClientInit.ts            # Global interceptors with reactive token refresh
 │   │   ├── apiLogger.ts                # In-memory & localStorage HTTP network transaction recorder
+│   │   ├── notificationService.ts      # Audio sound generator and notification dispatcher
 │   │   ├── oidcConfig.ts               # Authentik OpenID Connect client configuration
+│   │   ├── pushNotifications.ts        # Web Push API service worker subscription manager
 │   │   ├── tbClientService.ts          # @enerlab/thingsboard-client singleton & Zod schema parser
 │   │   └── thingsboard.ts              # Unified ThingsBoard IoT engine (telemetry, RPC, claiming)
 │   ├── utils/
 │   │   ├── authTokens.ts               # JWT normalization, expiration check & token discovery
+│   │   ├── downsample.ts               # LTTB time-series downsampling algorithm for high performance
 │   │   ├── env.ts                      # Universal environment variable accessor
 │   │   └── url.ts                      # Domain and URL normalization helpers
 │   ├── types.ts                        # Centralized TypeScript interface & enum definitions

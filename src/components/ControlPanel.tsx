@@ -3,9 +3,14 @@ import { HumidorDevice, TempUnit, AlarmThresholds } from '../types';
 import { thingsboard } from '../services/thingsboard';
 import { 
   alarmThresholdService, 
+  getPresetThresholds,
+  getDefaultThresholds,
   THRESHOLD_PRESETS, 
-  toDisplayTemp, 
-  fromDisplayTemp
+  toDisplayTemp,
+  fromDisplayTemp,
+  toDisplayDelta,
+  fromDisplayDelta,
+  sanitizeToCanonicalKelvin,
 } from '../services/alarmThresholds';
 import { 
   Sliders, 
@@ -21,6 +26,9 @@ import {
   AlertCircle,
   Droplets,
   Thermometer,
+  Battery,
+  SlidersHorizontal,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   Volume2,
@@ -35,13 +43,11 @@ import {
 interface ControlPanelProps {
   device: HumidorDevice;
   tempUnit?: TempUnit;
-  onOpenThresholds?: () => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({ 
   device, 
-  tempUnit = 'F',
-  onOpenThresholds 
+  tempUnit = 'F' 
 }) => {
   const currentThresholds = alarmThresholdService.getThresholds();
 
@@ -101,13 +107,37 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   // Sync state when device updates from ThingsBoard
   useEffect(() => {
+    if (device.sharedAttributes.sleep_interval_min) {
+      setSleepMin(device.sharedAttributes.sleep_interval_min);
+    } else if (device.sharedAttributes.sleep_interval_sec) {
+      setSleepMin(Math.round(device.sharedAttributes.sleep_interval_sec / 60));
+    }
+    if (device.sharedAttributes.alarm_thresholds) {
+      setThresholds(sanitizeToCanonicalKelvin(device.sharedAttributes.alarm_thresholds));
+    }
     if (device.sharedAttributes.device_theme) {
       setTheme(String(device.sharedAttributes.device_theme).toLowerCase() === 'light' ? 'light' : 'dark');
     }
     if (device.sharedAttributes.sound_enabled !== undefined) {
       setSoundEnabled(hasSdCard ? (device.sharedAttributes.sound_enabled !== false) : false);
     }
-  }, [device.sharedAttributes.device_theme, device.sharedAttributes.sound_enabled, hasSdCard]);
+    if (device.sharedAttributes.auto_update_enabled !== undefined) {
+      setAutoUpdate(device.sharedAttributes.auto_update_enabled);
+    }
+    if (device.sharedAttributes.manual_ota_trigger !== undefined) {
+      setManualOta(device.sharedAttributes.manual_ota_trigger);
+    }
+  }, [
+    device.id,
+    device.sharedAttributes.sleep_interval_min,
+    device.sharedAttributes.sleep_interval_sec,
+    device.sharedAttributes.alarm_thresholds,
+    device.sharedAttributes.device_theme,
+    device.sharedAttributes.sound_enabled,
+    device.sharedAttributes.auto_update_enabled,
+    device.sharedAttributes.manual_ota_trigger,
+    hasSdCard,
+  ]);
 
   // RPC Command states
   const [rpcLoading, setRpcLoading] = useState<string | null>(null);
@@ -121,11 +151,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   }, []);
 
   const handleApplyPreset = (presetId: 'sensitive' | 'normal' | 'relaxed') => {
-    const found = THRESHOLD_PRESETS.find((p) => p.id === presetId);
-    if (found) {
-      setThresholds(found.thresholds);
-      setActivePreset(presetId);
-    }
+    const presetTh = getPresetThresholds(presetId);
+    setThresholds(presetTh);
+    setActivePreset(presetId);
+  };
+
+  const handleResetDefaults = () => {
+    const defaults = getDefaultThresholds();
+    setThresholds(defaults);
+    setActivePreset(null);
   };
 
   const handleThresholdChange = (key: keyof AlarmThresholds, val: number) => {
@@ -136,10 +170,30 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     setActivePreset(null);
   };
 
+  const handleTempThresholdChange = (key: keyof AlarmThresholds, dispVal: number) => {
+    const canonicalF = fromDisplayTemp(dispVal, tempUnit);
+    setThresholds((prev) => ({
+      ...prev,
+      [key]: canonicalF,
+    }));
+    setActivePreset(null);
+  };
+
+  const handleTempHistChange = (dispVal: number) => {
+    const canonicalFDelta = fromDisplayDelta(dispVal, tempUnit);
+    setThresholds((prev) => ({
+      ...prev,
+      tempHist: canonicalFDelta,
+    }));
+    setActivePreset(null);
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
+      const canonicalThresholds = sanitizeToCanonicalKelvin(thresholds);
+
       // 1. Update ThingsBoard Shared Attributes with clean schema
       await thingsboard.updateSharedAttributes(device.id, {
         sleep_interval_min: sleepMin,
@@ -149,11 +203,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         manual_ota_trigger: manualOta,
         sound_enabled: hasSdCard ? soundEnabled : false,
         temp_unit: tempUnit,
-        alarm_thresholds: thresholds,
+        alarm_thresholds: canonicalThresholds,
       });
 
       // 2. Synchronize local runtime alarm threshold service
-      alarmThresholdService.saveThresholds(thresholds);
+      alarmThresholdService.saveThresholds(canonicalThresholds);
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
@@ -191,14 +245,16 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     }
   };
 
-  // Temperature display conversions
+  // Temperature display values
   const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
   const dispTempLowWarning = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
   const dispTempHighWarning = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
   const dispTempHighCritical = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
+  const dispTempHist = toDisplayDelta(thresholds.tempHist, tempUnit);
 
   const tempMinSlider = tempUnit === 'C' ? 10 : 50;
   const tempMaxSlider = tempUnit === 'C' ? 32 : 90;
+  const tempHistMaxSlider = tempUnit === 'C' ? 3.0 : 5.0;
 
   const renderContent = () => (
     <div className="space-y-4">
@@ -372,7 +428,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               max={tempMaxSlider}
               step="0.5"
               value={dispTempLowCritical}
-              onChange={(e) => handleThresholdChange('tempLowCritical', fromDisplayTemp(Number(e.target.value), tempUnit))}
+              onChange={(e) => handleTempThresholdChange('tempLowCritical', Number(e.target.value))}
               className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
             />
           </div>
@@ -388,7 +444,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               max={tempMaxSlider}
               step="0.5"
               value={dispTempLowWarning}
-              onChange={(e) => handleThresholdChange('tempLowWarning', fromDisplayTemp(Number(e.target.value), tempUnit))}
+              onChange={(e) => handleTempThresholdChange('tempLowWarning', Number(e.target.value))}
               className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
             />
           </div>
@@ -404,7 +460,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               max={tempMaxSlider}
               step="0.5"
               value={dispTempHighWarning}
-              onChange={(e) => handleThresholdChange('tempHighWarning', fromDisplayTemp(Number(e.target.value), tempUnit))}
+              onChange={(e) => handleTempThresholdChange('tempHighWarning', Number(e.target.value))}
               className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
             />
           </div>
@@ -420,14 +476,128 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               max={tempMaxSlider}
               step="0.5"
               value={dispTempHighCritical}
-              onChange={(e) => handleThresholdChange('tempHighCritical', fromDisplayTemp(Number(e.target.value), tempUnit))}
+              onChange={(e) => handleTempThresholdChange('tempHighCritical', Number(e.target.value))}
               className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
             />
           </div>
         </div>
       </div>
 
-      {/* 3. Deep Sleep Interval Slider */}
+      {/* 3. Battery Level (%) Thresholds */}
+      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+            <Battery className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Battery Level (%) Thresholds</span>
+          </label>
+          <span className="font-mono text-xs font-bold text-emerald-300 bg-emerald-950/60 px-2.5 py-0.5 rounded border border-emerald-500/30">
+            LiPo Limits
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-400">Low Warning (Below)</span>
+              <span className="font-mono font-bold text-amber-400">{thresholds.batteryLowWarning}%</span>
+            </div>
+            <input
+              type="range"
+              min="15"
+              max="45"
+              step="1"
+              value={thresholds.batteryLowWarning}
+              onChange={(e) => handleThresholdChange('batteryLowWarning', Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-400">Critical Alert (Below)</span>
+              <span className="font-mono font-bold text-rose-400">{thresholds.batteryLowCritical}%</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="25"
+              step="1"
+              value={thresholds.batteryLowCritical}
+              onChange={(e) => handleThresholdChange('batteryLowCritical', Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Hysteresis Deactivation Zones (0 – 5.0) */}
+      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-purple-400" />
+            <span>Hysteresis Deactivation Zones (0 – 5.0)</span>
+          </label>
+          <span className="font-mono text-xs font-bold text-purple-300 bg-purple-950/60 px-2.5 py-0.5 rounded border border-purple-500/30">
+            Alert Reset Buffer
+          </span>
+        </div>
+
+        <p className="text-[11px] text-slate-400 leading-snug">
+          When an alert triggers, telemetry must transition back past the threshold by this hysteresis buffer before clearing, preventing rapid on/off alert bouncing.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-400">RH Hysteresis</span>
+              <span className="font-mono font-bold text-purple-300">{thresholds.rhHist}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.1"
+              value={thresholds.rhHist}
+              onChange={(e) => handleThresholdChange('rhHist', Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-400">Temp Hysteresis</span>
+              <span className="font-mono font-bold text-purple-300">{dispTempHist}°{tempUnit}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={tempHistMaxSlider}
+              step="0.1"
+              value={dispTempHist}
+              onChange={(e) => handleTempHistChange(Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-400">Batt Hysteresis</span>
+              <span className="font-mono font-bold text-purple-300">{thresholds.battHist}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.5"
+              value={thresholds.battHist}
+              onChange={(e) => handleThresholdChange('battHist', Number(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-400"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Deep Sleep Interval Slider */}
       <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
         <div className="flex justify-between items-center">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
@@ -456,7 +626,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       </div>
 
-      {/* 4. On-Device E-Ink Display Theme Selector (Light vs Dark) */}
+      {/* 6. On-Device E-Ink Display Theme Selector (Light vs Dark) */}
       <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
           <Sun className="w-3.5 h-3.5 text-amber-400" />
@@ -492,7 +662,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       </div>
 
-      {/* 5. Hardware Peripherals & Firmware Management */}
+      {/* 7. Hardware Peripherals & Firmware Management */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         {/* Hardware Sound Speaker Toggle */}
         <div className={`flex items-center justify-between p-3 rounded-xl border ${
@@ -598,7 +768,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       </div>
 
-      {/* 6. Live ThingsBoard RPC Triggers */}
+      {/* 8. Live ThingsBoard RPC Triggers */}
       <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
@@ -659,10 +829,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       <div className="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-mono">
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span>Syncs to ThingsBoard & Active Alarms</span>
-        </div>
+        <button
+          type="button"
+          onClick={handleResetDefaults}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-700/60 transition cursor-pointer"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Reset Defaults</span>
+        </button>
 
         <button
           onClick={handleSave}
@@ -711,18 +885,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <span className="text-[11px] font-mono px-2 py-1 rounded-lg bg-slate-950 text-sky-300 border border-slate-800 hidden lg:inline-block">
               Wake: {sleepMin}m
             </span>
-
-            {onOpenThresholds && (
-              <button
-                type="button"
-                onClick={onOpenThresholds}
-                className="h-8 px-2.5 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 text-amber-400 hover:text-amber-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                title="Open Advanced Threshold Configuration"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Presets</span>
-              </button>
-            )}
 
             {/* Window Mode Button */}
             <button
@@ -798,3 +960,4 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     </>
   );
 };
+

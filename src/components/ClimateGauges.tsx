@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HumidorDevice, TempUnit } from '../types';
-import { alarmThresholdService, AlarmThresholds } from '../services/alarmThresholds';
+import { alarmThresholdService, AlarmThresholds, toDisplayTemp, toKelvinTemp } from '../services/alarmThresholds';
 import { 
   Droplets, 
   Thermometer, 
@@ -13,14 +13,12 @@ interface ClimateGaugesProps {
   device: HumidorDevice;
   tempUnit: TempUnit;
   onToggleTempUnit?: () => void;
-  onOpenThresholds?: () => void;
 }
 
 export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
   device,
   tempUnit,
   onToggleTempUnit,
-  onOpenThresholds,
 }) => {
   const { rh, temp, battery, rssi } = device.telemetry;
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
@@ -86,38 +84,48 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     };
   };
 
-  // Temperature Evaluation based on configured thresholds
-  const getTempStatus = (tempF: number) => {
-    if (tempF > thresholds.tempHighCritical) {
+  const kTemp = toKelvinTemp(temp);
+  const displayTemp = toDisplayTemp(kTemp, tempUnit).toFixed(1);
+  const tempUnitSymbol = `°${tempUnit}`;
+
+  const dispTempLowCrit = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
+  const dispTempLowWarn = toDisplayTemp(thresholds.tempLowWarning, tempUnit);
+  const dispTempHighWarn = toDisplayTemp(thresholds.tempHighWarning, tempUnit);
+  const dispTempHighCrit = toDisplayTemp(thresholds.tempHighCritical, tempUnit);
+
+  // Temperature Evaluation based on configured thresholds (evaluated in Kelvin)
+  const getTempStatus = (rawTemp: number) => {
+    const k = toKelvinTemp(rawTemp);
+    if (k > thresholds.tempHighCritical) {
       return {
-        label: `CRITICAL HIGH (>${thresholds.tempHighCritical}°F)`,
+        label: `CRITICAL HIGH (>${dispTempHighCrit}${tempUnitSymbol})`,
         color: 'text-rose-400',
         bg: 'bg-rose-950/40',
         border: 'border-rose-500/30',
         barColor: 'bg-rose-500',
       };
     }
-    if (tempF > thresholds.tempHighWarning) {
+    if (k > thresholds.tempHighWarning) {
       return {
-        label: `HIGH WARNING (>${thresholds.tempHighWarning}°F)`,
+        label: `HIGH WARNING (>${dispTempHighWarn}${tempUnitSymbol})`,
         color: 'text-amber-400',
         bg: 'bg-amber-950/40',
         border: 'border-amber-500/30',
         barColor: 'bg-amber-400',
       };
     }
-    if (tempF < thresholds.tempLowCritical) {
+    if (k < thresholds.tempLowCritical) {
       return {
-        label: `CRITICAL LOW (<${thresholds.tempLowCritical}°F)`,
+        label: `CRITICAL LOW (<${dispTempLowCrit}${tempUnitSymbol})`,
         color: 'text-rose-400',
         bg: 'bg-rose-950/40',
         border: 'border-rose-500/30',
         barColor: 'bg-rose-500',
       };
     }
-    if (tempF < thresholds.tempLowWarning) {
+    if (k < thresholds.tempLowWarning) {
       return {
-        label: `LOW WARNING (<${thresholds.tempLowWarning}°F)`,
+        label: `LOW WARNING (<${dispTempLowWarn}${tempUnitSymbol})`,
         color: 'text-blue-300',
         bg: 'bg-blue-950/40',
         border: 'border-blue-500/30',
@@ -125,7 +133,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
       };
     }
     return {
-      label: `OPTIMAL (${thresholds.tempLowWarning}–${thresholds.tempHighWarning}°F)`,
+      label: `OPTIMAL (${dispTempLowWarn}–${dispTempHighWarn}${tempUnitSymbol})`,
       color: 'text-emerald-400',
       bg: 'bg-emerald-950/40',
       border: 'border-emerald-500/30',
@@ -135,9 +143,6 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
   const rhStatus = getRhStatus(rh);
   const tempStatus = getTempStatus(temp);
-
-  const displayTemp = tempUnit === 'C' ? (((temp - 32) * 5) / 9).toFixed(1) : temp.toFixed(1);
-  const tempUnitSymbol = tempUnit === 'C' ? '°C' : '°F';
 
   // Battery percentage color based on batteryLowCritical threshold
   const getBatteryColor = (lvl: number) => {
@@ -161,21 +166,9 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${rhStatus.color} truncate max-w-[110px] sm:max-w-none`}>{rhStatus.label}</span>
               </div>
             </div>
-            {onOpenThresholds ? (
-              <button
-                type="button"
-                onClick={onOpenThresholds}
-                className="text-[10px] font-mono text-amber-400 hover:text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 flex items-center gap-1 transition"
-                title="Configure Alarm & Climate Thresholds"
-              >
-                <Sliders className="w-2.5 h-2.5" />
-                <span className="hidden sm:inline">Tune</span>
-              </button>
-            ) : (
-              <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800">
-                SHT40
-              </span>
-            )}
+            <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800">
+              SHT40
+            </span>
           </div>
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
@@ -243,7 +236,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">{tempUnitSymbol}</span>
             </div>
             <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
-              <span>Max: {tempUnit === 'C' ? (((thresholds.tempHighCritical - 32) * 5) / 9).toFixed(1) + '°C' : `${thresholds.tempHighCritical}°F`}</span>
+              <span>Max: {dispTempHighCrit}{tempUnitSymbol}</span>
             </div>
           </div>
 
@@ -251,19 +244,29 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
             <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden relative border border-slate-800">
               <div
                 className={`h-full ${tempStatus.barColor} transition-all duration-500 rounded-full`}
-                style={{ width: `${Math.min(Math.max(((temp - 50) / 40) * 100, 0), 100)}%` }}
+                style={{
+                  width: `${Math.min(
+                    Math.max(
+                      tempUnit === 'C'
+                        ? ((Number(displayTemp) - 10) / 22) * 100
+                        : ((Number(displayTemp) - 50) / 40) * 100,
+                      0
+                    ),
+                    100
+                  )}%`,
+                }}
               />
             </div>
             <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
-              <span>{thresholds.tempLowWarning}°F</span>
+              <span>{dispTempLowWarn}{tempUnitSymbol}</span>
               <span className="text-emerald-400">Safe Range</span>
-              <span>{thresholds.tempHighCritical}°F</span>
+              <span>{dispTempHighCrit}{tempUnitSymbol}</span>
             </div>
           </div>
         </div>
 
         <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
-          Keep between {tempUnit === 'C' ? (((thresholds.tempLowWarning - 32) * 5 / 9).toFixed(1) + '°C – ' + ((thresholds.tempHighWarning - 32) * 5 / 9).toFixed(1) + '°C') : `${thresholds.tempLowWarning}°F – ${thresholds.tempHighWarning}°F`} configured target boundary.
+          Keep between {dispTempLowWarn}{tempUnitSymbol} – {dispTempHighWarn}{tempUnitSymbol} configured target boundary.
         </p>
       </div>
 

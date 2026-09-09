@@ -26,6 +26,7 @@ import {
   ClaimLogEntry,
   DeviceStatus,
   TelemetryData,
+  TempUnit,
 } from '../types';
 import { normalizeUrl } from '../utils/url';
 import { getEnv } from '../utils/env';
@@ -40,7 +41,7 @@ import {
   isAuthentikOidcToken,
 } from '../utils/authTokens';
 import { registerGlobalClientInterceptors } from './apiClientInit';
-import { alarmThresholdService } from './alarmThresholds';
+import { alarmThresholdService, sanitizeToCanonicalKelvin, toDisplayTemp, toKelvinTemp } from './alarmThresholds';
 import { notificationService } from './notificationService';
 
 const CONFIG_STORAGE_KEY = 'humid1_thingsboard_config';
@@ -1817,6 +1818,7 @@ class ThingsBoardService {
       return dev;
     });
 
+    this.evaluateAllAlarms();
     this.notifySubscribers();
   }
 
@@ -1884,7 +1886,8 @@ class ThingsBoardService {
     const now = Date.now();
 
     for (const device of this.devices) {
-      const th = device.sharedAttributes?.alarm_thresholds || globalThresholds;
+      const rawTh = device.sharedAttributes?.alarm_thresholds || globalThresholds;
+      const th = sanitizeToCanonicalKelvin(rawTh);
       const { rh, temp, battery } = device.telemetry;
       if (typeof rh !== 'number' || typeof temp !== 'number') continue;
 
@@ -2002,9 +2005,18 @@ class ThingsBoardService {
       }
 
       // --- 2. Temperature Alerts ---
+      const unit = (device.sharedAttributes?.temp_unit || 'F') as TempUnit;
+      const kTemp = toKelvinTemp(temp);
+      const dispTemp = toDisplayTemp(kTemp, unit);
+      const dispUnitSym = `°${unit}`;
+      const dispLimitHC = toDisplayTemp(th.tempHighCritical, unit);
+      const dispLimitHW = toDisplayTemp(th.tempHighWarning, unit);
+      const dispLimitLW = toDisplayTemp(th.tempLowWarning, unit);
+      const dispLimitLC = toDisplayTemp(th.tempLowCritical, unit);
+
       // A. Temp Critical High
       const tempCritHigh = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_HIGH');
-      if (temp > th.tempHighCritical) {
+      if (kTemp > th.tempHighCritical) {
         if (!tempCritHigh || !tempCritHigh.status.startsWith('ACTIVE')) {
           addAlarm({
             id: `alm-temp-hc-${device.id}-${now}`,
@@ -2015,13 +2027,13 @@ class ThingsBoardService {
             status: 'ACTIVE_UNACK',
             createdTime: now,
             details: {
-              message: `Critical high temperature (${temp.toFixed(1)}°F) exceeded ${th.tempHighCritical}°F limit`,
+              message: `Critical high temperature (${dispTemp}${dispUnitSym}) exceeded ${dispLimitHC}${dispUnitSym} limit`,
               temp,
             },
           });
         }
       } else if (tempCritHigh && tempCritHigh.status.startsWith('ACTIVE')) {
-        if (temp <= th.tempHighCritical - th.tempHist) {
+        if (kTemp <= th.tempHighCritical - th.tempHist) {
           tempCritHigh.status = tempCritHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
           tempCritHigh.clearTime = now;
           updated = true;
@@ -2030,7 +2042,7 @@ class ThingsBoardService {
 
       // B. Temp Warning High
       const tempWarnHigh = deviceAlarms.find((a) => a.type === 'TEMP_HIGH_WARNING');
-      if (temp > th.tempHighWarning && temp <= th.tempHighCritical) {
+      if (kTemp > th.tempHighWarning && kTemp <= th.tempHighCritical) {
         if (!tempWarnHigh || !tempWarnHigh.status.startsWith('ACTIVE')) {
           addAlarm({
             id: `alm-temp-hw-${device.id}-${now}`,
@@ -2041,13 +2053,13 @@ class ThingsBoardService {
             status: 'ACTIVE_UNACK',
             createdTime: now,
             details: {
-              message: `High temperature warning (${temp.toFixed(1)}°F) exceeded ${th.tempHighWarning}°F limit`,
+              message: `High temperature warning (${dispTemp}${dispUnitSym}) exceeded ${dispLimitHW}${dispUnitSym} limit`,
               temp,
             },
           });
         }
       } else if (tempWarnHigh && tempWarnHigh.status.startsWith('ACTIVE')) {
-        if (temp <= th.tempHighWarning - th.tempHist) {
+        if (kTemp <= th.tempHighWarning - th.tempHist) {
           tempWarnHigh.status = tempWarnHigh.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
           tempWarnHigh.clearTime = now;
           updated = true;
@@ -2056,7 +2068,7 @@ class ThingsBoardService {
 
       // C. Temp Warning Low
       const tempWarnLow = deviceAlarms.find((a) => a.type === 'TEMP_LOW_WARNING');
-      if (temp < th.tempLowWarning && temp >= th.tempLowCritical) {
+      if (kTemp < th.tempLowWarning && kTemp >= th.tempLowCritical) {
         if (!tempWarnLow || !tempWarnLow.status.startsWith('ACTIVE')) {
           addAlarm({
             id: `alm-temp-lw-${device.id}-${now}`,
@@ -2067,13 +2079,13 @@ class ThingsBoardService {
             status: 'ACTIVE_UNACK',
             createdTime: now,
             details: {
-              message: `Low temperature warning (${temp.toFixed(1)}°F) dropped below ${th.tempLowWarning}°F limit`,
+              message: `Low temperature warning (${dispTemp}${dispUnitSym}) dropped below ${dispLimitLW}${dispUnitSym} limit`,
               temp,
             },
           });
         }
       } else if (tempWarnLow && tempWarnLow.status.startsWith('ACTIVE')) {
-        if (temp >= th.tempLowWarning + th.tempHist) {
+        if (kTemp >= th.tempLowWarning + th.tempHist) {
           tempWarnLow.status = tempWarnLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
           tempWarnLow.clearTime = now;
           updated = true;
@@ -2082,7 +2094,7 @@ class ThingsBoardService {
 
       // D. Temp Critical Low
       const tempCritLow = deviceAlarms.find((a) => a.type === 'TEMP_CRITICAL_LOW');
-      if (temp < th.tempLowCritical) {
+      if (kTemp < th.tempLowCritical) {
         if (!tempCritLow || !tempCritLow.status.startsWith('ACTIVE')) {
           addAlarm({
             id: `alm-temp-lc-${device.id}-${now}`,
@@ -2093,13 +2105,13 @@ class ThingsBoardService {
             status: 'ACTIVE_UNACK',
             createdTime: now,
             details: {
-              message: `Critical low temperature (${temp.toFixed(1)}°F) dropped below ${th.tempLowCritical}°F limit`,
+              message: `Critical low temperature (${dispTemp}${dispUnitSym}) dropped below ${dispLimitLC}${dispUnitSym} limit`,
               temp,
             },
           });
         }
       } else if (tempCritLow && tempCritLow.status.startsWith('ACTIVE')) {
-        if (temp >= th.tempLowCritical + th.tempHist) {
+        if (kTemp >= th.tempLowCritical + th.tempHist) {
           tempCritLow.status = tempCritLow.status === 'ACTIVE_ACK' ? 'CLEARED_ACK' : 'CLEARED_UNACK';
           tempCritLow.clearTime = now;
           updated = true;

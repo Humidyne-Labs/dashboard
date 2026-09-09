@@ -17,8 +17,8 @@ import { RemoveDeviceModal } from './components/RemoveDeviceModal';
 import { DevelopmentWarningModal } from './components/DevelopmentWarningModal';
 import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
-import { AlarmThresholdsModal } from './components/AlarmThresholdsModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { alarmThresholdService, sanitizeToCanonicalKelvin } from './services/alarmThresholds';
 import { getEnv } from './utils/env';
 import { Flame, Cpu, Info, AlertTriangle } from 'lucide-react';
 
@@ -74,7 +74,6 @@ export default function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isDevWarningOpen, setIsDevWarningOpen] = useState(false);
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
-  const [isThresholdsModalOpen, setIsThresholdsModalOpen] = useState(false);
 
   const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1-DASHBOARD');
   const appDesc = getEnv('VITE_APP_DESCRIPTION', 'Precision Humidor Monitoring & Telemetry Stack');
@@ -150,9 +149,18 @@ export default function App() {
     const nextUnit: TempUnit = tempUnit === 'F' ? 'C' : 'F';
     setTempUnit(nextUnit);
     if (selectedDevice?.id) {
-      // Update only the 'temp_unit' shared attribute in ThingsBoard
+      // Ensure thresholds remain in canonical Kelvin storage
+      const currentThresholds =
+        selectedDevice.sharedAttributes?.alarm_thresholds || alarmThresholdService.getThresholds();
+      const canonicalThresholds = sanitizeToCanonicalKelvin(currentThresholds);
+
+      // Persist to local runtime service
+      alarmThresholdService.saveThresholds(canonicalThresholds);
+
+      // Update both 'temp_unit' and canonical Kelvin 'alarm_thresholds' shared attributes in ThingsBoard
       thingsboard.updateSharedAttributes(selectedDevice.id, {
         temp_unit: nextUnit,
+        alarm_thresholds: canonicalThresholds,
       });
     }
   };
@@ -216,7 +224,6 @@ export default function App() {
               <ControlPanel 
                 device={selectedDevice} 
                 tempUnit={tempUnit}
-                onOpenThresholds={() => setIsThresholdsModalOpen(true)} 
               />
 
               {/* OTA Firmware Management Center (Collapsible & Windowed) */}
@@ -224,7 +231,10 @@ export default function App() {
 
               {/* Live ThingsBoard Alarms Feed */}
               <div id="alarms-feed-section">
-                <AlarmsFeed alarms={alarms} />
+                <AlarmsFeed 
+                  alarms={alarms} 
+                  tempUnit={tempUnit} 
+                />
               </div>
             </>
           ) : (
@@ -316,12 +326,6 @@ export default function App() {
         <PushNotificationModal
           isOpen={isPushModalOpen}
           onClose={() => setIsPushModalOpen(false)}
-        />
-        <AlarmThresholdsModal
-          isOpen={isThresholdsModalOpen}
-          onClose={() => setIsThresholdsModalOpen(false)}
-          activeDevice={selectedDevice}
-          tempUnit={tempUnit}
         />
         <RemoveDeviceModal
           isOpen={isRemoveModalOpen}

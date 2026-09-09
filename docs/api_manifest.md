@@ -349,19 +349,21 @@ Fetches configuration values and hardware diagnostic details.
         "rhLowWarning": 65,
         "rhHighWarning": 73,
         "rhHighCritical": 76,
-        "tempLowCritical": 58,
-        "tempLowWarning": 64,
-        "tempHighWarning": 72,
-        "tempHighCritical": 75,
+        "tempLowCritical": 287.6,
+        "tempLowWarning": 290.93,
+        "tempHighWarning": 295.37,
+        "tempHighCritical": 297.04,
         "batteryLowCritical": 15,
         "batteryLowWarning": 25,
         "rhHist": 1.5,
-        "tempHist": 1,
+        "tempHist": 0.556,
         "battHist": 2
       }
     }
   ]
   ```
+
+> **Note on Canonical Kelvin Storage:** All temperature thresholds (`tempLowCritical`, `tempLowWarning`, `tempHighWarning`, `tempHighCritical`, `tempHist`) are stored canonically in **Kelvin (K)** in `alarm_thresholds`. This allows the ThingsBoard rule chain engine to evaluate temperature alarm conditions against unit-agnostic Kelvin values regardless of whether the user sets `temp_unit` to `"F"`, `"C"`, or `"K"`.
 
 ---
 
@@ -384,14 +386,14 @@ Pushes threshold updates, sleep duration controls, or toggle configurations back
           "rhLowWarning": 65,
           "rhHighWarning": 73,
           "rhHighCritical": 76,
-          "tempLowCritical": 58,
-          "tempLowWarning": 64,
-          "tempHighWarning": 72,
-          "tempHighCritical": 75,
+          "tempLowCritical": 287.6,
+          "tempLowWarning": 290.93,
+          "tempHighWarning": 295.37,
+          "tempHighCritical": 297.04,
           "batteryLowCritical": 15,
           "batteryLowWarning": 25,
           "rhHist": 1.5,
-          "tempHist": 1,
+          "tempHist": 0.556,
           "battHist": 2
         }
       }

@@ -5,6 +5,7 @@ import {
   alarmThresholdService,
   AlarmThresholds,
   toDisplayTemp,
+  toKelvinTemp,
 } from '../services/alarmThresholds';
 import { downsampleTelemetryLTTB } from '../utils/downsample';
 import {
@@ -240,13 +241,16 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       220
     );
 
-    return sampled.map((pt) => ({
-      ...pt,
-      displayTemp: tempUnit === 'C' ? pt.tempC : pt.temp,
-    }));
+    return sampled.map((pt) => {
+      const kVal = toKelvinTemp(pt.temp);
+      return {
+        ...pt,
+        displayTemp: toDisplayTemp(kVal, tempUnit),
+      };
+    });
   }, [historyData, activeStartTs, activeEndTs, tempUnit]);
 
-  const tempSymbol = tempUnit === 'C' ? '°C' : '°F';
+  const tempSymbol = `°${tempUnit}`;
 
   // Scaled temperature threshold values
   const dispTempLowCritical = toDisplayTemp(thresholds.tempLowCritical, tempUnit);
@@ -261,11 +265,11 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
     let minT =
       tempUnit === 'C'
         ? Math.min(10, Math.floor(dispTempLowCritical - 2))
-        : Math.min(50, Math.floor(thresholds.tempLowCritical - 3));
+        : Math.min(50, Math.floor(dispTempLowCritical - 3));
     let maxT =
       tempUnit === 'C'
         ? Math.max(30, Math.ceil(dispTempHighCritical + 2))
-        : Math.max(82, Math.ceil(thresholds.tempHighCritical + 3));
+        : Math.max(82, Math.ceil(dispTempHighCritical + 3));
 
     if (displayHistory.length > 0) {
       for (const pt of displayHistory) {
