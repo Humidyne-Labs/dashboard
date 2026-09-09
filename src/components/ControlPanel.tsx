@@ -10,7 +10,6 @@ import {
   fromDisplayTemp,
   toDisplayDelta,
   fromDisplayDelta,
-  sanitizeToCanonicalKelvin,
 } from '../services/alarmThresholds';
 import { 
   Sliders, 
@@ -80,9 +79,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     (device.sharedAttributes.sleep_interval_sec ? Math.round(device.sharedAttributes.sleep_interval_sec / 60) : 15)
   );
 
-  // Active Runtime Alarm Thresholds (Canonical storage in °F for temp)
+  // Active Runtime Alarm Thresholds (Canonical storage in Kelvin for temp)
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
-    device.sharedAttributes.alarm_thresholds || currentThresholds
+    () => device.sharedAttributes.alarm_thresholds || currentThresholds
   );
 
   // Hardware Display Theme (strictly 'light' or 'dark')
@@ -113,7 +112,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       setSleepMin(Math.round(device.sharedAttributes.sleep_interval_sec / 60));
     }
     if (device.sharedAttributes.alarm_thresholds) {
-      setThresholds(sanitizeToCanonicalKelvin(device.sharedAttributes.alarm_thresholds));
+      setThresholds(device.sharedAttributes.alarm_thresholds);
     }
     if (device.sharedAttributes.device_theme) {
       setTheme(String(device.sharedAttributes.device_theme).toLowerCase() === 'light' ? 'light' : 'dark');
@@ -192,8 +191,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     if (e) e.preventDefault();
     setIsSaving(true);
     try {
-      const canonicalThresholds = sanitizeToCanonicalKelvin(thresholds);
-
       // 1. Update ThingsBoard Shared Attributes with clean schema
       await thingsboard.updateSharedAttributes(device.id, {
         sleep_interval_min: sleepMin,
@@ -203,11 +200,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         manual_ota_trigger: manualOta,
         sound_enabled: hasSdCard ? soundEnabled : false,
         temp_unit: tempUnit,
-        alarm_thresholds: canonicalThresholds,
+        alarm_thresholds: thresholds,
       });
 
       // 2. Synchronize local runtime alarm threshold service
-      alarmThresholdService.saveThresholds(canonicalThresholds);
+      alarmThresholdService.saveThresholds(thresholds);
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);

@@ -41,7 +41,7 @@ import {
   isAuthentikOidcToken,
 } from '../utils/authTokens';
 import { registerGlobalClientInterceptors } from './apiClientInit';
-import { alarmThresholdService, sanitizeToCanonicalKelvin, toDisplayTemp, toKelvinTemp } from './alarmThresholds';
+import { alarmThresholdService, toDisplayTemp, toKelvinTemp } from './alarmThresholds';
 import { notificationService } from './notificationService';
 
 const CONFIG_STORAGE_KEY = 'humid1_thingsboard_config';
@@ -1886,8 +1886,7 @@ class ThingsBoardService {
     const now = Date.now();
 
     for (const device of this.devices) {
-      const rawTh = device.sharedAttributes?.alarm_thresholds || globalThresholds;
-      const th = sanitizeToCanonicalKelvin(rawTh);
+      const th = device.sharedAttributes?.alarm_thresholds || globalThresholds;
       const { rh, temp, battery } = device.telemetry;
       if (typeof rh !== 'number' || typeof temp !== 'number') continue;
 

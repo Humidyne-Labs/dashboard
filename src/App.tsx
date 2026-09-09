@@ -18,7 +18,6 @@ import { DevelopmentWarningModal } from './components/DevelopmentWarningModal';
 import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { alarmThresholdService, sanitizeToCanonicalKelvin } from './services/alarmThresholds';
 import { getEnv } from './utils/env';
 import { Flame, Cpu, Info, AlertTriangle } from 'lucide-react';
 
@@ -149,18 +148,9 @@ export default function App() {
     const nextUnit: TempUnit = tempUnit === 'F' ? 'C' : 'F';
     setTempUnit(nextUnit);
     if (selectedDevice?.id) {
-      // Ensure thresholds remain in canonical Kelvin storage
-      const currentThresholds =
-        selectedDevice.sharedAttributes?.alarm_thresholds || alarmThresholdService.getThresholds();
-      const canonicalThresholds = sanitizeToCanonicalKelvin(currentThresholds);
-
-      // Persist to local runtime service
-      alarmThresholdService.saveThresholds(canonicalThresholds);
-
-      // Update both 'temp_unit' and canonical Kelvin 'alarm_thresholds' shared attributes in ThingsBoard
+      // Only push temp_unit to ThingsBoard shared attributes
       thingsboard.updateSharedAttributes(selectedDevice.id, {
         temp_unit: nextUnit,
-        alarm_thresholds: canonicalThresholds,
       });
     }
   };

@@ -154,95 +154,14 @@ export const fromDisplayDelta = (dispDelta: number, unit: TempUnit | 'K'): numbe
 };
 
 /**
- * Converts any arbitrary temperature reading (Kelvin, Fahrenheit, or Celsius) to canonical Kelvin.
+ * Converts any temperature reading to canonical Kelvin if unit is provided, or returns the canonical value.
  */
 export const toKelvinTemp = (val: number, assumedUnit?: TempUnit | 'K'): number => {
   if (typeof val !== 'number' || isNaN(val)) return 295.37; // Default fallback (72°F / 22.2°C)
   
-  if (assumedUnit === 'K') return val;
   if (assumedUnit === 'C') return val + 273.15;
   if (assumedUnit === 'F') return (val - 32) * (5 / 9) + 273.15;
-
-  // Auto-detect unit if not specified:
-  if (val > 200) {
-    return val; // Already Kelvin (e.g. 295.37 K)
-  }
-  if (val > 45) {
-    return (val - 32) * (5 / 9) + 273.15; // Fahrenheit (e.g. 72°F)
-  }
-  return val + 273.15; // Celsius (e.g. 22.2°C)
-};
-
-/**
- * Auto-detects and converts threshold values stored in °F, °C, or Kelvin into canonical Kelvin (K).
- */
-export const sanitizeToCanonicalKelvin = (th?: Partial<AlarmThresholds>): AlarmThresholds => {
-  if (!th) return { ...DEFAULT_THRESHOLDS };
-
-  const rawCritHigh = Number(th.tempHighCritical ?? DEFAULT_THRESHOLDS.tempHighCritical);
-  const rawWarnHigh = Number(th.tempHighWarning ?? DEFAULT_THRESHOLDS.tempHighWarning);
-  const rawWarnLow = Number(th.tempLowWarning ?? DEFAULT_THRESHOLDS.tempLowWarning);
-  const rawCritLow = Number(th.tempLowCritical ?? DEFAULT_THRESHOLDS.tempLowCritical);
-  const rawHist = Number(th.tempHist ?? DEFAULT_THRESHOLDS.tempHist);
-
-  let tempHighCritical: number;
-  let tempHighWarning: number;
-  let tempLowWarning: number;
-  let tempLowCritical: number;
-  let tempHist: number;
-
-  if (rawCritHigh > 200) {
-    // Already in Kelvin!
-    tempHighCritical = rawCritHigh;
-    tempHighWarning = rawWarnHigh;
-    tempLowWarning = rawWarnLow;
-    tempLowCritical = rawCritLow;
-    tempHist = rawHist;
-  } else if (rawCritHigh > 45) {
-    // Input is in Fahrenheit (°F)
-    tempHighCritical = Number(((rawCritHigh - 32) * (5 / 9) + 273.15).toFixed(2));
-    tempHighWarning = Number(((rawWarnHigh - 32) * (5 / 9) + 273.15).toFixed(2));
-    tempLowWarning = Number(((rawWarnLow - 32) * (5 / 9) + 273.15).toFixed(2));
-    tempLowCritical = Number(((rawCritLow - 32) * (5 / 9) + 273.15).toFixed(2));
-    tempHist = Number((rawHist * (5 / 9)).toFixed(2));
-  } else {
-    // Input is in Celsius (°C)
-    tempHighCritical = Number((rawCritHigh + 273.15).toFixed(2));
-    tempHighWarning = Number((rawWarnHigh + 273.15).toFixed(2));
-    tempLowWarning = Number((rawWarnLow + 273.15).toFixed(2));
-    tempLowCritical = Number((rawCritLow + 273.15).toFixed(2));
-    tempHist = Number(rawHist.toFixed(2));
-  }
-
-  return {
-    rhLowCritical: Number(th.rhLowCritical ?? DEFAULT_THRESHOLDS.rhLowCritical),
-    rhLowWarning: Number(th.rhLowWarning ?? DEFAULT_THRESHOLDS.rhLowWarning),
-    rhHighWarning: Number(th.rhHighWarning ?? DEFAULT_THRESHOLDS.rhHighWarning),
-    rhHighCritical: Number(th.rhHighCritical ?? DEFAULT_THRESHOLDS.rhHighCritical),
-
-    tempLowCritical,
-    tempLowWarning,
-    tempHighWarning,
-    tempHighCritical,
-
-    batteryLowCritical: Number(th.batteryLowCritical ?? DEFAULT_THRESHOLDS.batteryLowCritical),
-    batteryLowWarning: Number(th.batteryLowWarning ?? DEFAULT_THRESHOLDS.batteryLowWarning),
-
-    rhHist: Math.max(0, Math.min(5, Number(th.rhHist ?? DEFAULT_THRESHOLDS.rhHist))),
-    tempHist: Math.max(0, Math.min(5, tempHist)),
-    battHist: Math.max(0, Math.min(5, Number(th.battHist ?? DEFAULT_THRESHOLDS.battHist))),
-  };
-};
-
-export const sanitizeToCanonicalFahrenheit = sanitizeToCanonicalKelvin;
-
-export const convertThresholdsForUnitChange = (
-  thresholds: AlarmThresholds,
-  _fromUnit: TempUnit,
-  _toUnit: TempUnit
-): AlarmThresholds => {
-  // Thresholds are always canonical in Kelvin, so returning sanitized thresholds works for all units
-  return sanitizeToCanonicalKelvin(thresholds);
+  return val;
 };
 
 export const getPresetThresholds = (
@@ -274,7 +193,10 @@ class AlarmThresholdService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        return sanitizeToCanonicalKelvin(parsed);
+        return {
+          ...DEFAULT_THRESHOLDS,
+          ...parsed,
+        };
       }
     } catch (e) {
       console.warn('[AlarmThresholds] Failed to parse stored thresholds, using defaults:', e);
@@ -287,11 +209,10 @@ class AlarmThresholdService {
   }
 
   public saveThresholds(newThresholds: Partial<AlarmThresholds>): AlarmThresholds {
-    const merged = {
+    this.thresholds = {
       ...this.thresholds,
       ...newThresholds,
     };
-    this.thresholds = sanitizeToCanonicalKelvin(merged);
 
     if (typeof window !== 'undefined') {
       try {
