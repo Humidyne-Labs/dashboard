@@ -1,210 +1,310 @@
 import { Theme } from './types';
-import { msVscodePowershellIseTheme } from './presets/ms-vscode-powershell-ise';
-import { zhuangtongfaOneDarkProTheme } from './presets/zhuangtongfa-one-dark-pro';
-import { zhuangtongfaOneDarkProFlatTheme } from './presets/zhuangtongfa-one-dark-pro-flat';
-import { zhuangtongfaOneDarkProDarkerTheme } from './presets/zhuangtongfa-one-dark-pro-darker';
-import { zhuangtongfaOneDarkProMixTheme } from './presets/zhuangtongfa-one-dark-pro-mix';
-import { zhuangtongfaOneDarkProNightFlatTheme } from './presets/zhuangtongfa-one-dark-pro-night-flat';
-import { catppuccinCatppuccinMochaTheme } from './presets/catppuccin-catppuccin-mocha';
-import { catppuccinCatppuccinMacchiatoTheme } from './presets/catppuccin-catppuccin-macchiato';
-import { catppuccinCatppuccinFrappTheme } from './presets/catppuccin-catppuccin-frapp';
-import { catppuccinCatppuccinLatteTheme } from './presets/catppuccin-catppuccin-latte';
-import { msVscodeDarkVisualStudioCCTheme } from './presets/ms-vscode-dark-visual-studio-c-c';
-import { msVscode2017DarkVisualStudioCCTheme } from './presets/ms-vscode-2017-dark-visual-studio-c-c';
-import { msVscodeLightVisualStudioCCTheme } from './presets/ms-vscode-light-visual-studio-c-c';
-import { msVscode2017LightVisualStudioCCTheme } from './presets/ms-vscode-2017-light-visual-studio-c-c';
-import { gitpodGitpodDarkTheme } from './presets/gitpod-gitpod-dark';
-import { gitpodGitpodLightTheme } from './presets/gitpod-gitpod-light';
-import { draculaThemeDraculaTheme } from './presets/dracula-theme-dracula';
-import { draculaThemeDraculaSoftTheme } from './presets/dracula-theme-dracula-soft';
-import { githubGithubLightDefaultTheme } from './presets/github-github-light-default';
-import { githubGithubLightHighContrastTheme } from './presets/github-github-light-high-contrast';
-import { githubGithubLightColorblindBetaTheme } from './presets/github-github-light-colorblind-beta';
-import { githubGithubDarkDefaultTheme } from './presets/github-github-dark-default';
-import { githubGithubDarkHighContrastTheme } from './presets/github-github-dark-high-contrast';
-import { githubGithubDarkColorblindBetaTheme } from './presets/github-github-dark-colorblind-beta';
-import { githubGithubDarkDimmedTheme } from './presets/github-github-dark-dimmed';
-import { githubGithubLightTheme } from './presets/github-github-light';
-import { githubGithubDarkTheme } from './presets/github-github-dark';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeDarkpluscolorlabelTheme } from './presets/vscode-darkpluscolorlabel';
-import { vscodeDarkmodernlabelTheme } from './presets/vscode-darkmodernlabel';
-import { vscodeLightpluscolorlabelTheme } from './presets/vscode-lightpluscolorlabel';
-import { vscodeLightmodernlabelTheme } from './presets/vscode-lightmodernlabel';
-import { vscodeDarkcolorlabelTheme } from './presets/vscode-darkcolorlabel';
-import { vscodeLightcolorlabelTheme } from './presets/vscode-lightcolorlabel';
-import { vscodeHccolorlabelTheme } from './presets/vscode-hccolorlabel';
-import { vscodeLighthccolorlabelTheme } from './presets/vscode-lighthccolorlabel';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { monokaiMonokaiProTheme } from './presets/monokai-monokai-pro';
-import { monokaiMonokaiProFilterOctagonTheme } from './presets/monokai-monokai-pro-filter-octagon';
-import { monokaiMonokaiProFilterRistrettoTheme } from './presets/monokai-monokai-pro-filter-ristretto';
-import { monokaiMonokaiProFilterSpectrumTheme } from './presets/monokai-monokai-pro-filter-spectrum';
-import { monokaiMonokaiProFilterMachineTheme } from './presets/monokai-monokai-pro-filter-machine';
-import { monokaiMonokaiProLightTheme } from './presets/monokai-monokai-pro-light';
-import { monokaiMonokaiProLightFilterSunTheme } from './presets/monokai-monokai-pro-light-filter-sun';
-import { monokaiMonokaiClassicTheme } from './presets/monokai-monokai-classic';
-import { vscodeLabelTheme } from './presets/vscode-label';
-import { jdinhlifeGruvboxDarkMediumTheme } from './presets/jdinhlife-gruvbox-dark-medium';
-import { jdinhlifeGruvboxDarkHardTheme } from './presets/jdinhlife-gruvbox-dark-hard';
-import { jdinhlifeGruvboxDarkSoftTheme } from './presets/jdinhlife-gruvbox-dark-soft';
-import { jdinhlifeGruvboxLightMediumTheme } from './presets/jdinhlife-gruvbox-light-medium';
-import { jdinhlifeGruvboxLightHardTheme } from './presets/jdinhlife-gruvbox-light-hard';
-import { jdinhlifeGruvboxLightSoftTheme } from './presets/jdinhlife-gruvbox-light-soft';
-import { teabyiiAyuLightTheme } from './presets/teabyii-ayu-light';
-import { teabyiiAyuLightBorderedTheme } from './presets/teabyii-ayu-light-bordered';
-import { teabyiiAyuMirageTheme } from './presets/teabyii-ayu-mirage';
-import { teabyiiAyuMirageBorderedTheme } from './presets/teabyii-ayu-mirage-bordered';
-import { teabyiiAyuDarkTheme } from './presets/teabyii-ayu-dark';
-import { teabyiiAyuDarkBorderedTheme } from './presets/teabyii-ayu-dark-bordered';
-import { akamudAtomOneDarkTheme } from './presets/akamud-atom-one-dark';
-import { enkiaTokyoNightTheme } from './presets/enkia-tokyo-night';
-import { enkiaTokyoNightStormTheme } from './presets/enkia-tokyo-night-storm';
-import { enkiaTokyoNightLightTheme } from './presets/enkia-tokyo-night-light';
-import { beardedbearBeardedMonokaiMetallianTheme } from './presets/beardedbear-bearded-monokai-metallian';
-import { beardedbearBeardedMonokaiTerraTheme } from './presets/beardedbear-bearded-monokai-terra';
-import { beardedbearBeardedMonokaiStoneTheme } from './presets/beardedbear-bearded-monokai-stone';
-import { beardedbearBeardedMonokaiBlackTheme } from './presets/beardedbear-bearded-monokai-black';
-import { beardedbearBeardedMonokaiReversedTheme } from './presets/beardedbear-bearded-monokai-reversed';
-import { beardedbearBeardedSolarizedTheme } from './presets/beardedbear-bearded-solarized';
-import { beardedbearBeardedSolarizedReversedTheme } from './presets/beardedbear-bearded-solarized-reversed';
-import { beardedbearBeardedSolarizedLightTheme } from './presets/beardedbear-bearded-solarized-light';
-import { beardedbearBeardedOceanicTheme } from './presets/beardedbear-bearded-oceanic';
-import { beardedbearBeardedOceanicReversedTheme } from './presets/beardedbear-bearded-oceanic-reversed';
-import { beardedbearBeardedArcTheme } from './presets/beardedbear-bearded-arc';
-import { beardedbearBeardedArcEggplantTheme } from './presets/beardedbear-bearded-arc-eggplant';
-import { beardedbearBeardedArcEolstormTheme } from './presets/beardedbear-bearded-arc-eolstorm';
-import { beardedbearBeardedArcBlueberryTheme } from './presets/beardedbear-bearded-arc-blueberry';
-import { beardedbearBeardedArcReversedTheme } from './presets/beardedbear-bearded-arc-reversed';
-import { beardedbearBeardedBlackAmethystTheme } from './presets/beardedbear-bearded-black-amethyst';
-import { beardedbearBeardedBlackAmethystSoftTheme } from './presets/beardedbear-bearded-black-amethyst-soft';
-import { beardedbearBeardedBlackDiamondTheme } from './presets/beardedbear-bearded-black-diamond';
-import { beardedbearBeardedBlackDiamondSoftTheme } from './presets/beardedbear-bearded-black-diamond-soft';
-import { beardedbearBeardedBlackEmeraldTheme } from './presets/beardedbear-bearded-black-emerald';
-import { beardedbearBeardedBlackEmeraldSoftTheme } from './presets/beardedbear-bearded-black-emerald-soft';
-import { beardedbearBeardedBlackGoldTheme } from './presets/beardedbear-bearded-black-gold';
-import { beardedbearBeardedBlackGoldSoftTheme } from './presets/beardedbear-bearded-black-gold-soft';
-import { beardedbearBeardedBlackRubyTheme } from './presets/beardedbear-bearded-black-ruby';
-import { beardedbearBeardedBlackRubySoftTheme } from './presets/beardedbear-bearded-black-ruby-soft';
-import { beardedbearBeardedStainedPurpleTheme } from './presets/beardedbear-bearded-stained-purple';
-import { beardedbearBeardedStainedBlueTheme } from './presets/beardedbear-bearded-stained-blue';
-import { beardedbearBeardedVividPurpleTheme } from './presets/beardedbear-bearded-vivid-purple';
-import { beardedbearBeardedVividBlackTheme } from './presets/beardedbear-bearded-vivid-black';
-import { beardedbearBeardedVividLightTheme } from './presets/beardedbear-bearded-vivid-light';
-import { beardedbearBeardedFeatWillTheme } from './presets/beardedbear-bearded-feat-will';
-import { beardedbearBeardedFeatGoldDRaynhTheme } from './presets/beardedbear-bearded-feat-gold-d-raynh';
+import { discreetNurtureTheme } from './presets/discreet-nurture';
+import { dizzyWoodchuckTheme } from './presets/dizzy-woodchuck';
+import { romanticSpiritualityTheme } from './presets/romantic-spirituality';
+import { frightenedCrazyTheme } from './presets/frightened-crazy';
+import { capableDetectiveTheme } from './presets/capable-detective';
+import { profuseSellerTheme } from './presets/profuse-seller';
+import { ambitiousSessionTheme } from './presets/ambitious-session';
+import { knowledgeableAgendaTheme } from './presets/knowledgeable-agenda';
+import { manyIndicationTheme } from './presets/many-indication';
+import { boredCarryTheme } from './presets/bored-carry';
+import { thoughtlessVibrationTheme } from './presets/thoughtless-vibration';
+import { ashamedRelishTheme } from './presets/ashamed-relish';
+import { smallDiscussionTheme } from './presets/small-discussion';
+import { mysteriousHogTheme } from './presets/mysterious-hog';
+import { raspyAcquaintanceTheme } from './presets/raspy-acquaintance';
+import { weakDropTheme } from './presets/weak-drop';
+import { crazyCohesionTheme } from './presets/crazy-cohesion';
+import { dysfunctionalBloomTheme } from './presets/dysfunctional-bloom';
+import { immenseDefendantTheme } from './presets/immense-defendant';
+import { knowledgeableLongitudeTheme } from './presets/knowledgeable-longitude';
+import { hallowedFishermanTheme } from './presets/hallowed-fisherman';
+import { standingBafflementTheme } from './presets/standing-bafflement';
+import { wateryDearestTheme } from './presets/watery-dearest';
+import { godlySpleenTheme } from './presets/godly-spleen';
+import { changeableNoonTheme } from './presets/changeable-noon';
+import { goodShoreTheme } from './presets/good-shore';
+import { mistyOutlookTheme } from './presets/misty-outlook';
+import { rottenMakeupTheme } from './presets/rotten-makeup';
+import { permissibleEntityTheme } from './presets/permissible-entity';
+import { imperfectRebellionTheme } from './presets/imperfect-rebellion';
+import { swankyShearTheme } from './presets/swanky-shear';
+import { premiumParkingTheme } from './presets/premium-parking';
+import { distinctStallTheme } from './presets/distinct-stall';
+import { fairCastleTheme } from './presets/fair-castle';
+import { repulsiveMiniTheme } from './presets/repulsive-mini';
+import { economicWestTheme } from './presets/economic-west';
+import { toweringFilterTheme } from './presets/towering-filter';
+import { knowledgeablePerfumeTheme } from './presets/knowledgeable-perfume';
+import { troubledAirshipTheme } from './presets/troubled-airship';
+import { ceaselessCurlTheme } from './presets/ceaseless-curl';
+import { elderlyTeaTheme } from './presets/elderly-tea';
+import { wonderfulResemblanceTheme } from './presets/wonderful-resemblance';
+import { diligentBufferTheme } from './presets/diligent-buffer';
+import { deepPresenceTheme } from './presets/deep-presence';
+import { inexpensiveExistenceTheme } from './presets/inexpensive-existence';
+import { illustriousAlbTheme } from './presets/illustrious-alb';
+import { berserkMeansTheme } from './presets/berserk-means';
+import { weakCookingTheme } from './presets/weak-cooking';
+import { spectacularStewTheme } from './presets/spectacular-stew';
+import { ordinaryTieTheme } from './presets/ordinary-tie';
+import { spicyDustStormTheme } from './presets/spicy-dust-storm';
+import { lackingThicknessTheme } from './presets/lacking-thickness';
+import { absurdGuineaTheme } from './presets/absurd-guinea';
+import { comfortableVertigoTheme } from './presets/comfortable-vertigo';
+import { chubbyCollectivisationTheme } from './presets/chubby-collectivisation';
+import { festiveMagnetTheme } from './presets/festive-magnet';
+import { tastefulMassageTheme } from './presets/tasteful-massage';
+import { wrathfulCaliberTheme } from './presets/wrathful-caliber';
+import { elegantIndicationTheme } from './presets/elegant-indication';
+import { fertileSurvivorTheme } from './presets/fertile-survivor';
+import { betterEverybodyTheme } from './presets/better-everybody';
+import { outrageousOreTheme } from './presets/outrageous-ore';
+import { squareWindshieldTheme } from './presets/square-windshield';
+import { adhesiveElverTheme } from './presets/adhesive-elver';
+import { vigorousRoundaboutTheme } from './presets/vigorous-roundabout';
+import { accidentalPopTheme } from './presets/accidental-pop';
+import { smoggyRemarkTheme } from './presets/smoggy-remark';
+import { scaryThugTheme } from './presets/scary-thug';
+import { wideOutcomeTheme } from './presets/wide-outcome';
+import { royalValidityTheme } from './presets/royal-validity';
+import { truculentCanoeTheme } from './presets/truculent-canoe';
+import { cynicalDiamTheme } from './presets/cynical-diam';
+import { tightResortTheme } from './presets/tight-resort';
+import { squealingPrizeTheme } from './presets/squealing-prize';
+import { annoyedOperatorTheme } from './presets/annoyed-operator';
+import { blackConsiderationTheme } from './presets/black-consideration';
+import { whisperingLoafTheme } from './presets/whispering-loaf';
+import { usedCollateralTheme } from './presets/used-collateral';
+import { skinnyStrifeTheme } from './presets/skinny-strife';
+import { hallowedClueTheme } from './presets/hallowed-clue';
+import { assortedManiacTheme } from './presets/assorted-maniac';
+import { illAnalogyTheme } from './presets/ill-analogy';
+import { youthfulAgencyTheme } from './presets/youthful-agency';
+import { muteAdvertisingTheme } from './presets/mute-advertising';
+import { prettyAwardTheme } from './presets/pretty-award';
+import { perpetualCompassTheme } from './presets/perpetual-compass';
+import { brainyKennelTheme } from './presets/brainy-kennel';
+import { superBakerTheme } from './presets/super-baker';
+import { selfishStenchTheme } from './presets/selfish-stench';
+import { vengefulNormalTheme } from './presets/vengeful-normal';
+import { voicelessSolutionTheme } from './presets/voiceless-solution';
+import { brainyContinentTheme } from './presets/brainy-continent';
+import { tartFenTheme } from './presets/tart-fen';
+import { raspyPremiseTheme } from './presets/raspy-premise';
+import { joyousWaspTheme } from './presets/joyous-wasp';
+import { glibBriefingTheme } from './presets/glib-briefing';
+import { ancientJackalTheme } from './presets/ancient-jackal';
+import { domineeringMintTheme } from './presets/domineering-mint';
+import { eliteThousandTheme } from './presets/elite-thousand';
+import { didacticCommunicantTheme } from './presets/didactic-communicant';
+import { psychoticScarfTheme } from './presets/psychotic-scarf';
+import { looseFlatboatTheme } from './presets/loose-flatboat';
+import { homelyMapleTheme } from './presets/homely-maple';
+import { unablePeonyTheme } from './presets/unable-peony';
+import { tastySimplificationTheme } from './presets/tasty-simplification';
+import { petiteBasketTheme } from './presets/petite-basket';
+import { quackWelcomeTheme } from './presets/quack-welcome';
+import { kindNymphTheme } from './presets/kind-nymph';
+import { agreeableSpiritualTheme } from './presets/agreeable-spiritual';
+import { perpetualNeedTheme } from './presets/perpetual-need';
+import { decisiveSuvTheme } from './presets/decisive-suv';
+import { raggedCrackersTheme } from './presets/ragged-crackers';
+import { importedPrecedenceTheme } from './presets/imported-precedence';
+import { numberlessBreastplateTheme } from './presets/numberless-breastplate';
+import { angryColloquyTheme } from './presets/angry-colloquy';
+import { scientificRopeTheme } from './presets/scientific-rope';
+import { cooperativeTellerTheme } from './presets/cooperative-teller';
+import { yellowParticleTheme } from './presets/yellow-particle';
+import { breakableWaterskiingTheme } from './presets/breakable-waterskiing';
+import { depressedGreatGrandfatherTheme } from './presets/depressed-great-grandfather';
+import { incompetentPalaceTheme } from './presets/incompetent-palace';
+import { bashfulLipTheme } from './presets/bashful-lip';
+import { crazyCheddarTheme } from './presets/crazy-cheddar';
+import { adHocSunTheme } from './presets/ad-hoc-sun';
+import { ruddyEarplugTheme } from './presets/ruddy-earplug';
+import { minorFriendshipTheme } from './presets/minor-friendship';
+import { earsplittingParsnipTheme } from './presets/earsplitting-parsnip';
+import { aboardTuitionTheme } from './presets/aboard-tuition';
+import { dramaticSidingTheme } from './presets/dramatic-siding';
+import { hissingPandaTheme } from './presets/hissing-panda';
+import { grandioseCostumeTheme } from './presets/grandiose-costume';
+import { nappyHeterosexualTheme } from './presets/nappy-heterosexual';
+import { lovelyBlightTheme } from './presets/lovely-blight';
+import { aliveMusicianTheme } from './presets/alive-musician';
+import { laughableSpeedTheme } from './presets/laughable-speed';
+import { overconfidentChasubleTheme } from './presets/overconfident-chasuble';
+import { flakyGarageTheme } from './presets/flaky-garage';
+import { lackadaisicalScorpionTheme } from './presets/lackadaisical-scorpion';
+import { cuddlyBugleTheme } from './presets/cuddly-bugle';
+import { strongUnderclothesTheme } from './presets/strong-underclothes';
+import { capriciousRetouchingTheme } from './presets/capricious-retouching';
+import { impossibleStepBrotherTheme } from './presets/impossible-step-brother';
+import { gutturalKiltTheme } from './presets/guttural-kilt';
+import { modernOrganizationTheme } from './presets/modern-organization';
+import { gutturalOutrageTheme } from './presets/guttural-outrage';
+import { ashamedPantologyTheme } from './presets/ashamed-pantology';
+import { dazzlingNewsstandTheme } from './presets/dazzling-newsstand';
+import { ossifiedCastleTheme } from './presets/ossified-castle';
+import { sharpDucklingTheme } from './presets/sharp-duckling';
+import { nappyExplorerTheme } from './presets/nappy-explorer';
 
 export * from './types';
 
 export const THEME_PRESETS: Theme[] = [
-  msVscodePowershellIseTheme,
-  zhuangtongfaOneDarkProTheme,
-  zhuangtongfaOneDarkProFlatTheme,
-  zhuangtongfaOneDarkProDarkerTheme,
-  zhuangtongfaOneDarkProMixTheme,
-  zhuangtongfaOneDarkProNightFlatTheme,
-  catppuccinCatppuccinMochaTheme,
-  catppuccinCatppuccinMacchiatoTheme,
-  catppuccinCatppuccinFrappTheme,
-  catppuccinCatppuccinLatteTheme,
-  msVscodeDarkVisualStudioCCTheme,
-  msVscode2017DarkVisualStudioCCTheme,
-  msVscodeLightVisualStudioCCTheme,
-  msVscode2017LightVisualStudioCCTheme,
-  gitpodGitpodDarkTheme,
-  gitpodGitpodLightTheme,
-  draculaThemeDraculaTheme,
-  draculaThemeDraculaSoftTheme,
-  githubGithubLightDefaultTheme,
-  githubGithubLightHighContrastTheme,
-  githubGithubLightColorblindBetaTheme,
-  githubGithubDarkDefaultTheme,
-  githubGithubDarkHighContrastTheme,
-  githubGithubDarkColorblindBetaTheme,
-  githubGithubDarkDimmedTheme,
-  githubGithubLightTheme,
-  githubGithubDarkTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  vscodeDarkpluscolorlabelTheme,
-  vscodeDarkmodernlabelTheme,
-  vscodeLightpluscolorlabelTheme,
-  vscodeLightmodernlabelTheme,
-  vscodeDarkcolorlabelTheme,
-  vscodeLightcolorlabelTheme,
-  vscodeHccolorlabelTheme,
-  vscodeLighthccolorlabelTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  vscodeLabelTheme,
-  monokaiMonokaiProTheme,
-  monokaiMonokaiProFilterOctagonTheme,
-  monokaiMonokaiProFilterRistrettoTheme,
-  monokaiMonokaiProFilterSpectrumTheme,
-  monokaiMonokaiProFilterMachineTheme,
-  monokaiMonokaiProLightTheme,
-  monokaiMonokaiProLightFilterSunTheme,
-  monokaiMonokaiClassicTheme,
-  vscodeLabelTheme,
-  jdinhlifeGruvboxDarkMediumTheme,
-  jdinhlifeGruvboxDarkHardTheme,
-  jdinhlifeGruvboxDarkSoftTheme,
-  jdinhlifeGruvboxLightMediumTheme,
-  jdinhlifeGruvboxLightHardTheme,
-  jdinhlifeGruvboxLightSoftTheme,
-  teabyiiAyuLightTheme,
-  teabyiiAyuLightBorderedTheme,
-  teabyiiAyuMirageTheme,
-  teabyiiAyuMirageBorderedTheme,
-  teabyiiAyuDarkTheme,
-  teabyiiAyuDarkBorderedTheme,
-  akamudAtomOneDarkTheme,
-  enkiaTokyoNightTheme,
-  enkiaTokyoNightStormTheme,
-  enkiaTokyoNightLightTheme,
-  beardedbearBeardedMonokaiMetallianTheme,
-  beardedbearBeardedMonokaiTerraTheme,
-  beardedbearBeardedMonokaiStoneTheme,
-  beardedbearBeardedMonokaiBlackTheme,
-  beardedbearBeardedMonokaiReversedTheme,
-  beardedbearBeardedSolarizedTheme,
-  beardedbearBeardedSolarizedReversedTheme,
-  beardedbearBeardedSolarizedLightTheme,
-  beardedbearBeardedOceanicTheme,
-  beardedbearBeardedOceanicReversedTheme,
-  beardedbearBeardedArcTheme,
-  beardedbearBeardedArcEggplantTheme,
-  beardedbearBeardedArcEolstormTheme,
-  beardedbearBeardedArcBlueberryTheme,
-  beardedbearBeardedArcReversedTheme,
-  beardedbearBeardedBlackAmethystTheme,
-  beardedbearBeardedBlackAmethystSoftTheme,
-  beardedbearBeardedBlackDiamondTheme,
-  beardedbearBeardedBlackDiamondSoftTheme,
-  beardedbearBeardedBlackEmeraldTheme,
-  beardedbearBeardedBlackEmeraldSoftTheme,
-  beardedbearBeardedBlackGoldTheme,
-  beardedbearBeardedBlackGoldSoftTheme,
-  beardedbearBeardedBlackRubyTheme,
-  beardedbearBeardedBlackRubySoftTheme,
-  beardedbearBeardedStainedPurpleTheme,
-  beardedbearBeardedStainedBlueTheme,
-  beardedbearBeardedVividPurpleTheme,
-  beardedbearBeardedVividBlackTheme,
-  beardedbearBeardedVividLightTheme,
-  beardedbearBeardedFeatWillTheme,
-  beardedbearBeardedFeatGoldDRaynhTheme
+  discreetNurtureTheme,
+  dizzyWoodchuckTheme,
+  romanticSpiritualityTheme,
+  frightenedCrazyTheme,
+  capableDetectiveTheme,
+  profuseSellerTheme,
+  ambitiousSessionTheme,
+  knowledgeableAgendaTheme,
+  manyIndicationTheme,
+  boredCarryTheme,
+  thoughtlessVibrationTheme,
+  ashamedRelishTheme,
+  smallDiscussionTheme,
+  mysteriousHogTheme,
+  raspyAcquaintanceTheme,
+  weakDropTheme,
+  crazyCohesionTheme,
+  dysfunctionalBloomTheme,
+  immenseDefendantTheme,
+  knowledgeableLongitudeTheme,
+  hallowedFishermanTheme,
+  standingBafflementTheme,
+  wateryDearestTheme,
+  godlySpleenTheme,
+  changeableNoonTheme,
+  goodShoreTheme,
+  mistyOutlookTheme,
+  rottenMakeupTheme,
+  permissibleEntityTheme,
+  imperfectRebellionTheme,
+  swankyShearTheme,
+  premiumParkingTheme,
+  distinctStallTheme,
+  fairCastleTheme,
+  repulsiveMiniTheme,
+  economicWestTheme,
+  toweringFilterTheme,
+  knowledgeablePerfumeTheme,
+  troubledAirshipTheme,
+  ceaselessCurlTheme,
+  elderlyTeaTheme,
+  wonderfulResemblanceTheme,
+  diligentBufferTheme,
+  deepPresenceTheme,
+  inexpensiveExistenceTheme,
+  illustriousAlbTheme,
+  berserkMeansTheme,
+  weakCookingTheme,
+  spectacularStewTheme,
+  ordinaryTieTheme,
+  spicyDustStormTheme,
+  lackingThicknessTheme,
+  absurdGuineaTheme,
+  comfortableVertigoTheme,
+  chubbyCollectivisationTheme,
+  festiveMagnetTheme,
+  tastefulMassageTheme,
+  wrathfulCaliberTheme,
+  elegantIndicationTheme,
+  fertileSurvivorTheme,
+  betterEverybodyTheme,
+  outrageousOreTheme,
+  squareWindshieldTheme,
+  adhesiveElverTheme,
+  vigorousRoundaboutTheme,
+  accidentalPopTheme,
+  smoggyRemarkTheme,
+  scaryThugTheme,
+  wideOutcomeTheme,
+  royalValidityTheme,
+  truculentCanoeTheme,
+  cynicalDiamTheme,
+  tightResortTheme,
+  squealingPrizeTheme,
+  annoyedOperatorTheme,
+  blackConsiderationTheme,
+  whisperingLoafTheme,
+  usedCollateralTheme,
+  skinnyStrifeTheme,
+  hallowedClueTheme,
+  assortedManiacTheme,
+  illAnalogyTheme,
+  youthfulAgencyTheme,
+  muteAdvertisingTheme,
+  prettyAwardTheme,
+  perpetualCompassTheme,
+  brainyKennelTheme,
+  superBakerTheme,
+  selfishStenchTheme,
+  vengefulNormalTheme,
+  voicelessSolutionTheme,
+  brainyContinentTheme,
+  tartFenTheme,
+  raspyPremiseTheme,
+  joyousWaspTheme,
+  glibBriefingTheme,
+  ancientJackalTheme,
+  domineeringMintTheme,
+  eliteThousandTheme,
+  didacticCommunicantTheme,
+  psychoticScarfTheme,
+  looseFlatboatTheme,
+  homelyMapleTheme,
+  unablePeonyTheme,
+  tastySimplificationTheme,
+  petiteBasketTheme,
+  quackWelcomeTheme,
+  kindNymphTheme,
+  agreeableSpiritualTheme,
+  perpetualNeedTheme,
+  decisiveSuvTheme,
+  raggedCrackersTheme,
+  importedPrecedenceTheme,
+  numberlessBreastplateTheme,
+  angryColloquyTheme,
+  scientificRopeTheme,
+  cooperativeTellerTheme,
+  yellowParticleTheme,
+  breakableWaterskiingTheme,
+  depressedGreatGrandfatherTheme,
+  incompetentPalaceTheme,
+  bashfulLipTheme,
+  crazyCheddarTheme,
+  adHocSunTheme,
+  ruddyEarplugTheme,
+  minorFriendshipTheme,
+  earsplittingParsnipTheme,
+  aboardTuitionTheme,
+  dramaticSidingTheme,
+  hissingPandaTheme,
+  grandioseCostumeTheme,
+  nappyHeterosexualTheme,
+  lovelyBlightTheme,
+  aliveMusicianTheme,
+  laughableSpeedTheme,
+  overconfidentChasubleTheme,
+  flakyGarageTheme,
+  lackadaisicalScorpionTheme,
+  cuddlyBugleTheme,
+  strongUnderclothesTheme,
+  capriciousRetouchingTheme,
+  impossibleStepBrotherTheme,
+  gutturalKiltTheme,
+  modernOrganizationTheme,
+  gutturalOutrageTheme,
+  ashamedPantologyTheme,
+  dazzlingNewsstandTheme,
+  ossifiedCastleTheme,
+  sharpDucklingTheme,
+  nappyExplorerTheme
 ];
 
 export const getThemeById = (id: string): Theme => {
-  return THEME_PRESETS.find(t => t.id === id) || msVscodePowershellIseTheme;
+  return THEME_PRESETS.find(t => t.id === id) || discreetNurtureTheme;
 };
