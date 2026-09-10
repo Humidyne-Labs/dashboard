@@ -158,7 +158,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className={`p-1.5 sm:p-2 rounded-xl ${rhStatus.bg} ${rhStatus.color}`}>
+              <div className={`p-1.5 sm:p-2 rounded-xl ${rhStatus.bg} ${rhStatus.color} border border-app-border-highlight`}>
                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
@@ -206,7 +206,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className={`p-1.5 sm:p-2 rounded-xl ${tempStatus.bg} ${tempStatus.color}`}>
+              <div className={`p-1.5 sm:p-2 rounded-xl ${tempStatus.bg} ${tempStatus.color} border border-app-border-highlight`}>
                 <Thermometer className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>

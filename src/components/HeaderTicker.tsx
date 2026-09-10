@@ -660,14 +660,13 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             )}
           </button>
 
-          {/* API Transaction Inspector - Visible on lg+ */}
+          {/* API Transaction Inspector - Icon Only, visible on sm+ */}
           <button
             onClick={onOpenApiInspector}
-            className="hidden lg:flex h-9 px-3 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-accent/50 text-app-accent hover:text-app-accent transition-colors cursor-pointer items-center justify-center gap-1.5 text-xs font-mono shrink-0 whitespace-nowrap"
+            className="hidden sm:flex w-9 h-9 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-accent/50 text-app-accent hover:text-app-accent transition-colors cursor-pointer items-center justify-center shrink-0"
             title="Inspect API Transactions, Endpoints & JSON Payloads"
           >
             <Terminal className="w-4 h-4" />
-            <span className="hidden xl:inline">API Logs</span>
           </button>
 
           {/* Settings / Connection Config - Visible on sm+ */}
