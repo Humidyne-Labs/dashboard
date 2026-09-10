@@ -536,10 +536,55 @@ Dispatches interactive requests to the device. These block synchronously (with a
 
 ---
 
+## 6. XML Device Configuration Profiles (Import/Export Interchange)
+
+The dashboard provides a portable XML schema (`<humid1-device-config>`) allowing users to export complete operational and alarm threshold parameters from one humidor device and import/apply them to another device in a single transaction.
+
+### 6.1 Standard XML Schema
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<humid1-device-config version="1.0" exported-at="2026-09-09T20:15:00.000Z">
+  <metadata>
+    <device-id>788910ab-1234-4567-89ab-cdef01234567</device-id>
+    <device-name>Cabinet-01-Master</device-name>
+    <generator>HUMID1 Telemetry Stack v1.0</generator>
+  </metadata>
+
+  <parameters>
+    <sleep-interval-min>15</sleep-interval-min>
+    <sleep-interval-sec>900</sleep-interval-sec>
+    <device-theme>dark</device-theme>
+    <sound-enabled>true</sound-enabled>
+    <auto-update-enabled>true</auto-update-enabled>
+    <manual-ota-trigger>false</manual-ota-trigger>
+    <email-alerts-enabled>true</email-alerts-enabled>
+    <temp-unit>F</temp-unit>
+  </parameters>
+
+  <alarm-thresholds>
+    <rh-low-critical>60.0</rh-low-critical>
+    <rh-low-warning>65.0</rh-low-warning>
+    <rh-high-warning>72.0</rh-high-warning>
+    <rh-high-critical>75.0</rh-high-critical>
+    <temp-low-critical>285.93</temp-low-critical>
+    <temp-low-warning>291.48</temp-low-warning>
+    <temp-high-warning>295.93</temp-high-warning>
+    <temp-high-critical>298.15</temp-high-critical>
+    <battery-low-critical>15</battery-low-critical>
+    <battery-low-warning>25</battery-low-warning>
+    <rh-hist>1.0</rh-hist>
+    <temp-hist>0.56</temp-hist>
+    <batt-hist>3.0</batt-hist>
+  </alarm-thresholds>
+</humid1-device-config>
+```
+
+---
+
 <details>
   <summary>Not Actually Implemented</summary>
 
-## 6. Over-The-Air (OTA) Updates Triggering
+## 7. Over-The-Air (OTA) Updates Triggering
 
 The dashboard initiates hardware over-the-air firmware updates via a simple shared attribute transaction. 
 

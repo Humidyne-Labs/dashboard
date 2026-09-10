@@ -154,14 +154,21 @@ export const fromDisplayDelta = (dispDelta: number, unit: TempUnit | 'K'): numbe
 };
 
 /**
- * Converts any temperature reading to canonical Kelvin if unit is provided, or returns the canonical value.
+ * Converts any temperature reading to canonical Kelvin.
+ * The hardware and ThingsBoard telemetry standard natively transmits temperatures in Fahrenheit (°F).
+ * If val is already in Kelvin (> 200) or assumedUnit is 'K', it preserves canonical Kelvin.
  */
-export const toKelvinTemp = (val: number, assumedUnit?: TempUnit | 'K'): number => {
-  if (typeof val !== 'number' || isNaN(val)) return 295.37; // Default fallback (72°F / 22.2°C)
+export const toKelvinTemp = (val: number, assumedUnit: TempUnit | 'K' = 'F'): number => {
+  if (typeof val !== 'number' || isNaN(val)) return 295.37; // Default 72.0°F (295.37 K)
   
-  if (assumedUnit === 'C') return val + 273.15;
-  if (assumedUnit === 'F') return (val - 32) * (5 / 9) + 273.15;
-  return val;
+  if (assumedUnit === 'K' || val > 200) {
+    return Number(val.toFixed(2));
+  }
+  if (assumedUnit === 'C') {
+    return Number((val + 273.15).toFixed(2));
+  }
+  // Standard hardware telemetry reading is Fahrenheit (°F)
+  return Number((((val - 32) * (5 / 9)) + 273.15).toFixed(2));
 };
 
 export const getPresetThresholds = (

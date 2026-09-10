@@ -28,6 +28,7 @@ import {
 } from '../services/tbClientService';
 
 import { TempUnit } from '../types';
+import { toDisplayTemp, toKelvinTemp } from '../services/alarmThresholds';
 
 export interface HumidorTelemetryWidgetProps {
   deviceId: string;
@@ -148,7 +149,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
     : (typeof humidorDevice?.telemetry?.temp === 'number' ? humidorDevice.telemetry.temp : null);
   
   const tempVal = rawTempNum !== null
-    ? (activeUnit === 'C' ? (((rawTempNum - 32) * 5) / 9).toFixed(1) : rawTempNum.toFixed(1))
+    ? toDisplayTemp(toKelvinTemp(rawTempNum, 'F'), activeUnit as TempUnit).toFixed(1)
     : '--';
 
   const batteryVal = getMetricValue('battery');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { HumidorDevice, TempUnit, HistoricalTelemetryPoint } from '../types';
 import { thingsboard } from '../services/thingsboard';
 import {
@@ -44,6 +45,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   device,
   tempUnit,
 }) => {
+  const { currentTheme } = useTheme();
   const [range, setRange] = useState<TimeRange>('24h');
   const [showRh, setShowRh] = useState(true);
   const [showTemp, setShowTemp] = useState(true);
@@ -372,40 +374,64 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 lg:p-6 shadow-xl backdrop-blur-sm w-full">
-      {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-3.5 sm:mb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
-            <Activity className="w-5 h-5" />
+      {/* Controls Row: Pulse Icon, Day-Scale Selector & Refresh on the Left, Series & Bounds Pushed to the Right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-3.5 border-b border-slate-800/80">
+        {/* Left: Pulse/Activity Icon + Zoom Indicator + Day-scale selector + Refresh */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Pulse / Activity Icon */}
+          <div 
+            className="p-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 flex items-center justify-center shadow-xs"
+            title="Climate Telemetry History Series"
+          >
+            <Activity className="w-4 h-4" />
           </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                Dual-Axis Climate Telemetry History
-              </h3>
-              {isZoomed && (
-                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono flex items-center gap-1">
-                  <span>Zoomed: {zoomDurationLabel}</span>
-                  <button
-                    onClick={handleResetZoom}
-                    className="hover:text-white font-bold ml-1 cursor-pointer"
-                    title="Reset Zoom"
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-400">
-              Relative Humidity (%) & Temperature ({tempSymbol}) timeseries with noise-filtered true climate fidelity
-            </p>
+
+          {isZoomed && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono flex items-center gap-1 shadow-xs">
+              <span>Zoomed: {zoomDurationLabel}</span>
+              <button
+                onClick={handleResetZoom}
+                className="hover:text-white font-bold ml-1 cursor-pointer"
+                title="Reset Zoom"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {/* Time range preset selector (day-scale) */}
+          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+            {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
+              <button
+                key={r}
+                onClick={() => handleRangeChange(r)}
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                  range === r && !isZoomed
+                    ? 'bg-amber-600 text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {r}
+              </button>
+            ))}
           </div>
+
+          {/* Manual Refresh Button to the right of the day-selector */}
+          <button
+            onClick={loadHistory}
+            disabled={isLoading}
+            className="h-8 px-2.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs shadow-xs"
+            title="Manual Batch Window Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-400' : 'text-slate-400'}`} />
+            <span className="text-[11px] font-medium">Refresh</span>
+          </button>
         </div>
 
-        {/* Range & Series / Boundary / Zoom Toggles */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Series filters */}
+        {/* Right: Series and Bounds Selectors pushed to the right */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end">
           <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
+            {/* Series filters */}
             <button
               onClick={() => setShowRh(!showRh)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
@@ -428,6 +454,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span>Temp</span>
             </button>
+
+            <div className="h-3.5 w-px bg-slate-800 mx-0.5" />
 
             {/* Boundary controls */}
             <button
@@ -456,34 +484,6 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               <span>Temp Bounds</span>
             </button>
           </div>
-
-          {/* Time range preset selector */}
-          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
-            {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => handleRangeChange(r)}
-                className={`px-2 py-1 rounded-lg transition-colors cursor-pointer ${
-                  range === r && !isZoomed
-                    ? 'bg-amber-600 text-slate-950 font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-
-          {/* Manual Refresh Button */}
-          <button
-            onClick={loadHistory}
-            disabled={isLoading}
-            className="p-2 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs"
-            title="Manual Batch Window Refresh"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-400' : ''}`} />
-            <span className="hidden md:inline text-[11px] font-medium">Refresh</span>
-          </button>
         </div>
       </div>
 
@@ -499,12 +499,12 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           >
             <defs>
               <linearGradient id="rhGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                <stop offset="5%" stopColor={currentTheme.charts.rhGradientStart} stopOpacity={0.35} />
+                <stop offset="95%" stopColor={currentTheme.charts.rhGradientStart} stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={currentTheme.charts.gridColor} vertical={false} />
 
             <XAxis
               dataKey="timestamp"
@@ -512,7 +512,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               domain={[activeStartTs, activeEndTs]}
               ticks={ticks}
               tickFormatter={formatTick}
-              stroke="#64748b"
+              stroke={currentTheme.colors.textMuted}
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -522,7 +522,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <YAxis
               yAxisId="rh"
               domain={[calculatedRhMin, calculatedRhMax]}
-              stroke="#f59e0b"
+              stroke={currentTheme.charts.rhLine}
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -534,7 +534,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               yAxisId="temp"
               orientation="right"
               domain={[calculatedTempMin, calculatedTempMax]}
-              stroke="#38bdf8"
+              stroke={currentTheme.charts.tempLine}
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -543,11 +543,11 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
 
             <Tooltip
               contentStyle={{
-                backgroundColor: '#090d16',
-                borderColor: '#334155',
+                backgroundColor: currentTheme.charts.tooltipBackground,
+                borderColor: currentTheme.charts.tooltipBorder,
                 borderRadius: '0.75rem',
                 fontSize: '11px',
-                color: '#f8fafc',
+                color: currentTheme.colors.textPrimary,
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5)',
               }}
               formatter={(value: any, name: string) => {
@@ -701,7 +701,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 type="monotone"
                 dataKey="rh"
                 name="rh"
-                stroke="#f59e0b"
+                stroke={currentTheme.charts.rhLine}
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#rhGradient)"
@@ -716,7 +716,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 type="monotone"
                 dataKey="displayTemp"
                 name="displayTemp"
-                stroke="#38bdf8"
+                stroke={currentTheme.charts.tempLine}
                 strokeWidth={2}
                 dot={false}
                 connectNulls={true}
@@ -731,7 +731,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 x1={refAreaLeft}
                 x2={refAreaRight}
                 strokeOpacity={0.3}
-                fill="#f59e0b"
+                fill={currentTheme.charts.rhLine}
                 fillOpacity={0.25}
               />
             ) : null}
@@ -741,8 +741,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               <Brush
                 dataKey="timestamp"
                 height={26}
-                stroke="#f59e0b"
-                fill="#0f172a"
+                stroke={currentTheme.charts.rhLine}
+                fill={currentTheme.colors.surface}
                 tickFormatter={formatTick}
                 travellerWidth={10}
               />

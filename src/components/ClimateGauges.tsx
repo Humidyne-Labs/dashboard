@@ -166,9 +166,6 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${rhStatus.color} truncate max-w-[110px] sm:max-w-none`}>{rhStatus.label}</span>
               </div>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800">
-              SHT40
-            </span>
           </div>
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
@@ -217,15 +214,6 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${tempStatus.color} truncate max-w-[110px] sm:max-w-none`}>{tempStatus.label}</span>
               </div>
             </div>
-            {onToggleTempUnit && (
-              <button
-                type="button"
-                onClick={onToggleTempUnit}
-                className="text-[10px] sm:text-[11px] font-mono text-slate-300 hover:text-amber-400 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800 transition-colors cursor-pointer"
-              >
-                {tempUnit}
-              </button>
-            )}
           </div>
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
@@ -279,15 +267,12 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <Battery className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">LiPo Cell</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">400mAh LiPo</span>
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${getBatteryColor(battery)} truncate max-w-[110px] sm:max-w-none`}>
-                  {battery > thresholds.batteryLowCritical ? 'LiPo Normal' : 'Low Cell Alert'}
+                  {battery > thresholds.batteryLowCritical ? 'LiPo Nominal' : 'Low Cell Alert'}
                 </span>
               </div>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800">
-              3.7V
-            </span>
           </div>
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
@@ -298,7 +283,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">%</span>
             </div>
             <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
-              <span>~{Math.round((battery / 100) * 180)} Days</span>
+              <span className="text-emerald-400/90 font-medium">RTC Wake Cycles</span>
             </div>
           </div>
 
@@ -311,7 +296,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
             </div>
             <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
               <span>0%</span>
-              <span>Sleep RTC</span>
+              <span>Deep-Sleep RTC</span>
               <span>100%</span>
             </div>
           </div>
@@ -337,9 +322,6 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 </span>
               </div>
             </div>
-            <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-800">
-              ESP32
-            </span>
           </div>
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">

@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from 'react-oidc-context';
+import { useTheme } from '../context/ThemeContext';
 import { HumidorDevice, TempUnit } from '../types';
 import { UserProfile, thingsboard } from '../services/thingsboard';
 import { toDisplayTemp, toKelvinTemp } from '../services/alarmThresholds';
 import { getSafeHost } from '../utils/url';
 import { getEnv } from '../utils/env';
 import { APP_CONFIG } from '../config/env';
+import {
+  getStoredTickerSpeed,
+  saveStoredTickerSpeed,
+  getStoredTickerPaused,
+  saveStoredTickerPaused,
+} from '../utils/tickerConfig';
 import { 
   Battery, 
   Plus, 
@@ -21,7 +28,16 @@ import {
   AlertTriangle,
   BellRing,
   Menu,
-  X
+  X,
+  Play,
+  Pause,
+  Gauge,
+  RotateCcw,
+  Sparkles,
+  Droplets,
+  Thermometer,
+  Wifi,
+  Activity
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
@@ -63,6 +79,12 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   isDemoMode,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [speedSec, setSpeedSec] = useState<number>(() => getStoredTickerSpeed());
+  const [isPaused, setIsPaused] = useState<boolean>(() => getStoredTickerPaused());
+  const [isSpeedControlOpen, setIsSpeedControlOpen] = useState<boolean>(false);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
+  const { currentTheme, setTheme, presets } = useTheme();
+
   const auth = useAuth();
   const authUsername =
     (auth.user?.profile?.preferred_username as string) ||
@@ -70,6 +92,33 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
     (auth.user?.profile?.email ? auth.user.profile.email.split('@')[0] : null) ||
     (currentUser ? currentUser.email.split('@')[0] : null);
   const isAuth = auth.isAuthenticated || !!currentUser;
+
+  // Close speed control dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (speedMenuRef.current && !speedMenuRef.current.contains(event.target as Node)) {
+        setIsSpeedControlOpen(false);
+      }
+    };
+    if (isSpeedControlOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSpeedControlOpen]);
+
+  const handleSpeedChange = (newSpeed: number) => {
+    setSpeedSec(newSpeed);
+    saveStoredTickerSpeed(newSpeed);
+  };
+
+  const handleTogglePause = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const nextPaused = !isPaused;
+    setIsPaused(nextPaused);
+    saveStoredTickerPaused(nextPaused);
+  };
 
   const handleAuthClick = async () => {
     if (isDemoMode) {
@@ -82,7 +131,6 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
 
     if (isAuth) {
       try {
-        // ALWAYS clear the ThingsBoard session locally first
         await thingsboard.logout();
       } catch (err) {
         console.warn('ThingsBoard logout failed:', err);
@@ -96,7 +144,6 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
         }
       }
 
-      // Deep-clean storage to guarantee all credentials and sessions are completely wiped
       if (typeof window !== 'undefined') {
         try {
           sessionStorage.clear();
@@ -108,7 +155,6 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
         } catch {
           // ignore
         }
-        // Redirect to a clean origin path to force a clean reload and show the auth gate immediately
         window.location.href = window.location.origin + window.location.pathname;
       }
     } else {
@@ -125,81 +171,340 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   const getStatusBadge = (status: HumidorDevice['status']) => {
     switch (status) {
       case 'ONLINE':
-        return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">ONLINE</span>;
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
+            ONLINE
+          </span>
+        );
       case 'SLEEP':
-        return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-amber-300 border border-slate-700">SLEEP</span>;
+        return (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-amber-300 border border-slate-700">
+            SLEEP
+          </span>
+        );
       default:
         return null;
     }
   };
 
-  // Only active (ONLINE) or SLEEP devices appear in the live telemetry reel
+  // Active or Sleeping devices for live telemetry reel
   const activeOrSleepingDevices = devices.filter(
     (d) => d.status === 'ONLINE' || d.status === 'SLEEP'
   );
 
+  /**
+   * Generates a rich, multifaceted array of ticker "nodes" for the conveyor belt.
+   * Even with 1 device, provides a rotating sequence of informative telemetry,
+   * target thresholds, signal diagnostics, and fleet health.
+   */
+  const renderTickerNodeSequence = (keyPrefix: string) => {
+    if (activeOrSleepingDevices.length === 0) return null;
+
+    const baseNodes: React.ReactNode[] = [];
+
+    activeOrSleepingDevices.forEach((device, index) => {
+      const isSelected = device.id === selectedDeviceId;
+      const rh = device.telemetry.rh;
+      const isDry = rh < 65;
+      const isWet = rh > 75;
+      const isHot = device.telemetry.temp > 75;
+      const thresholds = device.sharedAttributes?.alarm_thresholds;
+      const sleepMin =
+        device.sharedAttributes?.sleep_interval_min ||
+        (device.sharedAttributes?.sleep_interval_sec
+          ? Math.round(device.sharedAttributes.sleep_interval_sec / 60)
+          : 15);
+
+      // Node 1: Primary Telemetry Capsule
+      baseNodes.push(
+        <button
+          key={`${keyPrefix}-dev-main-${device.id}-${index}`}
+          onClick={() => onSelectDevice(device.id)}
+          className={`inline-flex items-center gap-2.5 px-3 py-1 rounded-md transition-all text-xs font-medium cursor-pointer shrink-0 ${
+            isSelected
+              ? 'bg-amber-500/15 border border-amber-500/40 text-amber-200 shadow-sm'
+              : 'bg-slate-900/80 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+          }`}
+          title={`Select ${device.name}`}
+        >
+          <span className="font-semibold text-slate-100">{device.name}</span>
+          {getStatusBadge(device.status)}
+
+          <span className="text-slate-600">|</span>
+
+          <span
+            className={`font-mono font-medium ${
+              isDry ? 'text-blue-400 font-bold' : isWet ? 'text-rose-400 font-bold' : 'text-emerald-400'
+            }`}
+          >
+            RH {rh.toFixed(1)}%
+          </span>
+
+          <span className={`font-mono ${isHot ? 'text-amber-400 font-bold' : 'text-slate-300'}`}>
+            {formatTemp(device.telemetry.temp)}
+          </span>
+
+          <span className="inline-flex items-center gap-1 font-mono text-slate-400">
+            <Battery className="w-3 h-3 text-slate-400" />
+            {device.telemetry.battery}%
+          </span>
+
+          <span className="font-mono text-slate-500 text-[10px]">
+            {device.telemetry.rssi} dBm
+          </span>
+        </button>
+      );
+
+      // Node 2: RH Safe Envelope & Climate Health Capsule
+      baseNodes.push(
+        <div
+          key={`${keyPrefix}-dev-rh-env-${device.id}-${index}`}
+          onClick={() => onSelectDevice(device.id)}
+          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/50 border border-slate-800/80 text-xs font-mono shrink-0 cursor-pointer hover:border-amber-500/30"
+          title="RH Stability Envelope"
+        >
+          <Droplets className="w-3.5 h-3.5 text-sky-400" />
+          <span className="text-slate-400">Target Envelope:</span>
+          <span className="text-amber-300 font-bold">
+            {thresholds?.rhLowWarning ?? 65}%–{thresholds?.rhHighWarning ?? 73}% RH
+          </span>
+          <span
+            className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
+              rh >= 65 && rh <= 73
+                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/20'
+                : 'bg-amber-950/80 text-amber-300 border border-amber-500/20'
+            }`}
+          >
+            {rh >= 65 && rh <= 73 ? 'Nominal Zone' : rh < 65 ? 'Dry Warning' : 'Humid Warning'}
+          </span>
+        </div>
+      );
+
+      // Node 3: Thermal Metrics & Scale Capsule
+      baseNodes.push(
+        <div
+          key={`${keyPrefix}-dev-thermal-${device.id}-${index}`}
+          onClick={() => onSelectDevice(device.id)}
+          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/50 border border-slate-800/80 text-xs font-mono shrink-0 cursor-pointer hover:border-amber-500/30"
+          title="Thermal Telemetry"
+        >
+          <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-slate-400">{device.name} Temp:</span>
+          <span className="text-slate-200 font-bold">{formatTemp(device.telemetry.temp)}</span>
+          <span className="text-slate-500 text-[10px]">
+            (Canonical {toKelvinTemp(device.telemetry.temp).toFixed(1)} K)
+          </span>
+        </div>
+      );
+
+      // Node 4: Power Cycle & RF Radio Link Capsule
+      baseNodes.push(
+        <div
+          key={`${keyPrefix}-dev-power-${device.id}-${index}`}
+          onClick={() => onSelectDevice(device.id)}
+          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900/50 border border-slate-800/80 text-xs font-mono shrink-0 cursor-pointer hover:border-amber-500/30"
+          title="Hardware Power & Radio Link"
+        >
+          <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-slate-400">Wake Interval:</span>
+          <span className="text-sky-300 font-bold">{sleepMin}m Deep-Sleep</span>
+          <span className="text-slate-600">•</span>
+          <span className="text-slate-400">RF:</span>
+          <span className="text-slate-300 font-bold">{device.telemetry.rssi} dBm</span>
+        </div>
+      );
+    });
+
+    // Node 5: Fleet Overview & Auth Status Capsule
+    baseNodes.push(
+      <div
+        key={`${keyPrefix}-fleet-status`}
+        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-950/30 border border-amber-500/20 text-xs font-mono text-amber-200 shrink-0 select-none"
+      >
+        <Activity className="w-3.5 h-3.5 text-amber-400" />
+        <span className="font-semibold text-amber-300">Fleet Active:</span>
+        <span>
+          {activeOrSleepingDevices.length} / {devices.length} Devices Online
+        </span>
+        <span className="text-slate-600">•</span>
+        <span className="text-emerald-400">Telemetry Streaming</span>
+      </div>
+    );
+
+    // If few nodes exist, repeat to ensure track is generously wide before cloning for the infinite loop
+    let repeatedSequence: React.ReactNode[] = [...baseNodes];
+    while (repeatedSequence.length < 8) {
+      repeatedSequence = [...repeatedSequence, ...baseNodes];
+    }
+
+    return repeatedSequence;
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 shadow-lg shadow-black/20">
-      {/* Top Scrolling Live News-Channel Ticker */}
-      <div className="bg-slate-950 border-b border-slate-800/60 overflow-hidden py-1.5 px-3 flex items-center relative text-xs">
+      {/* Top Scrolling Live News-Channel Conveyor Ticker */}
+      <div className="bg-slate-950 border-b border-slate-800/60 py-1 px-3 flex items-center relative text-xs">
+        {/* Left Live Telemetry Label */}
         <div className="flex items-center gap-1.5 text-amber-400 font-bold uppercase tracking-wider text-[11px] pr-3 shrink-0 border-r border-slate-800 z-10 bg-slate-950">
           <span className="relative flex h-2 w-2">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${activeOrSleepingDevices.length > 0 ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75`}></span>
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${activeOrSleepingDevices.length > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                activeOrSleepingDevices.length > 0 ? 'bg-emerald-400' : 'bg-amber-400'
+              } opacity-75`}
+            ></span>
+            <span
+              className={`relative inline-flex rounded-full h-2 w-2 ${
+                activeOrSleepingDevices.length > 0 ? 'bg-emerald-500' : 'bg-amber-500'
+              }`}
+            ></span>
           </span>
           {activeOrSleepingDevices.length > 0 ? 'Live Telemetry' : 'System Ready'}
         </div>
 
-        <div className="overflow-hidden w-full select-none">
+        {/* Center Pac-Man Rotating Conveyor Belt */}
+        <div className="overflow-hidden w-full select-none relative flex-1 min-w-0">
           {activeOrSleepingDevices.length > 0 ? (
-            <div className="animate-ticker flex items-center gap-6">
-              {activeOrSleepingDevices.map((device) => {
-                const isSelected = device.id === selectedDeviceId;
-                const isDry = device.telemetry.rh < 65;
-                const isWet = device.telemetry.rh > 75;
-                const isHot = device.telemetry.temp > 75;
+            <div
+              className={`animate-ticker flex items-center gap-5 ${isPaused ? 'animate-ticker-paused' : ''}`}
+              style={{
+                ['--ticker-duration' as any]: `${speedSec}s`,
+              }}
+            >
+              {/* Segment 1: Main Stream */}
+              <div className="flex items-center gap-5 shrink-0">
+                {renderTickerNodeSequence('seg-a')}
+              </div>
 
-                return (
-                  <button
-                    key={device.id}
-                    onClick={() => onSelectDevice(device.id)}
-                    className={`inline-flex items-center gap-2.5 px-3 py-1 rounded-md transition-all text-xs font-medium cursor-pointer shrink-0 ${
-                      isSelected
-                        ? 'bg-amber-500/15 border border-amber-500/40 text-amber-200 shadow-sm'
-                        : 'bg-slate-900/80 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <span className="font-semibold text-slate-100">{device.name}</span>
-                    {getStatusBadge(device.status)}
-
-                    <span className="text-slate-600">|</span>
-
-                    <span className={`font-mono font-medium ${isDry ? 'text-blue-400 font-bold' : isWet ? 'text-rose-400 font-bold' : 'text-emerald-400'}`}>
-                      RH {device.telemetry.rh.toFixed(1)}%
-                    </span>
-
-                    <span className={`font-mono ${isHot ? 'text-amber-400 font-bold' : 'text-slate-300'}`}>
-                      {formatTemp(device.telemetry.temp)}
-                    </span>
-
-                    <span className="inline-flex items-center gap-1 font-mono text-slate-400">
-                      <Battery className="w-3 h-3 text-slate-400" />
-                      {device.telemetry.battery}%
-                    </span>
-
-                    <span className="font-mono text-slate-500 text-[10px]">
-                      {device.telemetry.rssi} dBm
-                    </span>
-                  </button>
-                );
-              })}
+              {/* Segment 2: Seamless Clone for Continuous 0% -> -50% Pac-Man Loop */}
+              <div className="flex items-center gap-5 shrink-0" aria-hidden="true">
+                {renderTickerNodeSequence('seg-b')}
+              </div>
             </div>
           ) : (
             <div className="px-3 text-slate-400 font-mono text-xs flex items-center gap-2">
               <span className="text-slate-500">SSO AUTHENTICATED:</span>
-              <span className="text-emerald-400 font-bold">{auth.user?.profile?.email || authUsername || 'Active Session'}</span>
+              <span className="text-emerald-400 font-bold">
+                {auth.user?.profile?.email || authUsername || 'Active Session'}
+              </span>
               <span className="text-slate-600">•</span>
-              <span>No active or sleeping humidor telemetry streams detected. Claim a hardware device to start monitoring.</span>
+              <span>
+                No active or sleeping humidor telemetry streams detected. Claim a hardware device to start monitoring.
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right Conveyor Speed & Pause Controls Cluster */}
+        <div className="relative shrink-0 flex items-center gap-1.5 pl-3 border-l border-slate-800 bg-slate-950 z-10" ref={speedMenuRef}>
+          {/* Pause / Play Quick Toggle */}
+          <button
+            type="button"
+            onClick={handleTogglePause}
+            className={`h-6 px-1.5 rounded flex items-center gap-1 text-[10px] font-mono transition cursor-pointer ${
+              isPaused
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+            title={isPaused ? 'Resume live ticker conveyor' : 'Pause ticker motion (hovering also pauses)'}
+          >
+            {isPaused ? <Play className="w-2.5 h-2.5 text-amber-400 fill-amber-400" /> : <Pause className="w-2.5 h-2.5" />}
+            <span className="hidden sm:inline">{isPaused ? 'Paused' : 'Motion'}</span>
+          </button>
+
+          {/* Speed Controller Popover Button */}
+          <button
+            type="button"
+            onClick={() => setIsSpeedControlOpen(!isSpeedControlOpen)}
+            className={`h-6 px-2 rounded flex items-center gap-1.5 text-[10px] font-mono transition cursor-pointer ${
+              isSpeedControlOpen
+                ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300'
+                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
+            }`}
+            title="Configure lateral travel rate & loop duration"
+          >
+            <Gauge className="w-3 h-3 text-amber-400" />
+            <span className="font-bold">{speedSec}s</span>
+          </button>
+
+          {/* Speed Configuration Floating Menu */}
+          {isSpeedControlOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3.5 z-50 animate-fadeIn text-slate-200">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5 gap-2">
+                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5 shrink-0">
+                  <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Conveyor Rate Speed</span>
+                </span>
+                <span className="text-[10px] font-mono bg-slate-950 px-2 py-0.5 rounded text-amber-400 border border-slate-800 font-bold shrink-0">
+                  {speedSec}s / cycle
+                </span>
+              </div>
+
+              {/* Live Rate Slider */}
+              <div className="space-y-1.5 mb-3">
+                <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                  <span>Fast (10s)</span>
+                  <span>Normal (35s)</span>
+                  <span>Cruise (90s)</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="90"
+                  step="5"
+                  value={speedSec}
+                  onChange={(e) => handleSpeedChange(Number(e.target.value))}
+                  className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                />
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="grid grid-cols-3 gap-1.5 mb-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleSpeedChange(15)}
+                  className={`h-6 text-[10px] font-mono rounded border transition cursor-pointer ${
+                    speedSec === 15
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Fast
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSpeedChange(35)}
+                  className={`h-6 text-[10px] font-mono rounded border transition cursor-pointer ${
+                    speedSec === 35
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Normal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSpeedChange(60)}
+                  className={`h-6 text-[10px] font-mono rounded border transition cursor-pointer ${
+                    speedSec === 60
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Cruise
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+                <button
+                  type="button"
+                  onClick={() => handleSpeedChange(35)}
+                  className="flex items-center gap-1 hover:text-amber-300 transition cursor-pointer font-mono"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" />
+                  <span>Reset Default</span>
+                </button>
+                <span className="font-mono text-slate-500">Saved in Session</span>
+              </div>
             </div>
           )}
         </div>
@@ -248,6 +553,27 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
 
         {/* Center / Right Controls Cluster */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Theme Selector Dropdown */}
+          <div className="relative shrink-0 hidden sm:block">
+            <select
+              value={currentTheme.id}
+              onChange={(e) => setTheme(e.target.value)}
+              className="h-9 pl-3 pr-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-xs font-mono text-slate-200 transition-colors shadow-sm cursor-pointer appearance-none outline-none"
+              title="Change application theme"
+            >
+              {presets.map((t) => (
+                <option key={t.id} value={t.id} className="bg-slate-900 text-slate-200">
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+              <svg className="fill-current h-3.5 w-3.5 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+              </svg>
+            </div>
+          </div>
+
           {/* Quick Unit Switcher (°F / °C) - Always Visible */}
           <button
             onClick={onToggleTempUnit}
@@ -366,7 +692,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu Drawer (Clean, Accessible & Responsive) */}
+      {/* Mobile Dropdown Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-900/98 backdrop-blur-xl px-4 py-3.5 space-y-3 animate-fadeIn shadow-2xl">
           {/* User Session Bar in Mobile Menu */}
@@ -421,6 +747,29 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             <Plus className="w-4 h-4" />
             <span>Claim New Humidor Device</span>
           </button>
+
+          {/* Mobile Theme Selector */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block pl-1">Theme Preset</span>
+            <div className="relative">
+              <select
+                value={currentTheme.id}
+                onChange={(e) => setTheme(e.target.value)}
+                className="w-full h-10 pl-3 pr-8 rounded-xl bg-slate-800 border border-slate-700 hover:border-slate-600 text-xs font-mono text-slate-200 transition-colors shadow-sm cursor-pointer appearance-none outline-none"
+              >
+                {presets.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-slate-900 text-slate-200">
+                    {t.name} — {t.description}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
 
           {/* Quick Actions Grid in Mobile Menu */}
           <div className="grid grid-cols-2 gap-2 pt-1">

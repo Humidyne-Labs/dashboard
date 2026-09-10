@@ -110,20 +110,20 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
           </p>
         </div>
       ) : (
-        <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-400 space-y-2">
-          <div className="flex items-center gap-2 text-slate-300 font-medium">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>SHA-256 Signature Verified</span>
+        <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-xl text-xs space-y-2">
+          <div className="flex items-center gap-2 text-amber-300 font-medium">
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <span>OTA Capability Status: Planned / Non-Functional</span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Updates are staged via ThingsBoard OTA repository and applied during next RTC wake cycle.
+            Remote OTA binary deployment is currently non-functional on active hardware. Firmware revisions must be flashed locally over USB-C via ESP-IDF / esptool. Remote FOTA binary flashing is staged for a future firmware milestone.
           </p>
         </div>
       )}
 
       <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
         <span className="text-[11px] font-mono text-slate-500">
-          Auto-Rollback on Panic: Enabled
+          Auto-Rollback on Panic: Enabled (Hardware RTC)
         </span>
 
         <button
@@ -132,18 +132,19 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
           className={`h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
             updating
               ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-950/40'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
           }`}
+          title="OTA is planned and currently non-functional"
         >
           {updating ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Updating...</span>
+              <span>Simulating Flash...</span>
             </>
           ) : (
             <>
-              <ArrowUpCircle className="w-3.5 h-3.5" />
-              <span>Push OTA Update</span>
+              <ArrowUpCircle className="w-3.5 h-3.5 text-amber-400" />
+              <span>OTA Update (Planned / Inactive)</span>
             </>
           )}
         </button>
@@ -168,12 +169,12 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
                 <h3 className="text-base font-bold text-white tracking-wide group-hover:text-indigo-300 transition">
                   OTA Firmware Updater
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  {isCollapsed ? 'Collapsed' : 'FOTA'}
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/30 font-bold">
+                  Planned • Non-Functional
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Over-the-air ESP32-S3 firmware lifecycle
+                Over-the-air ESP32-S3 firmware lifecycle (Planned capability; use USB-C for current builds)
               </p>
             </div>
           </div>

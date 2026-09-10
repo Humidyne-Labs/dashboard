@@ -4,6 +4,7 @@ import { HumidorDevice, HumidorAlarm, TempUnit } from './types';
 import { thingsboard } from './services/thingsboard';
 import { HeaderTicker } from './components/HeaderTicker';
 import { DeviceStatusHeader } from './components/DeviceStatusHeader';
+import { DeviceHardwareWidget } from './components/DeviceHardwareWidget';
 import { ClimateGauges } from './components/ClimateGauges';
 import { HistoricalChart } from './components/HistoricalChart';
 import { ControlPanel } from './components/ControlPanel';
@@ -191,7 +192,7 @@ export default function App() {
         <main className="flex-1 max-w-[1536px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {devices.length > 0 && selectedDevice ? (
             <>
-              {/* Primary Device Status & Quick Metrics with Grouped Alert Controls */}
+              {/* Primary Device Status Title Bar & Quick Metrics */}
               <DeviceStatusHeader
                 device={selectedDevice}
                 allDevices={devices}
@@ -199,6 +200,9 @@ export default function App() {
                 onRemoveDevice={() => setIsRemoveModalOpen(true)}
                 onOpenPushModal={() => setIsPushModalOpen(true)}
               />
+
+              {/* Dedicated Hardware Specs & System Diagnostics Widget */}
+              <DeviceHardwareWidget device={selectedDevice} />
 
               {/* Climate Gauges Grid (RH%, Temp, Battery, RSSI) */}
               <ClimateGauges

@@ -1,16 +1,68 @@
 @import "tailwindcss";
 
+@theme {
+  --color-slate-950: var(--app-bg);
+  --color-slate-900: var(--app-surface);
+  --color-slate-800: var(--app-border);
+  --color-slate-700: var(--app-border-highlight);
+  --color-slate-600: var(--app-text-muted);
+  --color-slate-500: var(--app-text-muted);
+  --color-slate-400: var(--app-text-secondary);
+  --color-slate-300: var(--app-text-secondary);
+  --color-slate-100: var(--app-text-primary);
+  
+  --color-amber-500: var(--app-accent);
+  --color-amber-400: var(--app-accent);
+  --color-amber-300: var(--app-accent);
+  --color-amber-600: var(--app-accent-hover);
+  
+  --color-emerald-400: var(--app-status-nominal);
+  --color-emerald-500: var(--app-status-nominal);
+  --color-rose-400: var(--app-status-critical);
+  --color-rose-500: var(--app-status-critical);
+  --color-sky-300: var(--app-status-info);
+  --color-sky-400: var(--app-status-info);
+
+  --radius-2xl: var(--app-card-radius);
+  --radius-xl: var(--app-border-radius);
+  --radius-lg: var(--app-button-radius);
+}
+
+:root {
+  --app-bg: #020617;
+  --app-surface: #0b0f19;
+  --app-surface-elevated: #111827;
+  --app-surface-subtle: #030712;
+  --app-border: #1e293b;
+  --app-border-highlight: #334155;
+  --app-text-primary: #f8fafc;
+  --app-text-secondary: #94a3b8;
+  --app-text-muted: #64748b;
+  --app-accent: #f59e0b;
+  --app-accent-hover: #d97706;
+  --app-accent-text: #020617;
+  --app-status-nominal: #10b981;
+  --app-status-warning: #f59e0b;
+  --app-status-critical: #f43f5e;
+  --app-status-info: #38bdf8;
+  --app-border-radius: 16px;
+  --app-card-radius: 16px;
+  --app-button-radius: 10px;
+  --app-backdrop-blur: 12px;
+  --app-font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui;
+  --app-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--app-bg) !important;
+    color: var(--app-text-secondary) !important;
+    font-family: var(--app-font-sans) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .font-serif {
-    font-family: 'Cinzel', Georgia, serif;
+    font-family: var(--app-font-mono) !important;
   }
 }
 
@@ -21,16 +73,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--app-surface-subtle);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: var(--app-border);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 1);
+  background: var(--app-border-highlight);
 }
 
 /* Smooth ticker animations */
@@ -47,11 +99,12 @@
   display: inline-flex;
   width: max-content;
   will-change: transform;
-  animation: ticker-scroll 85s linear infinite;
+  animation: ticker-scroll var(--ticker-duration, 35s) linear infinite;
 }
 
 .animate-ticker:hover,
-.ticker-paused {
+.ticker-paused,
+.animate-ticker-paused {
   animation-play-state: paused !important;
 }
 

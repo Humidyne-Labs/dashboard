@@ -131,16 +131,17 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
   const isPushActive = pushPerm === 'granted';
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl shadow-black/20 backdrop-blur-sm">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Left: Device Selection & Basic Status */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Device Dropdown */}
-          <div className="relative">
+    <div className="space-y-3">
+      {/* Row 1: Main Dropdown, Live Status Badge, Packet Ticker, and Remove Button */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-black/20 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+        {/* Main Controls Group: Dropdown, Live Badge, Packet Ticker */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Main Dropdown Selector */}
+          <div className="relative min-w-[200px] sm:min-w-[240px]">
             <select
               value={device.id}
               onChange={(e) => onSelectDevice(e.target.value)}
-              className="appearance-none bg-slate-950/80 border border-slate-700 hover:border-amber-500/60 rounded-xl px-4 py-2.5 pr-10 text-base font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/30 cursor-pointer transition-all"
+              className="w-full appearance-none bg-slate-950/90 border border-slate-700 hover:border-amber-500/60 rounded-xl px-4 py-2 pr-10 text-sm sm:text-base font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/30 cursor-pointer transition-all shadow-inner"
             >
               {allDevices.map((d) => (
                 <option key={d.id} value={d.id} className="bg-slate-900 text-slate-100">
@@ -151,158 +152,116 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Status Pills */}
-          <div className="flex flex-wrap items-center gap-2">
-            {device.status === 'ONLINE' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Live Telemetry
-              </span>
-            ) : device.status === 'SLEEP' ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                <span className="h-2 w-2 rounded-full bg-slate-400" />
-                Deep Sleep (RTC)
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950/60 text-rose-300 border border-rose-500/30">
-                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                Unreachable / Offline
-              </span>
-            )}
+          {/* Live Status Badge */}
+          {device.status === 'ONLINE' ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 shadow-xs">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              Live Telemetry
+            </span>
+          ) : device.status === 'SLEEP' ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="h-2 w-2 rounded-full bg-slate-400" />
+              Deep Sleep (RTC)
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-950/60 text-rose-300 border border-rose-500/30">
+              <span className="h-2 w-2 rounded-full bg-rose-400" />
+              Unreachable / Offline
+            </span>
+          )}
 
-            <div className="flex items-center gap-1 text-xs text-slate-400 font-mono bg-slate-950/50 px-2.5 py-1 rounded-full border border-slate-800">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Last Packet: {timeAgo(device.lastActivityTime)}</span>
-            </div>
+          {/* Packet Ticker */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-300 font-mono bg-slate-950/60 px-3 py-1.5 rounded-full border border-slate-800 shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-amber-400/90" />
+            <span>Last Packet: {timeAgo(device.lastActivityTime)}</span>
           </div>
         </div>
 
-        {/* Right: Hardware & Connection Diagnostic Badges + Alerts Action Group */}
-        <div className="flex flex-col items-start lg:items-end gap-2.5">
-          {/* Top Diagnostics Row: Wi-Fi & RSSI, SD Card, Remove button */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Wi-Fi & RSSI */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl px-3 py-1.5 flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                <Wifi className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-medium truncate max-w-[110px]">{device.clientAttributes.ssid}</span>
-              </div>
-              <div className="h-3 w-px bg-slate-800" />
-              {getRssiVisual(device.telemetry.rssi)}
-            </div>
-
-            {/* SD Card Status Badge */}
-            <div 
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 ${
-                device.clientAttributes.has_sd_card
-                  ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/20'
-                  : 'bg-amber-950/40 text-amber-300 border-amber-500/20'
-              }`}
-            >
-              <HardDrive className="w-3.5 h-3.5" />
-              <span>{device.clientAttributes.has_sd_card ? 'SD: OK' : 'SD: Missing'}</span>
-            </div>
-
-            {/* Remove / Unclaim Device Button */}
-            {onRemoveDevice && (
-              <button
-                type="button"
-                onClick={onRemoveDevice}
-                className="h-7.5 px-2.5 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-                title="Remove or unclaim this humidor device"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                <span>Remove</span>
-              </button>
-            )}
-          </div>
-
-          {/* Bottom Row: Grouped Alert & Audio Controls (placed under the Wi-Fi/diagnostics row) */}
-          <div className="flex items-center gap-2 bg-slate-950/70 p-1 rounded-2xl border border-slate-800 shadow-inner">
-            {/* 1. Push Alerts Action Element */}
+        {/* Remove Badge / Action Button */}
+        {onRemoveDevice && (
+          <div className="flex items-center justify-end">
             <button
               type="button"
-              onClick={handlePushClick}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
-                isPushActive
-                  ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
-                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
-              }`}
-              title={`Web Push & TWA Notifications: ${isPushActive ? 'Active' : 'Click to configure/enable'}`}
+              onClick={onRemoveDevice}
+              className="h-8.5 px-3 rounded-xl text-xs font-medium border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+              title="Remove or unclaim this humidor device"
             >
-              <BellRing className={`w-3.5 h-3.5 ${isPushActive ? 'text-amber-400' : 'text-slate-500'}`} />
-              <span>{isPushActive ? 'Push: ON' : 'Push: Setup'}</span>
-            </button>
-
-            {/* 2. Email Alerts Action Element (Modeled directly after Push Alerts) */}
-            <button
-              type="button"
-              onClick={handleToggleEmailAlerts}
-              disabled={isUpdatingEmail}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
-                emailAlertsEnabled
-                  ? 'bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 border-sky-500/30'
-                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
-              }`}
-              title={`ThingsBoard Rule Chain Email Alerts: ${emailAlertsEnabled ? 'Active' : 'Opted Out'}. Click to toggle.`}
-            >
-              {isUpdatingEmail ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
-              ) : emailAlertsEnabled ? (
-                <MailCheck className="w-3.5 h-3.5 text-sky-400" />
-              ) : (
-                <MailX className="w-3.5 h-3.5 text-slate-500" />
-              )}
-              <span>{emailAlertsEnabled ? 'Email: ON' : 'Email: OFF'}</span>
-            </button>
-
-            {/* 3. Browser Push Alerts Sound / Chimes Action Element */}
-            <button
-              type="button"
-              onClick={handleTogglePushSound}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-sm ${
-                pushSoundEnabled
-                  ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
-                  : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-700 hover:text-slate-300'
-              }`}
-              title={`Push Alert Sound & Chimes: ${pushSoundEnabled ? 'Active' : 'Muted'}. Click to toggle.`}
-            >
-              {pushSoundEnabled ? (
-                <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-              ) : (
-                <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-              )}
-              <span>{pushSoundEnabled ? 'Sound: ON' : 'Sound: Muted'}</span>
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>Remove Device</span>
             </button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Secondary Diagnostics Row (Clean display of real client attributes with graceful fallbacks) */}
-      <div className="mt-4 pt-3 border-t border-slate-800/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div>
-          <span className="text-slate-500 block text-[11px]">Device Identifier</span>
-          <span className="font-mono text-slate-300 font-semibold truncate block">
-            {device.clientAttributes.device_name || device.name}
-          </span>
+      {/* Row 2: Wi-Fi Badge and Notification Cluster (Positioned directly above hardware spec) */}
+      <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl px-3.5 py-2.5 shadow-md backdrop-blur-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Wi-Fi & Signal Badge */}
+        <div className="bg-slate-950/70 border border-slate-800/90 rounded-xl px-3 py-1.5 flex items-center gap-3 w-fit">
+          <div className="flex items-center gap-1.5 text-xs text-slate-300">
+            <Wifi className="w-3.5 h-3.5 text-sky-400" />
+            <span className="font-semibold truncate max-w-[140px]">{device.clientAttributes.ssid || 'Humidor-WiFi'}</span>
+          </div>
+          <div className="h-3.5 w-px bg-slate-800" />
+          {getRssiVisual(device.telemetry.rssi)}
         </div>
-        <div>
-          <span className="text-slate-500 block text-[11px]">Hardware MAC</span>
-          <span className="font-mono text-slate-300 truncate block">
-            {device.clientAttributes.mac_address || 'ESP32-MAC'}
-          </span>
-        </div>
-        <div>
-          <span className="text-slate-500 block text-[11px]">Local IP Address</span>
-          <span className="font-mono text-slate-300 truncate block">
-            {device.clientAttributes.ip_address || '192.168.1.x'}
-          </span>
-        </div>
-        <div>
-          <span className="text-slate-500 block text-[11px]">Active Firmware</span>
-          <span className="font-mono text-amber-300 font-medium">
-            {device.clientAttributes.fw_version || 'v1.0.4'}
-          </span>
+
+        {/* Notification Cluster */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 1. Push Alerts */}
+          <button
+            type="button"
+            onClick={handlePushClick}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+              isPushActive
+                ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
+                : 'bg-slate-950 hover:bg-slate-850 text-slate-400 border-slate-800 hover:text-slate-300'
+            }`}
+            title={`Web Push Notifications: ${isPushActive ? 'Active' : 'Click to configure/enable'}`}
+          >
+            <BellRing className={`w-3.5 h-3.5 ${isPushActive ? 'text-amber-400' : 'text-slate-500'}`} />
+            <span>{isPushActive ? 'Push: ON' : 'Push: Setup'}</span>
+          </button>
+
+          {/* 2. Email Alerts */}
+          <button
+            type="button"
+            onClick={handleToggleEmailAlerts}
+            disabled={isUpdatingEmail}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+              emailAlertsEnabled
+                ? 'bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 border-sky-500/30'
+                : 'bg-slate-950 hover:bg-slate-850 text-slate-400 border-slate-800 hover:text-slate-300'
+            }`}
+            title={`ThingsBoard Email Alerts: ${emailAlertsEnabled ? 'Active' : 'Opted Out'}. Click to toggle.`}
+          >
+            {isUpdatingEmail ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+            ) : emailAlertsEnabled ? (
+              <MailCheck className="w-3.5 h-3.5 text-sky-400" />
+            ) : (
+              <MailX className="w-3.5 h-3.5 text-slate-500" />
+            )}
+            <span>{emailAlertsEnabled ? 'Email: ON' : 'Email: OFF'}</span>
+          </button>
+
+          {/* 3. Audio Chimes */}
+          <button
+            type="button"
+            onClick={handleTogglePushSound}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+              pushSoundEnabled
+                ? 'bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 border-amber-500/30'
+                : 'bg-slate-950 hover:bg-slate-850 text-slate-400 border-slate-800 hover:text-slate-300'
+            }`}
+            title={`Push Alert Sound & Chimes: ${pushSoundEnabled ? 'Active' : 'Muted'}. Click to toggle.`}
+          >
+            {pushSoundEnabled ? (
+              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+            )}
+            <span>{pushSoundEnabled ? 'Sound: ON' : 'Sound: Muted'}</span>
+          </button>
         </div>
       </div>
     </div>
