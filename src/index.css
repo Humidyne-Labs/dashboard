@@ -1,27 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-slate-950: var(--app-bg);
-  --color-slate-900: var(--app-surface);
-  --color-slate-800: var(--app-border);
-  --color-slate-700: var(--app-border-highlight);
-  --color-slate-600: var(--app-text-muted);
-  --color-slate-500: var(--app-text-muted);
-  --color-slate-400: var(--app-text-secondary);
-  --color-slate-300: var(--app-text-secondary);
-  --color-slate-100: var(--app-text-primary);
+  /* Semantic App Design Tokens */
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-elevated: var(--app-surface-elevated);
+  --color-app-border: var(--app-border);
+  --color-app-border-highlight: var(--app-border-highlight);
   
-  --color-amber-500: var(--app-accent);
-  --color-amber-400: var(--app-accent);
-  --color-amber-300: var(--app-accent);
-  --color-amber-600: var(--app-accent-hover);
+  --color-app-text-primary: var(--app-text-primary);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-text-muted: var(--app-text-muted);
   
-  --color-emerald-400: var(--app-status-nominal);
-  --color-emerald-500: var(--app-status-nominal);
-  --color-rose-400: var(--app-status-critical);
-  --color-rose-500: var(--app-status-critical);
-  --color-sky-300: var(--app-status-info);
-  --color-sky-400: var(--app-status-info);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-accent-text: var(--app-accent-text);
+  
+  --color-app-status-nominal: var(--app-status-nominal);
+  --color-app-status-warning: var(--app-status-warning);
+  --color-app-status-critical: var(--app-status-critical);
+  --color-app-status-info: var(--app-status-info);
 
   --radius-2xl: var(--app-card-radius);
   --radius-xl: var(--app-border-radius);
@@ -56,9 +54,16 @@
 @layer base {
   body {
     background-color: var(--app-bg) !important;
-    color: var(--app-text-secondary) !important;
+    color: var(--app-text-primary) !important;
     font-family: var(--app-font-sans) !important;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Force select inputs, dropdown options, and form controls to inherit surface text */
+  select, option, input {
+    background-color: var(--app-surface) !important;
+    color: var(--app-text-primary) !important;
+    border-color: var(--app-border) !important;
   }
 
   .font-mono {

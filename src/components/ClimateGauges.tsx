@@ -37,49 +37,49 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     if (val < thresholds.rhLowCritical) {
       return {
         label: 'CRITICALLY DRY',
-        color: 'text-blue-400',
-        bg: 'bg-blue-950/40',
-        border: 'border-blue-500/30',
-        barColor: 'bg-blue-500',
+        color: 'text-app-status-info',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-info/30',
+        barColor: 'bg-app-status-info',
         desc: `Below critical ${thresholds.rhLowCritical}%. Wrap cigars immediately.`,
       };
     }
     if (val < thresholds.rhLowWarning) {
       return {
         label: 'DRY ZONE',
-        color: 'text-sky-300',
-        bg: 'bg-sky-950/40',
-        border: 'border-sky-500/30',
-        barColor: 'bg-sky-400',
+        color: 'text-app-status-info',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-info/30',
+        barColor: 'bg-app-status-info',
         desc: `Below target sweet spot (${thresholds.rhLowWarning}%–${thresholds.rhHighWarning}%).`,
       };
     }
     if (val <= thresholds.rhHighWarning) {
       return {
         label: 'PERFECT SWEET SPOT',
-        color: 'text-emerald-400',
-        bg: 'bg-emerald-950/40',
-        border: 'border-emerald-500/30',
-        barColor: 'bg-emerald-500',
+        color: 'text-app-status-nominal',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-nominal/30',
+        barColor: 'bg-app-status-nominal',
         desc: 'Optimal cell aging & essential oil preservation.',
       };
     }
     if (val <= thresholds.rhHighCritical) {
       return {
         label: 'HIGH WARNING',
-        color: 'text-amber-400',
-        bg: 'bg-amber-950/40',
-        border: 'border-amber-500/30',
+        color: 'text-app-accent',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-accent/30',
         barColor: 'bg-amber-400',
         desc: `Approaching upper threshold limit (${thresholds.rhHighCritical}%).`,
       };
     }
     return {
       label: 'CRITICAL HIGH',
-      color: 'text-rose-400',
-      bg: 'bg-rose-950/40',
-      border: 'border-rose-500/30',
-      barColor: 'bg-rose-500',
+      color: 'text-app-status-critical',
+      bg: 'bg-app-bg/40',
+      border: 'border-app-status-critical/30',
+      barColor: 'bg-app-status-critical',
       desc: `Upper critical threshold exceeded (> ${thresholds.rhHighCritical}%).`,
     };
   };
@@ -99,45 +99,45 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     if (k > thresholds.tempHighCritical) {
       return {
         label: `CRITICAL HIGH (>${dispTempHighCrit}${tempUnitSymbol})`,
-        color: 'text-rose-400',
-        bg: 'bg-rose-950/40',
-        border: 'border-rose-500/30',
-        barColor: 'bg-rose-500',
+        color: 'text-app-status-critical',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-critical/30',
+        barColor: 'bg-app-status-critical',
       };
     }
     if (k > thresholds.tempHighWarning) {
       return {
         label: `HIGH WARNING (>${dispTempHighWarn}${tempUnitSymbol})`,
-        color: 'text-amber-400',
-        bg: 'bg-amber-950/40',
-        border: 'border-amber-500/30',
+        color: 'text-app-accent',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-accent/30',
         barColor: 'bg-amber-400',
       };
     }
     if (k < thresholds.tempLowCritical) {
       return {
         label: `CRITICAL LOW (<${dispTempLowCrit}${tempUnitSymbol})`,
-        color: 'text-rose-400',
-        bg: 'bg-rose-950/40',
-        border: 'border-rose-500/30',
-        barColor: 'bg-rose-500',
+        color: 'text-app-status-critical',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-critical/30',
+        barColor: 'bg-app-status-critical',
       };
     }
     if (k < thresholds.tempLowWarning) {
       return {
         label: `LOW WARNING (<${dispTempLowWarn}${tempUnitSymbol})`,
         color: 'text-blue-300',
-        bg: 'bg-blue-950/40',
-        border: 'border-blue-500/30',
+        bg: 'bg-app-bg/40',
+        border: 'border-app-status-info/30',
         barColor: 'bg-blue-400',
       };
     }
     return {
       label: `OPTIMAL (${dispTempLowWarn}–${dispTempHighWarn}${tempUnitSymbol})`,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-950/40',
-      border: 'border-emerald-500/30',
-      barColor: 'bg-emerald-500',
+      color: 'text-app-status-nominal',
+      bg: 'bg-app-bg/40',
+      border: 'border-app-status-nominal/30',
+      barColor: 'bg-app-status-nominal',
     };
   };
 
@@ -146,15 +146,15 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
   // Battery percentage color based on batteryLowCritical threshold
   const getBatteryColor = (lvl: number) => {
-    if (lvl > 50) return 'text-emerald-400';
-    if (lvl > thresholds.batteryLowCritical) return 'text-amber-400';
-    return 'text-rose-400';
+    if (lvl > 50) return 'text-app-status-nominal';
+    if (lvl > thresholds.batteryLowCritical) return 'text-app-accent';
+    return 'text-app-status-critical';
   };
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
       {/* 1. Relative Humidity Gauge Card */}
-      <div className={`bg-slate-900/90 border ${rhStatus.border} rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden transition-all backdrop-blur-sm flex flex-col justify-between`}>
+      <div className={`bg-app-surface/90 border ${rhStatus.border} rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden transition-all backdrop-blur-sm flex flex-col justify-between`}>
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -162,7 +162,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <Droplets className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">RH %</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-app-text-secondary">RH %</span>
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${rhStatus.color} truncate max-w-[110px] sm:max-w-none`}>{rhStatus.label}</span>
               </div>
             </div>
@@ -173,36 +173,36 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
                 {rh.toFixed(1)}
               </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">%</span>
+              <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">%</span>
             </div>
-            <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
+            <div className="text-right text-[11px] sm:text-xs font-mono text-app-text-secondary">
               <span>Safe: {thresholds.rhLowWarning}–{thresholds.rhHighWarning}%</span>
             </div>
           </div>
 
           {/* Progress Bar with configured target highlight */}
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden relative border border-slate-800">
+            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden relative border border-app-border">
               <div
                 className={`h-full ${rhStatus.barColor} transition-all duration-500 rounded-full`}
                 style={{ width: `${Math.min(Math.max(rh, 0), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
               <span>{thresholds.rhLowCritical}%</span>
-              <span className="text-emerald-400">{thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%</span>
+              <span className="text-app-status-nominal">{thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%</span>
               <span>{thresholds.rhHighCritical}%</span>
             </div>
           </div>
         </div>
 
-        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
+        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-app-text-secondary leading-tight sm:leading-relaxed hidden xs:block">
           {rhStatus.desc}
         </p>
       </div>
 
       {/* 2. Temperature Gauge Card */}
-      <div className={`bg-slate-900/90 border ${tempStatus.border} rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden transition-all backdrop-blur-sm flex flex-col justify-between`}>
+      <div className={`bg-app-surface/90 border ${tempStatus.border} rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden transition-all backdrop-blur-sm flex flex-col justify-between`}>
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -210,7 +210,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 <Thermometer className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Temp</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-app-text-secondary">Temp</span>
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${tempStatus.color} truncate max-w-[110px] sm:max-w-none`}>{tempStatus.label}</span>
               </div>
             </div>
@@ -221,15 +221,15 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
                 {displayTemp}
               </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">{tempUnitSymbol}</span>
+              <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">{tempUnitSymbol}</span>
             </div>
-            <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
+            <div className="text-right text-[11px] sm:text-xs font-mono text-app-text-secondary">
               <span>Max: {dispTempHighCrit}{tempUnitSymbol}</span>
             </div>
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden relative border border-slate-800">
+            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden relative border border-app-border">
               <div
                 className={`h-full ${tempStatus.barColor} transition-all duration-500 rounded-full`}
                 style={{
@@ -245,29 +245,29 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
               <span>{dispTempLowWarn}{tempUnitSymbol}</span>
-              <span className="text-emerald-400">Safe Range</span>
+              <span className="text-app-status-nominal">Safe Range</span>
               <span>{dispTempHighCrit}{tempUnitSymbol}</span>
             </div>
           </div>
         </div>
 
-        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
+        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-app-text-secondary leading-tight sm:leading-relaxed hidden xs:block">
           Keep between {dispTempLowWarn}{tempUnitSymbol} – {dispTempHighWarn}{tempUnitSymbol} configured target boundary.
         </p>
       </div>
 
       {/* 3. Battery & Power Cell Card */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-sm flex flex-col justify-between">
+      <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-sm flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="p-1.5 sm:p-2 rounded-xl bg-slate-800 text-amber-400 border border-slate-700">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-app-surface-elevated text-app-accent border border-app-border-highlight">
                 <Battery className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">400mAh LiPo</span>
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-app-text-secondary">400mAh LiPo</span>
                 <span className={`block text-[10px] sm:text-[11px] font-bold ${getBatteryColor(battery)} truncate max-w-[110px] sm:max-w-none`}>
                   {battery > thresholds.batteryLowCritical ? 'LiPo Nominal' : 'Low Cell Alert'}
                 </span>
@@ -280,21 +280,21 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className={`text-3xl sm:text-4xl font-extrabold font-display tracking-tight ${getBatteryColor(battery)}`}>
                 {battery}
               </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">%</span>
+              <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">%</span>
             </div>
-            <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
-              <span className="text-emerald-400/90 font-medium">RTC Wake Cycles</span>
+            <div className="text-right text-[11px] sm:text-xs font-mono text-app-text-secondary">
+              <span className="text-app-status-nominal/90 font-medium">RTC Wake Cycles</span>
             </div>
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden border border-app-border">
               <div
-                className={`h-full ${battery > 50 ? 'bg-emerald-500' : battery > thresholds.batteryLowCritical ? 'bg-amber-500' : 'bg-rose-500'} transition-all duration-500 rounded-full`}
+                className={`h-full ${battery > 50 ? 'bg-app-status-nominal' : battery > thresholds.batteryLowCritical ? 'bg-app-accent' : 'bg-app-status-critical'} transition-all duration-500 rounded-full`}
                 style={{ width: `${Math.min(Math.max(battery, 0), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
               <span>0%</span>
               <span>Deep-Sleep RTC</span>
               <span>100%</span>
@@ -302,22 +302,22 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
           </div>
         </div>
 
-        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
+        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-app-text-secondary leading-tight sm:leading-relaxed hidden xs:block">
           Deep-sleep: {device.sharedAttributes.sleep_interval_min || 15}m intervals. Low alert: &lt;{thresholds.batteryLowCritical}%.
         </p>
       </div>
 
       {/* 4. RF Signal & Telemetry Link Card */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-sm flex flex-col justify-between">
+      <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3.5 sm:p-5 shadow-xl relative overflow-hidden backdrop-blur-sm flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="p-1.5 sm:p-2 rounded-xl bg-slate-800 text-sky-400 border border-slate-700">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-app-surface-elevated text-app-status-info border border-app-border-highlight">
                 <Wifi className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Wireless</span>
-                <span className="block text-[10px] sm:text-[11px] font-bold text-sky-400 truncate max-w-[110px] sm:max-w-none">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-app-text-secondary">Wireless</span>
+                <span className="block text-[10px] sm:text-[11px] font-bold text-app-status-info truncate max-w-[110px] sm:max-w-none">
                   {device.clientAttributes.ssid || 'Wi-Fi'}
                 </span>
               </div>
@@ -329,21 +329,21 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
               <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
                 {rssi}
               </span>
-              <span className="text-xl sm:text-2xl font-bold text-slate-400 font-display">dBm</span>
+              <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">dBm</span>
             </div>
-            <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
+            <div className="text-right text-[11px] sm:text-xs font-mono text-app-text-secondary">
               <span>{rssi >= -65 ? 'Strong' : rssi >= -80 ? 'Good' : 'Fair'}</span>
             </div>
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden border border-app-border">
               <div
                 className="h-full bg-sky-500 transition-all duration-500 rounded-full"
                 style={{ width: `${Math.min(Math.max(((rssi + 100) / 70) * 100, 5), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
               <span>-100 dBm</span>
               <span>Gateway Link</span>
               <span>-30 dBm</span>
@@ -351,7 +351,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
           </div>
         </div>
 
-        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-slate-400 leading-tight sm:leading-relaxed hidden xs:block">
+        <p className="mt-2.5 sm:mt-3 text-[10px] sm:text-[11px] text-app-text-secondary leading-tight sm:leading-relaxed hidden xs:block">
           ThingsBoard MQTT/REST gateway synchronization active.
         </p>
       </div>

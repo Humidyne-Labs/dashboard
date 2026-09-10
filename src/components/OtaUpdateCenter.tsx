@@ -67,24 +67,24 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
   const renderContent = () => (
     <div className="space-y-4">
       {/* Version Matrix */}
-      <div className="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs">
+      <div className="space-y-3 bg-app-bg/60 p-4 rounded-xl border border-app-border text-xs">
         <div className="flex items-center justify-between">
-          <span className="text-slate-400">Current Running Build:</span>
-          <span className="font-mono text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20">
+          <span className="text-app-text-secondary">Current Running Build:</span>
+          <span className="font-mono text-emerald-300 font-bold bg-app-bg/60 px-2 py-0.5 rounded border border-app-status-nominal/20">
             {currentVersion}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-slate-400">Latest Stable Release:</span>
-          <span className="font-mono text-amber-300 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/20">
+          <span className="text-app-text-secondary">Latest Stable Release:</span>
+          <span className="font-mono text-app-accent font-bold bg-app-bg/60 px-2 py-0.5 rounded border border-app-accent/20">
             {targetVersion}
           </span>
         </div>
 
-        <div className="flex items-center justify-between border-t border-slate-800 pt-2">
-          <span className="text-slate-400">Partition Scheme:</span>
-          <span className="font-mono text-slate-300">Dual OTA (ota_0 / ota_1)</span>
+        <div className="flex items-center justify-between border-t border-app-border pt-2">
+          <span className="text-app-text-secondary">Partition Scheme:</span>
+          <span className="font-mono text-app-text-secondary">Dual OTA (ota_0 / ota_1)</span>
         </div>
       </div>
 
@@ -99,30 +99,30 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
             <span className="font-mono font-bold text-indigo-200">{progress}%</span>
           </div>
 
-          <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-amber-500 transition-all duration-300 rounded-full"
+              className="h-full bg-gradient-to-r from-indigo-500 to-app-accent-hover transition-all duration-300 rounded-full"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-[11px] text-slate-400 leading-tight">
+          <p className="text-[11px] text-app-text-secondary leading-tight">
             Do not power off ESP32 humidor during flash write operation.
           </p>
         </div>
       ) : (
-        <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-xl text-xs space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 font-medium">
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
+        <div className="p-4 bg-app-bg/20 border border-app-accent/30 rounded-xl text-xs space-y-2">
+          <div className="flex items-center gap-2 text-app-accent font-medium">
+            <ShieldCheck className="w-4 h-4 text-app-accent" />
             <span>OTA Capability Status: Planned / Non-Functional</span>
           </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
+          <p className="text-[11px] text-app-text-secondary leading-relaxed">
             Remote OTA binary deployment is currently non-functional on active hardware. Firmware revisions must be flashed locally over USB-C via ESP-IDF / esptool. Remote FOTA binary flashing is staged for a future firmware milestone.
           </p>
         </div>
       )}
 
-      <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-        <span className="text-[11px] font-mono text-slate-500">
+      <div className="pt-4 border-t border-app-border/80 flex items-center justify-between">
+        <span className="text-[11px] font-mono text-app-text-primary0">
           Auto-Rollback on Panic: Enabled (Hardware RTC)
         </span>
 
@@ -131,8 +131,8 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
           disabled={updating}
           className={`h-9 px-4 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
             updating
-              ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+              ? 'bg-app-surface-elevated text-app-text-primary0 cursor-not-allowed'
+              : 'bg-app-surface-elevated hover:bg-app-border-highlight text-app-text-secondary border border-app-border-highlight'
           }`}
           title="OTA is planned and currently non-functional"
         >
@@ -143,7 +143,7 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
             </>
           ) : (
             <>
-              <ArrowUpCircle className="w-3.5 h-3.5 text-amber-400" />
+              <ArrowUpCircle className="w-3.5 h-3.5 text-app-accent" />
               <span>OTA Update (Planned / Inactive)</span>
             </>
           )}
@@ -154,9 +154,9 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
 
   return (
     <>
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden transition-all flex flex-col justify-between">
+      <div className="bg-app-surface/90 border border-app-border rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden transition-all flex flex-col justify-between">
         {/* Header Bar */}
-        <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 bg-slate-900/95">
+        <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 bg-app-surface/95">
           <div 
             onClick={toggleCollapse}
             className="flex items-center gap-3 cursor-pointer select-none group flex-1 min-w-[180px]"
@@ -169,18 +169,18 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
                 <h3 className="text-base font-bold text-white tracking-wide group-hover:text-indigo-300 transition">
                   OTA Firmware Updater
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/30 font-bold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-app-bg/80 text-app-accent border border-app-accent/30 font-bold">
                   Planned • Non-Functional
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-app-text-secondary">
                 Over-the-air ESP32-S3 firmware lifecycle (Planned capability; use USB-C for current builds)
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-emerald-300 font-bold bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+            <span className="font-mono text-xs text-emerald-300 font-bold bg-app-bg/60 px-2.5 py-1 rounded-lg border border-app-status-nominal/20">
               {currentVersion}
             </span>
 
@@ -188,7 +188,7 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
             <button
               type="button"
               onClick={() => setIsWindowOpen(true)}
-              className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 flex items-center justify-center transition cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary flex items-center justify-center transition cursor-pointer"
               title="Open OTA Updater in separate window"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -198,7 +198,7 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
             <button
               type="button"
               onClick={toggleCollapse}
-              className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary flex items-center justify-center transition cursor-pointer"
               title={isCollapsed ? 'Expand OTA Updater' : 'Collapse OTA Updater'}
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -208,7 +208,7 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
 
         {/* Collapsible Content Body */}
         {!isCollapsed && (
-          <div className="p-4 sm:p-6 border-t border-slate-800/80 animate-fadeIn">
+          <div className="p-4 sm:p-6 border-t border-app-border/80 animate-fadeIn">
             {renderContent()}
           </div>
         )}
@@ -217,12 +217,12 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
       {/* Floating Modal Window Mode */}
       {isWindowOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/80 backdrop-blur-md animate-fadeIn"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80">
+          <div className="bg-app-surface border border-app-border-highlight rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-bg/80">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <Cpu className="w-5 h-5" />
@@ -231,13 +231,13 @@ export const OtaUpdateCenter: React.FC<OtaUpdateCenterProps> = ({ device }) => {
                   <h3 className="text-base font-bold text-white tracking-wide">
                     OTA Firmware Updater Window
                   </h3>
-                  <p className="text-xs text-slate-400">{device.name} FOTA Manager</p>
+                  <p className="text-xs text-app-text-secondary">{device.name} FOTA Manager</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsWindowOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                className="p-2 rounded-xl text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

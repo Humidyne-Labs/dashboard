@@ -164,18 +164,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Show loading during initial OIDC session check (bounded by authChecking timeout)
   if (auth.isLoading && authChecking) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-slate-100 font-sans">
+      <div className="min-h-screen bg-app-bg flex flex-col items-center justify-center p-4 text-app-text-primary font-sans">
         <div className="flex flex-col items-center max-w-sm text-center space-y-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
-              <Radio className="w-7 h-7 text-amber-400 animate-pulse" />
+            <div className="w-14 h-14 rounded-2xl bg-app-accent/10 border border-app-accent/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
+              <Radio className="w-7 h-7 text-app-accent animate-pulse" />
             </div>
-            <Loader2 className="w-5 h-5 text-amber-400 animate-spin absolute -top-1 -right-1" />
+            <Loader2 className="w-5 h-5 text-app-accent animate-spin absolute -top-1 -right-1" />
           </div>
           <h2 className="text-lg font-bold text-white tracking-wide">
-            HUMID1<span className="text-amber-400">_OS</span>
+            HUMID1<span className="text-app-accent">_OS</span>
           </h2>
-          <p className="text-xs text-slate-400 font-mono">
+          <p className="text-xs text-app-text-secondary font-mono">
             Verifying Authentik SSO & ThingsBoard credentials...
           </p>
         </div>
@@ -190,42 +190,42 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Otherwise, render the polished authentication gate
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-amber-500/30 selection:text-amber-200 relative">
+    <div className="min-h-screen bg-app-bg flex flex-col items-center justify-center p-4 selection:bg-app-accent/30 selection:text-amber-200 relative">
       {/* Top Floating Diagnostics Bar */}
       <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
         <button
           onClick={() => openDiagnosticsModal('logs')}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono transition shadow-lg cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-app-surface/90 hover:bg-app-surface-elevated border border-app-border-highlight text-app-text-secondary hover:text-app-text-primary text-xs font-mono transition shadow-lg cursor-pointer"
           title="Open API Inspector & Diagnostics"
         >
-          <Terminal className="w-4 h-4 text-amber-400" />
+          <Terminal className="w-4 h-4 text-app-accent" />
           <span className="hidden sm:inline">Diagnostics & Logs</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-slate-800 text-[10px] text-amber-300 border border-slate-700">
+          <span className="px-1.5 py-0.2 rounded-full bg-app-surface-elevated text-[10px] text-app-accent border border-app-border-highlight">
             {txCount}
           </span>
         </button>
 
         <button
           onClick={() => setShowConfigModal(true)}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 bg-slate-900 transition-colors cursor-pointer"
+          className="p-2 rounded-xl text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated border border-app-border bg-app-surface transition-colors cursor-pointer"
           title="Configure Server & Auth URLs"
         >
           <Settings className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-7 shadow-2xl shadow-black/80 relative">
+      <div className="w-full max-w-md bg-app-surface border border-app-border rounded-3xl p-7 shadow-2xl shadow-black/80 relative">
         {/* Top Header & Logo */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-app-accent/20 to-app-accent-hover/10 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-md shadow-amber-500/10">
               <Radio className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                HUMID1<span className="text-amber-400">_OS</span>
+                HUMID1<span className="text-app-accent">_OS</span>
               </h1>
-              <p className="text-[11px] font-mono text-slate-400">
+              <p className="text-[11px] font-mono text-app-text-secondary">
                 Precision Humidor Telemetry Stack
               </p>
             </div>
@@ -234,8 +234,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
         {/* Primary Alert / Error Feedback */}
         {auth.error && (
-          <div className="mb-5 p-3.5 rounded-2xl bg-rose-950/70 border border-rose-500/30 text-rose-200 text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-rose-200 text-xs flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1">
               <div className="font-bold text-rose-300">Authentik OIDC Error:</div>
               <div className="font-mono text-[11px] leading-relaxed text-rose-200/90">{auth.error.message}</div>
@@ -244,16 +244,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         )}
 
         {loginError && (
-          <div className="mb-5 p-3.5 rounded-2xl bg-rose-950/70 border border-rose-500/30 text-rose-200 text-xs flex flex-col gap-2">
+          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-rose-200 text-xs flex flex-col gap-2">
             <div className="flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
               <div className="flex-1 font-mono text-[11px] leading-relaxed text-rose-200/90">{loginError}</div>
             </div>
             <div className="flex items-center justify-end gap-2 pt-1 border-t border-rose-900/50">
               <button
                 type="button"
                 onClick={() => openDiagnosticsModal('logs')}
-                className="text-[11px] text-amber-300 hover:text-amber-200 underline font-mono flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-app-accent hover:text-amber-200 underline font-mono flex items-center gap-1 cursor-pointer"
               >
                 <Terminal className="w-3 h-3" /> View Request Log
               </button>
@@ -265,7 +265,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <div className="space-y-3 mb-6">
           <button
             onClick={handleThingsBoardSsoLogin}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text font-bold text-sm shadow-lg shadow-app-bg/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4" />
             <span>Sign In with ThingsBoard SSO (Authentik)</span>
@@ -274,13 +274,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           <button
             type="button"
             onClick={handleEnterDemo}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500/40 text-amber-300 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-app-surface-elevated hover:bg-app-border-highlight border border-app-border-highlight hover:border-app-accent/40 text-app-accent font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Explore Live Dashboard (Sandbox / Demo Mode)</span>
           </button>
 
-          <div className="flex items-center justify-between px-1 text-[11px] text-slate-400 font-mono">
+          <div className="flex items-center justify-between px-1 text-[11px] text-app-text-secondary font-mono">
             <button
               type="button"
               onClick={() => {
@@ -289,7 +289,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                   window.location.reload();
                 } catch {}
               }}
-              className="text-slate-500 hover:text-amber-400 flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-app-text-primary0 hover:text-app-accent flex items-center gap-1 cursor-pointer transition-colors"
               title="Reset & show pre-release active development warning notice"
             >
               <Info className="w-3 h-3" /> Dev Info Notice
@@ -297,7 +297,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             <button
               type="button"
               onClick={handleAuthentikLogin}
-              className="text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-app-accent hover:underline flex items-center gap-1 cursor-pointer"
               title="Direct Authentik OIDC flow"
             >
               Direct Authentik OIDC <ExternalLink className="w-3 h-3" />
@@ -305,18 +305,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           </div>
 
           {/* OIDC Config Summary Pill */}
-          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] space-y-1 text-slate-400 font-mono">
+          <div className="p-3 rounded-xl bg-app-bg/70 border border-app-border text-[11px] space-y-1 text-app-text-secondary font-mono">
             <div className="flex justify-between">
-              <span className="text-slate-500">SSO Provider:</span>
-              <span className="text-slate-300 font-semibold">{oidcParams.authentikUrl}</span>
+              <span className="text-app-text-primary0">SSO Provider:</span>
+              <span className="text-app-text-secondary font-semibold">{oidcParams.authentikUrl}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">ThingsBoard Gateway:</span>
-              <span className="text-amber-400 font-semibold">app.humid1.com/oauth2</span>
+              <span className="text-app-text-primary0">ThingsBoard Gateway:</span>
+              <span className="text-app-accent font-semibold">app.humid1.com/oauth2</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Authentik App:</span>
-              <span className="text-slate-300 font-semibold truncate max-w-[200px]" title={oidcParams.appSlug}>
+              <span className="text-app-text-primary0">Authentik App:</span>
+              <span className="text-app-text-secondary font-semibold truncate max-w-[200px]" title={oidcParams.appSlug}>
                 {oidcParams.appSlug}
               </span>
             </div>
@@ -325,29 +325,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
         {/* Divider */}
         <div className="relative flex py-2 items-center mb-5">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-3 text-slate-500 text-[10px] uppercase font-mono tracking-wider">
+          <div className="flex-grow border-t border-app-border"></div>
+          <span className="flex-shrink mx-3 text-app-text-primary0 text-[10px] uppercase font-mono tracking-wider">
             Or Alternate Access
           </span>
-          <div className="flex-grow border-t border-slate-800"></div>
+          <div className="flex-grow border-t border-app-border"></div>
         </div>
 
         {/* Direct Thingsboard / Token Dropdown */}
         <div>
           <button
             onClick={() => setShowDirectLogin(!showDirectLogin)}
-            className="w-full text-center text-xs text-slate-400 hover:text-amber-400 font-medium py-1.5 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full text-center text-xs text-app-text-secondary hover:text-app-accent font-medium py-1.5 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Key className="w-3.5 h-3.5" />
             <span>{showDirectLogin ? 'Hide Credentials & Token Login' : 'Direct ThingsBoard Login / Token Override'}</span>
           </button>
 
           {showDirectLogin && (
-            <div className="mt-4 p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4 animate-fadeIn">
+            <div className="mt-4 p-4 rounded-2xl bg-app-bg/80 border border-app-border space-y-4 animate-fadeIn">
               {/* Username/Password Form */}
               <form onSubmit={handleCredentialsLogin} className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-app-text-secondary mb-1">
                     Username / Customer Email
                   </label>
                   <input
@@ -355,12 +355,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                     placeholder="customer@example.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                    className="w-full bg-app-surface border border-app-border-highlight rounded-xl px-3 py-2 text-xs text-app-text-primary placeholder-app-text-muted focus:outline-none focus:border-app-accent font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-app-text-secondary mb-1">
                     Password
                   </label>
                   <div className="relative">
@@ -369,12 +369,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 pr-9 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      className="w-full bg-app-surface border border-app-border-highlight rounded-xl px-3 py-2 pr-9 text-xs text-app-text-primary placeholder-app-text-muted focus:outline-none focus:border-app-accent font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-app-text-secondary hover:text-app-text-primary cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -384,7 +384,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                 <button
                   type="submit"
                   disabled={loginLoading}
-                  className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="w-full py-2 px-3 rounded-xl bg-app-surface-elevated hover:bg-app-border-highlight text-app-text-primary hover:text-app-text-primary text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {loginLoading ? (
                     <>
@@ -401,9 +401,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
               </form>
 
               {/* Or Token Input */}
-              <div className="pt-3 border-t border-slate-800 space-y-2">
+              <div className="pt-3 border-t border-app-border space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                  <label className="block text-[10px] font-mono uppercase tracking-wider text-app-text-secondary">
                     Paste Raw ThingsBoard JWT
                   </label>
                 </div>
@@ -413,11 +413,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                     placeholder="eyJhbGciOi..."
                     value={directTokenInput}
                     onChange={(e) => setDirectTokenInput(e.target.value)}
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-app-surface border border-app-border-highlight rounded-xl px-3 py-1.5 text-xs text-app-text-primary font-mono placeholder-app-text-muted focus:outline-none focus:border-app-accent"
                   />
                   <button
                     type="submit"
-                    className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-app-accent-hover hover:bg-app-accent text-app-accent-text text-xs font-bold cursor-pointer"
                   >
                     Apply
                   </button>

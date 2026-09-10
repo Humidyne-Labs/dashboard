@@ -366,10 +366,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const renderContent = () => (
     <div className="space-y-4">
       {/* Quick Profile & Presets Bar */}
-      <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
+      <div className="bg-app-bg/60 p-3.5 rounded-xl border border-app-border space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-xs font-bold uppercase tracking-wider text-app-text-secondary flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-app-accent" />
             <span>Threshold Envelope Presets</span>
           </span>
         </div>
@@ -382,8 +382,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               onClick={() => handleApplyPreset(preset.id)}
               className={`h-9 px-2 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activePreset === preset.id
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  ? 'bg-app-accent/20 text-app-accent border-app-accent/50 shadow-sm'
+                  : 'bg-app-surface border-app-border text-app-text-secondary hover:text-app-text-primary hover:border-app-border-highlight'
               }`}
               title={preset.description}
             >
@@ -394,30 +394,30 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       {/* 1. Relative Humidity (RH %) Thresholds */}
-      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+      <div className="bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border space-y-3">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-            <Droplets className="w-3.5 h-3.5 text-amber-400" />
+          <label className="text-xs font-bold uppercase tracking-wider text-app-accent flex items-center gap-1.5">
+            <Droplets className="w-3.5 h-3.5 text-app-accent" />
             <span>Relative Humidity (RH %) Thresholds</span>
           </label>
-          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-500/30">
+          <span className="font-mono text-xs font-bold text-app-accent bg-app-bg/60 px-2.5 py-0.5 rounded border border-app-accent/30">
             Safe Envelope: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%
           </span>
         </div>
 
         {/* Visual Color Spectrum Bar */}
         <div className="space-y-1">
-          <div className="h-3 w-full rounded-full bg-slate-800 flex overflow-hidden border border-slate-700">
+          <div className="h-3 w-full rounded-full bg-app-surface-elevated flex overflow-hidden border border-app-border-highlight">
             <div style={{ width: `${thresholds.rhLowCritical}%` }} className="bg-rose-600/80" title="Low Critical (<60%)" />
-            <div style={{ width: `${thresholds.rhLowWarning - thresholds.rhLowCritical}%` }} className="bg-amber-500/80" title="Low Warning (60-65%)" />
-            <div style={{ width: `${thresholds.rhHighWarning - thresholds.rhLowWarning}%` }} className="bg-emerald-500/80" title="Ideal Safe Range (65-72%)" />
-            <div style={{ width: `${thresholds.rhHighCritical - thresholds.rhHighWarning}%` }} className="bg-amber-500/80" title="High Warning (72-75%)" />
+            <div style={{ width: `${thresholds.rhLowWarning - thresholds.rhLowCritical}%` }} className="bg-app-accent/80" title="Low Warning (60-65%)" />
+            <div style={{ width: `${thresholds.rhHighWarning - thresholds.rhLowWarning}%` }} className="bg-app-status-nominal/80" title="Ideal Safe Range (65-72%)" />
+            <div style={{ width: `${thresholds.rhHighCritical - thresholds.rhHighWarning}%` }} className="bg-app-accent/80" title="High Warning (72-75%)" />
             <div style={{ width: `${100 - thresholds.rhHighCritical}%` }} className="bg-rose-600/80" title="High Critical (>75%)" />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-slate-400">
+          <div className="flex justify-between text-[10px] font-mono text-app-text-secondary">
             <span>0%</span>
             <span>{thresholds.rhLowCritical}% (Crit)</span>
-            <span className="text-emerald-400 font-bold">{thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% Safe</span>
+            <span className="text-app-status-nominal font-bold">{thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% Safe</span>
             <span>{thresholds.rhHighCritical}% (Crit)</span>
             <span>100%</span>
           </div>
@@ -425,9 +425,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
         {/* Sliders Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-rose-400 font-medium">Low Critical Alarm</span>
+              <span className="text-app-status-critical font-medium">Low Critical Alarm</span>
               <span className="font-mono text-rose-300 font-bold">{thresholds.rhLowCritical.toFixed(1)}%</span>
             </div>
             <input
@@ -437,14 +437,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               step="0.5"
               value={thresholds.rhLowCritical}
               onChange={(e) => setThresholds({ ...thresholds, rhLowCritical: Number(e.target.value) })}
-              className="w-full accent-rose-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-rose-500 h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-amber-400 font-medium">Low Warning Alert</span>
-              <span className="font-mono text-amber-300 font-bold">{thresholds.rhLowWarning.toFixed(1)}%</span>
+              <span className="text-app-accent font-medium">Low Warning Alert</span>
+              <span className="font-mono text-app-accent font-bold">{thresholds.rhLowWarning.toFixed(1)}%</span>
             </div>
             <input
               type="range"
@@ -453,14 +453,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               step="0.5"
               value={thresholds.rhLowWarning}
               onChange={(e) => setThresholds({ ...thresholds, rhLowWarning: Number(e.target.value) })}
-              className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-amber-400 font-medium">High Warning Alert</span>
-              <span className="font-mono text-amber-300 font-bold">{thresholds.rhHighWarning.toFixed(1)}%</span>
+              <span className="text-app-accent font-medium">High Warning Alert</span>
+              <span className="font-mono text-app-accent font-bold">{thresholds.rhHighWarning.toFixed(1)}%</span>
             </div>
             <input
               type="range"
@@ -469,13 +469,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               step="0.5"
               value={thresholds.rhHighWarning}
               onChange={(e) => setThresholds({ ...thresholds, rhHighWarning: Number(e.target.value) })}
-              className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-rose-400 font-medium">High Critical Alarm</span>
+              <span className="text-app-status-critical font-medium">High Critical Alarm</span>
               <span className="font-mono text-rose-300 font-bold">{thresholds.rhHighCritical.toFixed(1)}%</span>
             </div>
             <input
@@ -485,28 +485,28 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               step="0.5"
               value={thresholds.rhHighCritical}
               onChange={(e) => setThresholds({ ...thresholds, rhHighCritical: Number(e.target.value) })}
-              className="w-full accent-rose-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-rose-500 h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
         </div>
       </div>
 
       {/* 2. Temperature Thresholds */}
-      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+      <div className="bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border space-y-3">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-            <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+          <label className="text-xs font-bold uppercase tracking-wider text-app-accent flex items-center gap-1.5">
+            <Thermometer className="w-3.5 h-3.5 text-app-accent" />
             <span>Temperature (°{tempUnit}) Thresholds</span>
           </label>
-          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-500/30">
+          <span className="font-mono text-xs font-bold text-app-accent bg-app-bg/60 px-2.5 py-0.5 rounded border border-app-accent/30">
             Safe: {dispTempLowWarning.toFixed(1)}°–{dispTempHighWarning.toFixed(1)}°{tempUnit}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-rose-400 font-medium">Low Critical Temp</span>
+              <span className="text-app-status-critical font-medium">Low Critical Temp</span>
               <span className="font-mono text-rose-300 font-bold">{dispTempLowCritical.toFixed(1)}°{tempUnit}</span>
             </div>
             <input
@@ -519,14 +519,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 ...thresholds,
                 tempLowCritical: fromDisplayTemp(Number(e.target.value), tempUnit)
               })}
-              className="w-full accent-rose-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-rose-500 h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-amber-400 font-medium">Low Warning Temp</span>
-              <span className="font-mono text-amber-300 font-bold">{dispTempLowWarning.toFixed(1)}°{tempUnit}</span>
+              <span className="text-app-accent font-medium">Low Warning Temp</span>
+              <span className="font-mono text-app-accent font-bold">{dispTempLowWarning.toFixed(1)}°{tempUnit}</span>
             </div>
             <input
               type="range"
@@ -538,14 +538,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 ...thresholds,
                 tempLowWarning: fromDisplayTemp(Number(e.target.value), tempUnit)
               })}
-              className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-amber-400 font-medium">High Warning Temp</span>
-              <span className="font-mono text-amber-300 font-bold">{dispTempHighWarning.toFixed(1)}°{tempUnit}</span>
+              <span className="text-app-accent font-medium">High Warning Temp</span>
+              <span className="font-mono text-app-accent font-bold">{dispTempHighWarning.toFixed(1)}°{tempUnit}</span>
             </div>
             <input
               type="range"
@@ -557,13 +557,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 ...thresholds,
                 tempHighWarning: fromDisplayTemp(Number(e.target.value), tempUnit)
               })}
-              className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
 
-          <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+          <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
             <div className="flex justify-between text-xs">
-              <span className="text-rose-400 font-medium">High Critical Temp</span>
+              <span className="text-app-status-critical font-medium">High Critical Temp</span>
               <span className="font-mono text-rose-300 font-bold">{dispTempHighCritical.toFixed(1)}°{tempUnit}</span>
             </div>
             <input
@@ -576,7 +576,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 ...thresholds,
                 tempHighCritical: fromDisplayTemp(Number(e.target.value), tempUnit)
               })}
-              className="w-full accent-rose-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+              className="w-full accent-rose-500 h-1.5 bg-app-bg rounded-lg cursor-pointer"
             />
           </div>
         </div>
@@ -585,22 +585,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* 3. Battery & Hysteresis Limits */}
       <div className="space-y-3">
         {/* Battery Warnings - Side by Side */}
-        <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border space-y-3">
           <div className="flex justify-between items-center">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-              <Battery className="w-3.5 h-3.5 text-amber-400" />
+            <label className="text-xs font-bold uppercase tracking-wider text-app-accent flex items-center gap-1.5">
+              <Battery className="w-3.5 h-3.5 text-app-accent" />
               <span>Battery Thresholds</span>
             </label>
-            <span className="font-mono text-xs font-bold text-slate-300">
+            <span className="font-mono text-xs font-bold text-app-text-secondary">
               {thresholds.batteryLowWarning}% / {thresholds.batteryLowCritical}%
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
               <div className="flex justify-between text-xs">
-                <span className="text-amber-400 font-medium">Low Battery Warning</span>
-                <span className="font-mono text-amber-300 font-bold">{thresholds.batteryLowWarning}%</span>
+                <span className="text-app-accent font-medium">Low Battery Warning</span>
+                <span className="font-mono text-app-accent font-bold">{thresholds.batteryLowWarning}%</span>
               </div>
               <input
                 type="range"
@@ -609,13 +609,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 step="5"
                 value={thresholds.batteryLowWarning}
                 onChange={(e) => setThresholds({ ...thresholds, batteryLowWarning: Number(e.target.value) })}
-                className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
               />
             </div>
 
-            <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
               <div className="flex justify-between text-xs">
-                <span className="text-rose-400 font-medium">Critical Battery Cutoff</span>
+                <span className="text-app-status-critical font-medium">Critical Battery Cutoff</span>
                 <span className="font-mono text-rose-300 font-bold">{thresholds.batteryLowCritical}%</span>
               </div>
               <input
@@ -625,27 +625,27 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 step="5"
                 value={thresholds.batteryLowCritical}
                 onChange={(e) => setThresholds({ ...thresholds, batteryLowCritical: Number(e.target.value) })}
-                className="w-full accent-rose-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                className="w-full accent-rose-500 h-1.5 bg-app-bg rounded-lg cursor-pointer"
               />
             </div>
           </div>
         </div>
 
         {/* Hysteresis Anti-Flapping Buffers - 3 in a row */}
-        <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+        <div className="bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border space-y-3">
           <div className="flex justify-between items-center">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+            <label className="text-xs font-bold uppercase tracking-wider text-app-accent flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-app-accent" />
               <span>Alarm Hysteresis Filters</span>
             </label>
-            <span className="text-[10px] text-slate-400 font-mono">Anti-Flap (RH / Temp / Battery)</span>
+            <span className="text-[10px] text-app-text-secondary font-mono">Anti-Flap (RH / Temp / Battery)</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-300 font-medium">RH Hysteresis</span>
-                <span className="font-mono text-amber-300 font-bold">±{thresholds.rhHist.toFixed(1)}% RH</span>
+                <span className="text-app-text-secondary font-medium">RH Hysteresis</span>
+                <span className="font-mono text-app-accent font-bold">±{thresholds.rhHist.toFixed(1)}% RH</span>
               </div>
               <input
                 type="range"
@@ -654,14 +654,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 step="0.1"
                 value={thresholds.rhHist}
                 onChange={(e) => setThresholds({ ...thresholds, rhHist: Number(e.target.value) })}
-                className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
               />
             </div>
 
-            <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-300 font-medium">Temp Hysteresis</span>
-                <span className="font-mono text-amber-300 font-bold">±{dispTempHist.toFixed(1)}°{tempUnit}</span>
+                <span className="text-app-text-secondary font-medium">Temp Hysteresis</span>
+                <span className="font-mono text-app-accent font-bold">±{dispTempHist.toFixed(1)}°{tempUnit}</span>
               </div>
               <input
                 type="range"
@@ -673,14 +673,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   ...thresholds,
                   tempHist: fromDisplayDelta(Number(e.target.value), tempUnit)
                 })}
-                className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
               />
             </div>
 
-            <div className="space-y-1 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+            <div className="space-y-1 bg-app-surface/80 p-2.5 rounded-lg border border-app-border">
               <div className="flex justify-between text-xs">
-                <span className="text-slate-300 font-medium">Battery Hysteresis</span>
-                <span className="font-mono text-amber-300 font-bold">±{(thresholds.battHist ?? 2.0).toFixed(1)}%</span>
+                <span className="text-app-text-secondary font-medium">Battery Hysteresis</span>
+                <span className="font-mono text-app-accent font-bold">±{(thresholds.battHist ?? 2.0).toFixed(1)}%</span>
               </div>
               <input
                 type="range"
@@ -689,7 +689,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 step="0.5"
                 value={thresholds.battHist ?? 2.0}
                 onChange={(e) => setThresholds({ ...thresholds, battHist: Number(e.target.value) })}
-                className="w-full accent-amber-500 h-1.5 bg-slate-950 rounded-lg cursor-pointer"
+                className="w-full accent-app-accent h-1.5 bg-app-bg rounded-lg cursor-pointer"
               />
             </div>
           </div>
@@ -697,13 +697,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       {/* 4. Sleep Interval & Hardware Controls */}
-      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+      <div className="bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border space-y-3">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <label className="text-xs font-bold uppercase tracking-wider text-app-text-secondary flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-app-accent" />
             <span>Telemetry Sleep &amp; Wake Interval</span>
           </label>
-          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-0.5 rounded border border-amber-500/30">
+          <span className="font-mono text-xs font-bold text-app-accent bg-app-bg/60 px-2.5 py-0.5 rounded border border-app-accent/30">
             {sleepMin} Minutes ({sleepMin * 60}s)
           </span>
         </div>
@@ -715,10 +715,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           step="1"
           value={sleepMin}
           onChange={(e) => setSleepMin(Number(e.target.value))}
-          className="w-full accent-amber-500 h-1.5 bg-slate-900 rounded-lg cursor-pointer"
+          className="w-full accent-app-accent h-1.5 bg-app-surface rounded-lg cursor-pointer"
         />
 
-        <div className="flex justify-between text-[10px] font-mono text-slate-400">
+        <div className="flex justify-between text-[10px] font-mono text-app-text-secondary">
           <span>1 min (Testing)</span>
           <span>15 min (Recommended)</span>
           <span>30 min (Balanced)</span>
@@ -729,22 +729,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* 5. Display Theme, Sound, Auto Update & Manual Flash */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* Hardware Theme Switcher */}
-        <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-app-bg/60 p-3 rounded-xl border border-app-border">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-800 text-amber-400">
+            <div className="p-1.5 rounded-lg bg-app-surface-elevated text-app-accent">
               {theme === 'dark' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
             </div>
             <div>
-              <span className="text-xs font-bold text-slate-200 block">E-Ink Theme</span>
-              <span className="text-[10px] text-slate-400 capitalize">Waveshare {theme}</span>
+              <span className="text-xs font-bold text-app-text-primary block">E-Ink Theme</span>
+              <span className="text-[10px] text-app-text-secondary capitalize">Waveshare {theme}</span>
             </div>
           </div>
 
-          <div className="flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+          <div className="flex items-center bg-app-surface p-0.5 rounded-lg border border-app-border">
             <button
               type="button"
               onClick={() => setTheme('dark')}
-              className={`p-1 rounded-md transition ${theme === 'dark' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`p-1 rounded-md transition ${theme === 'dark' ? 'bg-app-accent text-app-accent-text' : 'text-app-text-secondary hover:text-app-text-primary'}`}
               title="Dark theme for E-Ink screen"
             >
               <Moon className="w-3.5 h-3.5" />
@@ -752,7 +752,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               type="button"
               onClick={() => setTheme('light')}
-              className={`p-1 rounded-md transition ${theme === 'light' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`p-1 rounded-md transition ${theme === 'light' ? 'bg-app-accent text-app-accent-text' : 'text-app-text-secondary hover:text-app-text-primary'}`}
               title="Light theme for E-Ink screen"
             >
               <Sun className="w-3.5 h-3.5" />
@@ -761,14 +761,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         {/* Sound Enabled Toggle */}
-        <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-app-bg/60 p-3 rounded-xl border border-app-border">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${soundEnabled && hasSdCard ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>
+            <div className={`p-1.5 rounded-lg ${soundEnabled && hasSdCard ? 'bg-app-accent/20 text-app-accent' : 'bg-app-surface-elevated text-app-text-secondary'}`}>
               {soundEnabled && hasSdCard ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </div>
             <div>
-              <span className="text-xs font-bold text-slate-200 block">Speaker Audio</span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-xs font-bold text-app-text-primary block">Speaker Audio</span>
+              <span className="text-[10px] text-app-text-secondary">
                 {!hasSdCard ? 'No SD Card' : soundEnabled ? 'Enabled' : 'Muted'}
               </span>
             </div>
@@ -779,7 +779,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             disabled={!hasSdCard}
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-              soundEnabled && hasSdCard ? 'bg-amber-500' : 'bg-slate-800'
+              soundEnabled && hasSdCard ? 'bg-app-accent' : 'bg-app-surface-elevated'
             }`}
             title={!hasSdCard ? 'Device speaker requires FAT32 SD card for audio playback' : 'Toggle device speaker audio playback'}
           >
@@ -792,14 +792,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         {/* Auto Update Toggle */}
-        <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-app-bg/60 p-3 rounded-xl border border-app-border">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-800 text-sky-400">
+            <div className="p-1.5 rounded-lg bg-app-surface-elevated text-app-status-info">
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-slate-200 block">Auto Update (Planned)</span>
-              <span className="text-[10px] text-slate-400">{autoUpdate ? 'Automatic' : 'Manual'}</span>
+              <span className="text-xs font-bold text-app-text-primary block">Auto Update (Planned)</span>
+              <span className="text-[10px] text-app-text-secondary">{autoUpdate ? 'Automatic' : 'Manual'}</span>
             </div>
           </div>
 
@@ -807,7 +807,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             type="button"
             onClick={() => setAutoUpdate(!autoUpdate)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-              autoUpdate ? 'bg-amber-600' : 'bg-slate-800'
+              autoUpdate ? 'bg-app-accent-hover' : 'bg-app-surface-elevated'
             }`}
             title="Toggle automatic firmware updates (Feature planned)"
           >
@@ -820,14 +820,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         {/* Manual OTA Trigger Attribute */}
-        <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-app-bg/60 p-3 rounded-xl border border-app-border">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${manualOta ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-400'}`}>
+            <div className={`p-1.5 rounded-lg ${manualOta ? 'bg-app-accent/20 text-app-accent' : 'bg-app-surface-elevated text-app-text-secondary'}`}>
               <Zap className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-xs font-bold text-slate-200 block">Manual OTA (Planned)</span>
-              <span className="text-[10px] text-slate-400">Arm trigger (Stub)</span>
+              <span className="text-xs font-bold text-app-text-primary block">Manual OTA (Planned)</span>
+              <span className="text-[10px] text-app-text-secondary">Arm trigger (Stub)</span>
             </div>
           </div>
 
@@ -835,7 +835,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             type="button"
             onClick={() => setManualOta(!manualOta)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-              manualOta ? 'bg-amber-500' : 'bg-slate-800'
+              manualOta ? 'bg-app-accent' : 'bg-app-surface-elevated'
             }`}
             title="Arm manual OTA flash trigger (Feature planned)"
           >
@@ -849,13 +849,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       {/* 6. Live ThingsBoard RPC Triggers */}
-      <div className="space-y-2 bg-slate-950/60 p-3.5 sm:p-4 rounded-xl border border-slate-800">
+      <div className="space-y-2 bg-app-bg/60 p-3.5 sm:p-4 rounded-xl border border-app-border">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Terminal className="w-3.5 h-3.5 text-amber-400" />
+          <label className="text-xs font-bold uppercase tracking-wider text-app-text-secondary flex items-center gap-1.5">
+            <Terminal className="w-3.5 h-3.5 text-app-accent" />
             <span>Remote RPC Commands</span>
           </label>
-          <span className="text-[10px] font-mono text-slate-500">ThingsBoard RPC</span>
+          <span className="text-[10px] font-mono text-app-text-primary0">ThingsBoard RPC</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-1">
@@ -863,10 +863,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             type="button"
             disabled={!!rpcLoading}
             onClick={() => handleTriggerRpc('ping')}
-            className="h-8.5 px-2 bg-slate-900 border border-slate-700 hover:border-amber-500/40 text-slate-200 rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+            className="h-8.5 px-2 bg-app-surface border border-app-border-highlight hover:border-app-accent/40 text-app-text-primary rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             title="Send ping echo request to device"
           >
-            {rpcLoading === 'ping' ? <RefreshCw className="w-3 h-3 animate-spin text-amber-400" /> : <Radio className="w-3 h-3 text-amber-400" />}
+            {rpcLoading === 'ping' ? <RefreshCw className="w-3 h-3 animate-spin text-app-accent" /> : <Radio className="w-3 h-3 text-app-accent" />}
             <span>Ping</span>
           </button>
 
@@ -874,10 +874,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             type="button"
             disabled={!!rpcLoading}
             onClick={() => handleTriggerRpc('testBuzzer', { durationMs: 500 })}
-            className="h-8.5 px-2 bg-slate-900 border border-slate-700 hover:border-amber-500/40 text-slate-200 rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+            className="h-8.5 px-2 bg-app-surface border border-app-border-highlight hover:border-app-accent/40 text-app-text-primary rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             title="Play audible chime on device speaker to physically locate device"
           >
-            {rpcLoading === 'testBuzzer' ? <RefreshCw className="w-3 h-3 animate-spin text-amber-400" /> : <Volume2 className="w-3 h-3 text-amber-400" />}
+            {rpcLoading === 'testBuzzer' ? <RefreshCw className="w-3 h-3 animate-spin text-app-accent" /> : <Volume2 className="w-3 h-3 text-app-accent" />}
             <span>Locate</span>
           </button>
 
@@ -885,10 +885,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             type="button"
             disabled={!!rpcLoading}
             onClick={() => handleTriggerRpc('syncTime', { epoch: Math.floor(Date.now() / 1000) })}
-            className="h-8.5 px-2 bg-slate-900 border border-slate-700 hover:border-amber-500/40 text-slate-200 rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+            className="h-8.5 px-2 bg-app-surface border border-app-border-highlight hover:border-app-accent/40 text-app-text-primary rounded-lg text-xs font-mono flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             title="Synchronize device system clock with UTC/server epoch timestamp"
           >
-            {rpcLoading === 'syncTime' ? <RefreshCw className="w-3 h-3 animate-spin text-amber-400" /> : <Clock className="w-3 h-3 text-amber-400" />}
+            {rpcLoading === 'syncTime' ? <RefreshCw className="w-3 h-3 animate-spin text-app-accent" /> : <Clock className="w-3 h-3 text-app-accent" />}
             <span>Time Sync</span>
           </button>
         </div>
@@ -898,22 +898,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div
             className={`mt-2 p-2 rounded-lg text-[11px] font-mono flex items-center gap-1.5 ${
               rpcStatus.type === 'success'
-                ? 'bg-emerald-950/70 border border-emerald-500/30 text-emerald-300'
-                : 'bg-amber-950/70 border border-amber-500/30 text-amber-300'
+                ? 'bg-app-bg/70 border border-app-status-nominal/30 text-emerald-300'
+                : 'bg-app-bg/70 border border-app-accent/30 text-app-accent'
             }`}
           >
-            {rpcStatus.type === 'success' ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+            {rpcStatus.type === 'success' ? <Check className="w-3.5 h-3.5 text-app-status-nominal shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 text-app-accent shrink-0" />}
             <span className="truncate">{rpcStatus.message}</span>
           </div>
         )}
       </div>
 
-      <div className="pt-4 border-t border-slate-800/80 mt-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="pt-4 border-t border-app-border/80 mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-700/60 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated border border-app-border-highlight/60 transition cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Defaults</span>
@@ -922,10 +922,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <button
             type="button"
             onClick={handleExportXml}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-slate-300 hover:text-amber-300 hover:bg-slate-800 border border-slate-700/60 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-app-text-secondary hover:text-app-accent hover:bg-app-surface-elevated border border-app-border-highlight/60 transition cursor-pointer"
             title="Download XML Profile"
           >
-            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <Download className="w-3.5 h-3.5 text-app-accent" />
             <span>Export XML</span>
           </button>
         </div>
@@ -933,7 +933,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="h-9 px-4 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-md shadow-amber-950/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          className="h-9 px-4 bg-app-accent-hover hover:bg-app-accent text-app-accent-text font-bold text-xs rounded-xl transition-all shadow-md shadow-app-bg/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           <span>Save Parameters</span>
@@ -944,23 +944,23 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
   return (
     <>
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden transition-all">
+      <div className="bg-app-surface/90 border border-app-border rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden transition-all">
         {/* Header Bar - Clickable to toggle collapse */}
-        <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 bg-slate-900/95">
+        <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 bg-app-surface/95">
           <div 
             onClick={toggleCollapse}
             className="flex items-center gap-3 cursor-pointer select-none group flex-1 min-w-[200px]"
           >
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:bg-amber-500/20 transition">
+            <div className="p-2 rounded-xl bg-app-accent/10 text-app-accent border border-app-accent/20 group-hover:bg-app-accent/20 transition">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-wide group-hover:text-amber-300 transition">
+                <h3 className="text-base font-bold text-white tracking-wide group-hover:text-app-accent transition">
                   Hardware Device &amp; Alarm Parameters
                 </h3>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-app-text-secondary">
                 Threshold limits, sleep interval &amp; XML profiles
               </p>
             </div>
@@ -972,10 +972,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               type="button"
               onClick={handleExportXml}
-              className="h-8 px-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 text-xs font-mono flex items-center gap-1.5 transition cursor-pointer"
+              className="h-8 px-2.5 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-accent/50 text-app-text-secondary hover:text-app-accent text-xs font-mono flex items-center gap-1.5 transition cursor-pointer"
               title="Export complete device configuration to XML profile file"
             >
-              <Download className="w-3.5 h-3.5 text-amber-400" />
+              <Download className="w-3.5 h-3.5 text-app-accent" />
               <span>Export XML</span>
             </button>
 
@@ -989,10 +989,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 setXmlFileContent('');
                 setIsXmlImportModalOpen(true);
               }}
-              className="h-8 px-2.5 rounded-lg bg-slate-800 border border-slate-700 hover:border-sky-500/50 text-slate-300 hover:text-sky-300 text-xs font-mono flex items-center gap-1.5 transition cursor-pointer"
+              className="h-8 px-2.5 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-status-info/50 text-app-text-secondary hover:text-app-status-info text-xs font-mono flex items-center gap-1.5 transition cursor-pointer"
               title="Import XML configuration from another humidor device"
             >
-              <Upload className="w-3.5 h-3.5 text-sky-400" />
+              <Upload className="w-3.5 h-3.5 text-app-status-info" />
               <span>Import XML</span>
             </button>
 
@@ -1000,7 +1000,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               type="button"
               onClick={() => setIsWindowOpen(true)}
-              className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 flex items-center justify-center transition cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary flex items-center justify-center transition cursor-pointer"
               title="Open parameters in separate window"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -1010,20 +1010,20 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <button
               type="button"
               onClick={toggleCollapse}
-              className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+              className="h-8 w-8 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary flex items-center justify-center transition cursor-pointer"
               title={isCollapsed ? 'Expand parameters panel' : 'Collapse parameters panel'}
             >
               {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
 
             {savedSuccess && (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 animate-fadeIn">
+              <span className="inline-flex items-center gap-1 text-xs text-app-status-nominal font-semibold bg-app-bg/80 px-2.5 py-1 rounded-lg border border-app-status-nominal/30 animate-fadeIn">
                 <Check className="w-3.5 h-3.5" /> Synced
               </span>
             )}
 
             {xmlExportNotice && (
-              <span className="inline-flex items-center gap-1 text-xs text-amber-400 font-semibold bg-amber-950/80 px-2.5 py-1 rounded-lg border border-amber-500/30 animate-fadeIn font-mono">
+              <span className="inline-flex items-center gap-1 text-xs text-app-accent font-semibold bg-app-bg/80 px-2.5 py-1 rounded-lg border border-app-accent/30 animate-fadeIn font-mono">
                 <FileCode className="w-3.5 h-3.5" /> XML Exported
               </span>
             )}
@@ -1032,7 +1032,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
         {/* Collapsible Content Body */}
         {!isCollapsed && (
-          <div className="p-4 sm:p-6 border-t border-slate-800/80 animate-fadeIn">
+          <div className="p-4 sm:p-6 border-t border-app-border/80 animate-fadeIn">
             {renderContent()}
           </div>
         )}
@@ -1041,27 +1041,27 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* Floating Modal Window Mode */}
       {isWindowOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/80 backdrop-blur-md animate-fadeIn"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80">
+          <div className="bg-app-surface border border-app-border-highlight rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-bg/80">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <div className="p-2 rounded-xl bg-app-accent/10 text-app-accent border border-app-accent/20">
                   <Sliders className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white tracking-wide">
                     Hardware Device &amp; Alarm Parameters Window
                   </h3>
-                  <p className="text-xs text-slate-400">{device.name} Configuration</p>
+                  <p className="text-xs text-app-text-secondary">{device.name} Configuration</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsWindowOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                className="p-2 rounded-xl text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1077,22 +1077,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* XML Configuration Import Modal */}
       {isXmlImportModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/85 backdrop-blur-md animate-fadeIn"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-app-surface border border-app-border-highlight rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-app-border bg-app-bg">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                <div className="p-2 rounded-xl bg-sky-500/10 text-app-status-info border border-app-status-info/20">
                   <FileCode className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white tracking-wide">
                     Import Device Configuration XML
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-app-text-secondary">
                     Apply dialed parameters from another humidor profile
                   </p>
                 </div>
@@ -1100,7 +1100,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
               <button
                 onClick={() => setIsXmlImportModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                className="p-1.5 rounded-lg text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1110,7 +1110,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="p-5 overflow-y-auto space-y-4 text-xs">
               {/* File Upload / Dropzone */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-300 block">
+                <label className="text-xs font-bold text-app-text-secondary block">
                   Select or Drop User XML Configuration File:
                 </label>
                 <input
@@ -1123,13 +1123,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-5 px-4 rounded-xl border-2 border-dashed border-slate-700 hover:border-amber-500/50 bg-slate-950/60 hover:bg-slate-950 text-slate-300 flex flex-col items-center justify-center gap-2 transition cursor-pointer"
+                  className="w-full py-5 px-4 rounded-xl border-2 border-dashed border-app-border-highlight hover:border-app-accent/50 bg-app-bg/60 hover:bg-app-bg text-app-text-secondary flex flex-col items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <Upload className="w-6 h-6 text-amber-400" />
-                  <span className="font-semibold text-slate-200">
+                  <Upload className="w-6 h-6 text-app-accent" />
+                  <span className="font-semibold text-app-text-primary">
                     Click to browse or drop .xml profile
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-app-text-primary0 font-mono">
                     Supports &lt;humid1-device-config&gt; schema
                   </span>
                 </button>
@@ -1138,7 +1138,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               {/* Or Paste Raw XML */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-slate-300">
+                  <label className="text-xs font-bold text-app-text-secondary">
                     Or Paste XML Payload Directly:
                   </label>
                   {xmlFileContent && (
@@ -1149,7 +1149,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         setParsedXmlResult(null);
                         setXmlParseError(null);
                       }}
-                      className="text-[10px] font-mono text-rose-400 hover:underline"
+                      className="text-[10px] font-mono text-app-status-critical hover:underline"
                     >
                       Clear
                     </button>
@@ -1168,75 +1168,75 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     }
                   }}
                   placeholder='<humid1-device-config version="1.0"> ... </humid1-device-config>'
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-app-bg border border-app-border rounded-xl p-3 text-[11px] font-mono text-app-text-primary placeholder:text-app-text-muted focus:outline-none focus:border-app-accent/50"
                 />
               </div>
 
               {/* Parse Error */}
               {xmlParseError && (
-                <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/30 text-rose-300 flex items-start gap-2 font-mono text-[11px]">
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-xl bg-app-bg/60 border border-app-status-critical/30 text-rose-300 flex items-start gap-2 font-mono text-[11px]">
+                  <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
                   <span>{xmlParseError}</span>
                 </div>
               )}
 
               {/* Success Notification */}
               {xmlImportSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 flex items-start gap-2 font-mono text-[11px]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-xl bg-app-bg/60 border border-app-status-nominal/30 text-emerald-300 flex items-start gap-2 font-mono text-[11px]">
+                  <CheckCircle2 className="w-4 h-4 text-app-status-nominal shrink-0 mt-0.5" />
                   <span>{xmlImportSuccess}</span>
                 </div>
               )}
 
               {/* Parsed Preview Card */}
               {parsedXmlResult && (
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-2.5 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="font-bold text-amber-300 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-amber-400" />
+                <div className="p-3.5 rounded-xl bg-app-bg border border-app-accent/30 space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-app-border pb-2">
+                    <span className="font-bold text-app-accent flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-app-accent" />
                       <span>Valid XML Profile Detected</span>
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-app-text-secondary">
                       v{parsedXmlResult.version}
                     </span>
                   </div>
 
                   {parsedXmlResult.metadata?.deviceName && (
-                    <div className="text-[11px] text-slate-300 font-mono">
-                      <span className="text-slate-500">Source Device:</span>{' '}
+                    <div className="text-[11px] text-app-text-secondary font-mono">
+                      <span className="text-app-text-primary0">Source Device:</span>{' '}
                       <span className="font-bold text-amber-200">{parsedXmlResult.metadata.deviceName}</span>
                     </div>
                   )}
 
                   {/* Summary Grid */}
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1">
-                    <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
-                      <span className="text-slate-500 block text-[10px]">Wake Interval:</span>
-                      <span className="text-sky-300 font-bold">
+                    <div className="bg-app-surface p-2 rounded-lg border border-app-border">
+                      <span className="text-app-text-primary0 block text-[10px]">Wake Interval:</span>
+                      <span className="text-app-status-info font-bold">
                         {parsedXmlResult.sharedAttributes.sleep_interval_min ?? sleepMin} min
                       </span>
                     </div>
 
-                    <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
-                      <span className="text-slate-500 block text-[10px]">Display Theme:</span>
-                      <span className="text-amber-300 font-bold capitalize">
+                    <div className="bg-app-surface p-2 rounded-lg border border-app-border">
+                      <span className="text-app-text-primary0 block text-[10px]">Display Theme:</span>
+                      <span className="text-app-accent font-bold capitalize">
                         {parsedXmlResult.sharedAttributes.device_theme ?? theme}
                       </span>
                     </div>
 
                     {parsedXmlResult.thresholds && (
                       <>
-                        <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">RH Safe Range:</span>
-                          <span className="text-emerald-400 font-bold">
+                        <div className="bg-app-surface p-2 rounded-lg border border-app-border">
+                          <span className="text-app-text-primary0 block text-[10px]">RH Safe Range:</span>
+                          <span className="text-app-status-nominal font-bold">
                             {parsedXmlResult.thresholds.rhLowWarning ?? thresholds.rhLowWarning}%–
                             {parsedXmlResult.thresholds.rhHighWarning ?? thresholds.rhHighWarning}% RH
                           </span>
                         </div>
 
-                        <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
-                          <span className="text-slate-500 block text-[10px]">Battery Low Warn:</span>
-                          <span className="text-rose-400 font-bold">
+                        <div className="bg-app-surface p-2 rounded-lg border border-app-border">
+                          <span className="text-app-text-primary0 block text-[10px]">Battery Low Warn:</span>
+                          <span className="text-app-status-critical font-bold">
                             {parsedXmlResult.thresholds.batteryLowWarning ?? thresholds.batteryLowWarning}%
                           </span>
                         </div>
@@ -1248,11 +1248,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
 
             {/* Modal Actions */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end gap-2.5">
+            <div className="p-4 border-t border-app-border bg-app-bg flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsXmlImportModalOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+                className="px-3.5 py-2 rounded-xl text-xs font-mono text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1261,7 +1261,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 type="button"
                 disabled={!parsedXmlResult || isSaving}
                 onClick={() => handleApplyXmlToEditor(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-2 rounded-xl text-xs font-mono bg-app-surface-elevated hover:bg-app-border-highlight text-app-text-primary border border-app-border-highlight transition cursor-pointer disabled:opacity-50"
               >
                 Load into Editor
               </button>
@@ -1270,7 +1270,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 type="button"
                 disabled={!parsedXmlResult || isSaving}
                 onClick={() => handleApplyXmlToEditor(true)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-slate-950 transition shadow-md shadow-amber-950/40 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-app-accent-hover hover:bg-app-accent text-app-accent-text transition shadow-md shadow-app-bg/40 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {isSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                 <span>Apply &amp; Sync to Device</span>

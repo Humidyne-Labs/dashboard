@@ -164,7 +164,7 @@ export default function App() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500 selection:text-slate-950 font-sans antialiased overflow-x-hidden w-full max-w-full">
+      <div className="min-h-screen bg-app-bg text-app-text-primary flex flex-col selection:bg-app-accent selection:text-app-accent-text font-sans antialiased overflow-x-hidden w-full max-w-full">
         {/* Top Header with live ticker & device switcher */}
         <HeaderTicker
           devices={devices}
@@ -232,21 +232,21 @@ export default function App() {
               </div>
             </>
           ) : (
-            <div className="text-center py-20 bg-slate-900/50 border border-slate-800 rounded-3xl max-w-xl mx-auto p-8 shadow-2xl space-y-4">
-              <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl w-fit mx-auto border border-amber-500/20 shadow-inner">
+            <div className="text-center py-20 bg-app-surface/50 border border-app-border rounded-3xl max-w-xl mx-auto p-8 shadow-2xl space-y-4">
+              <div className="p-4 bg-app-accent/10 text-app-accent rounded-2xl w-fit mx-auto border border-app-accent/20 shadow-inner">
                 <Cpu className="w-10 h-10" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-white mb-1">No Claimed Humidor Devices</h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Authenticated as <span className="text-emerald-400 font-mono font-medium">{userEmail}</span>. There are no ESP32 telemetry hardware units assigned to this account yet.
+                <p className="text-xs text-app-text-secondary max-w-md mx-auto leading-relaxed">
+                  Authenticated as <span className="text-app-status-nominal font-mono font-medium">{userEmail}</span>. There are no ESP32 telemetry hardware units assigned to this account yet.
                 </p>
               </div>
 
               <div className="pt-3 flex items-center justify-center">
                 <button
                   onClick={() => setIsClaimModalOpen(true)}
-                  className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-md shadow-amber-950/40 flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-3 bg-app-accent-hover hover:bg-app-accent text-app-accent-text font-bold text-xs rounded-xl transition-all shadow-md shadow-app-bg/40 flex items-center gap-2 cursor-pointer"
                 >
                   + Claim Hardware Device
                 </button>
@@ -256,13 +256,13 @@ export default function App() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-800/80 bg-slate-950/80 py-6 text-xs text-slate-500">
+        <footer className="border-t border-app-border/80 bg-app-bg/80 py-6 text-xs text-app-text-primary0">
           <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-amber-500" />
+              <Flame className="w-4 h-4 text-app-accent" />
               <button
                 onClick={() => setIsAboutModalOpen(true)}
-                className="font-display font-semibold text-slate-300 hover:text-amber-300 transition cursor-pointer"
+                className="font-display font-semibold text-app-text-secondary hover:text-app-accent transition cursor-pointer"
               >
                 {appTitle}
               </button>
@@ -271,15 +271,15 @@ export default function App() {
             <div className="flex items-center gap-4 text-[11px] font-mono">
               <button
                 onClick={() => setIsDevWarningOpen(true)}
-                className="text-amber-400/90 hover:text-amber-300 flex items-center gap-1 cursor-pointer transition"
+                className="text-app-accent/90 hover:text-app-accent flex items-center gap-1 cursor-pointer transition"
               >
-                <AlertTriangle className="w-3 h-3 text-amber-400" />
+                <AlertTriangle className="w-3 h-3 text-app-accent" />
                 <span>Dev Preview Notice</span>
               </button>
               <span>•</span>
               <button
                 onClick={() => setIsAboutModalOpen(true)}
-                className="hover:text-slate-300 flex items-center gap-1 cursor-pointer transition"
+                className="hover:text-app-text-secondary flex items-center gap-1 cursor-pointer transition"
               >
                 <Info className="w-3 h-3" />
                 <span>About &amp; Specs</span>

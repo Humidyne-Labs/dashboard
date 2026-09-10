@@ -72,53 +72,53 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl shadow-black/80 relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/80 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-app-surface border border-app-border rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl shadow-black/80 relative max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
           disabled={isProcessing}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition disabled:opacity-40"
+          className="absolute top-4 right-4 p-2 text-app-text-secondary hover:text-app-text-primary rounded-lg hover:bg-app-surface-elevated transition disabled:opacity-40"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+          <div className="p-3 rounded-xl bg-app-status-critical/10 border border-app-status-critical/20 text-app-status-critical shrink-0">
             <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Remove Humidor Device</h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-app-text-secondary">
               Unclaim from customer account or permanently delete device entity
             </p>
           </div>
         </div>
 
         {/* Target Device Summary */}
-        <div className="p-3.5 bg-slate-800/60 border border-slate-700/60 rounded-xl mb-4 text-xs text-slate-300 space-y-1.5">
+        <div className="p-3.5 bg-app-surface-elevated/60 border border-app-border-highlight/60 rounded-xl mb-4 text-xs text-app-text-secondary space-y-1.5">
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-medium">Device Name:</span>
+            <span className="text-app-text-secondary font-medium">Device Name:</span>
             <span className="font-bold text-white font-mono">{deviceName}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-medium">Device ID:</span>
-            <span className="font-mono text-slate-400 text-[11px] truncate max-w-[220px]">
+            <span className="text-app-text-secondary font-medium">Device ID:</span>
+            <span className="font-mono text-app-text-secondary text-[11px] truncate max-w-[220px]">
               {device.id}
             </span>
           </div>
           {device.clientAttributes?.mac_address && (
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-medium">MAC Address:</span>
-              <span className="font-mono text-slate-400 text-[11px]">
+              <span className="text-app-text-secondary font-medium">MAC Address:</span>
+              <span className="font-mono text-app-text-secondary text-[11px]">
                 {device.clientAttributes.mac_address}
               </span>
             </div>
           )}
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-medium">Account Role:</span>
-            <span className="font-mono text-[11px] font-bold text-amber-300">
+            <span className="text-app-text-secondary font-medium">Account Role:</span>
+            <span className="font-mono text-[11px] font-bold text-app-accent">
               {currentUser?.authority || 'CUSTOMER_USER'}
             </span>
           </div>
@@ -131,15 +131,15 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             onClick={() => setActionType('unclaim')}
             className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
               actionType === 'unclaim'
-                ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-sm'
-                : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                ? 'bg-app-accent/15 border-app-accent/50 text-app-accent shadow-sm'
+                : 'bg-app-surface-elevated/40 border-app-border-highlight/60 text-app-text-secondary hover:bg-app-surface-elevated'
             }`}
           >
             <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
-              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-app-accent" />
               <span>Unclaim Device</span>
             </div>
-            <span className="text-[11px] text-slate-400 leading-snug">
+            <span className="text-[11px] text-app-text-secondary leading-snug">
               Standard for Customer accounts. Safe to re-claim later.
             </span>
           </button>
@@ -149,15 +149,15 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             onClick={() => setActionType('delete')}
             className={`p-3 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
               actionType === 'delete'
-                ? 'bg-rose-500/15 border-rose-500/50 text-rose-300 shadow-sm'
-                : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:bg-slate-800'
+                ? 'bg-app-status-critical/15 border-app-status-critical/50 text-rose-300 shadow-sm'
+                : 'bg-app-surface-elevated/40 border-app-border-highlight/60 text-app-text-secondary hover:bg-app-surface-elevated'
             }`}
           >
             <div className="flex items-center gap-1.5 font-semibold text-xs text-white">
-              <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+              <ShieldAlert className="w-3.5 h-3.5 text-app-status-critical" />
               <span>Delete Permanently</span>
             </div>
-            <span className="text-[11px] text-slate-400 leading-snug">
+            <span className="text-[11px] text-app-text-secondary leading-snug">
               Tenant Admin privilege required to delete entity from DB.
             </span>
           </button>
@@ -165,8 +165,8 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
 
         {/* Action Explanation Notice */}
         {actionType === 'unclaim' ? (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3 bg-app-accent/10 border border-app-accent/20 rounded-xl mb-4 text-xs text-app-accent/90 leading-relaxed flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-app-accent shrink-0 mt-0.5" />
             <div>
               <strong>Unclaiming is non-destructive:</strong> Detaches{' '}
               <span className="font-mono text-white">{deviceName}</span> from your customer dashboard.
@@ -174,8 +174,8 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             </div>
           </div>
         ) : isCustomerUser ? (
-          <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-4 text-xs text-blue-200 leading-relaxed flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <div className="p-3 bg-app-status-info/10 border border-app-status-info/30 rounded-xl mb-4 text-xs text-blue-200 leading-relaxed flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-app-status-info shrink-0 mt-0.5" />
             <div>
               <strong>Tenant Admin Privileges Required:</strong> ThingsBoard customer accounts
               cannot permanently delete device entities from the tenant database. Proceeding will perform
@@ -184,8 +184,8 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
           </div>
         ) : (
           <div className="space-y-3 mb-4">
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 leading-relaxed flex items-start gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-app-status-critical/10 border border-app-status-critical/30 rounded-xl text-xs text-rose-300 leading-relaxed flex items-start gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
               <div>
                 <strong>Tenant Entity Deletion:</strong> Deleting permanently purges the device entity
                 and all recorded timeseries history from ThingsBoard.
@@ -193,15 +193,15 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Type <span className="font-mono text-rose-400 font-bold">DELETE</span> to confirm:
+              <label className="block text-xs font-medium text-app-text-secondary mb-1.5">
+                Type <span className="font-mono text-app-status-critical font-bold">DELETE</span> to confirm:
               </label>
               <input
                 type="text"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder="DELETE"
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-rose-500 transition"
+                className="w-full bg-app-bg border border-app-border-highlight rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-app-status-critical transition"
               />
             </div>
           </div>
@@ -209,15 +209,15 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
 
         {/* Error / Success Feedback */}
         {error && (
-          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 bg-app-status-critical/10 border border-app-status-critical/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
             <div>{error}</div>
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="mb-4 p-3 bg-app-status-nominal/10 border border-app-status-nominal/30 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-app-status-nominal shrink-0" />
             <div>{successMessage}</div>
           </div>
         )}
@@ -228,7 +228,7 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isProcessing}
-            className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 text-xs font-medium text-app-text-secondary hover:text-app-text-primary bg-app-surface-elevated hover:bg-app-border-highlight rounded-lg transition disabled:opacity-50 cursor-pointer"
           >
             Cancel
           </button>
@@ -239,8 +239,8 @@ export const RemoveDeviceModal: React.FC<RemoveDeviceModalProps> = ({
             disabled={isProcessing || (!isDeleteConfirmed && !isCustomerUser)}
             className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition shadow-lg cursor-pointer ${
               actionType === 'delete' && !isCustomerUser
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40 disabled:opacity-40'
-                : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/40 disabled:opacity-40'
+                ? 'bg-rose-600 hover:bg-app-status-critical text-white shadow-rose-900/40 disabled:opacity-40'
+                : 'bg-app-accent-hover hover:bg-app-accent text-white shadow-amber-900/40 disabled:opacity-40'
             }`}
           >
             {isProcessing ? (

@@ -373,25 +373,25 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   }, [isZoomed, activeStartTs, activeEndTs]);
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 sm:p-5 lg:p-6 shadow-xl backdrop-blur-sm w-full">
+    <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3.5 sm:p-5 lg:p-6 shadow-xl backdrop-blur-sm w-full">
       {/* Controls Row: Pulse Icon, Day-Scale Selector & Refresh on the Left, Series & Bounds Pushed to the Right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-3.5 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-3.5 border-b border-app-border/80">
         {/* Left: Pulse/Activity Icon + Zoom Indicator + Day-scale selector + Refresh */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* Pulse / Activity Icon */}
           <div 
-            className="p-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 flex items-center justify-center shadow-xs"
+            className="p-1.5 rounded-xl bg-app-accent/10 text-app-accent border border-app-accent/20 shrink-0 flex items-center justify-center shadow-xs"
             title="Climate Telemetry History Series"
           >
             <Activity className="w-4 h-4" />
           </div>
 
           {isZoomed && (
-            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono flex items-center gap-1 shadow-xs">
+            <span className="px-2 py-0.5 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent text-[10px] font-mono flex items-center gap-1 shadow-xs">
               <span>Zoomed: {zoomDurationLabel}</span>
               <button
                 onClick={handleResetZoom}
-                className="hover:text-white font-bold ml-1 cursor-pointer"
+                className="hover:text-app-text-primary font-bold ml-1 cursor-pointer"
                 title="Reset Zoom"
               >
                 ×
@@ -400,15 +400,15 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           )}
 
           {/* Time range preset selector (day-scale) */}
-          <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-mono">
+          <div className="flex items-center gap-1 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs font-mono">
             {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
               <button
                 key={r}
                 onClick={() => handleRangeChange(r)}
                 className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   range === r && !isZoomed
-                    ? 'bg-amber-600 text-slate-950 font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-app-accent-hover text-app-accent-text font-bold shadow-sm'
+                    : 'text-app-text-secondary hover:text-app-text-primary'
                 }`}
               >
                 {r}
@@ -420,24 +420,24 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
           <button
             onClick={loadHistory}
             disabled={isLoading}
-            className="h-8 px-2.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs shadow-xs"
+            className="h-8 px-2.5 rounded-xl bg-app-bg/80 border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs shadow-xs"
             title="Manual Batch Window Refresh"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-400' : 'text-slate-400'}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-app-accent' : 'text-app-text-secondary'}`} />
             <span className="text-[11px] font-medium">Refresh</span>
           </button>
         </div>
 
         {/* Right: Series and Bounds Selectors pushed to the right */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end">
-          <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center gap-1.5 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs">
             {/* Series filters */}
             <button
               onClick={() => setShowRh(!showRh)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
                 showRh
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30'
+                  : 'text-app-text-primary0 hover:text-app-text-secondary'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-amber-400" />
@@ -447,27 +447,27 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               onClick={() => setShowTemp(!showTemp)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
                 showTemp
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-sky-500/20 text-app-status-info border border-app-status-info/30'
+                  : 'text-app-text-primary0 hover:text-app-text-secondary'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <span className="w-2 h-2 rounded-full bg-app-status-info" />
               <span>Temp</span>
             </button>
 
-            <div className="h-3.5 w-px bg-slate-800 mx-0.5" />
+            <div className="h-3.5 w-px bg-app-surface-elevated mx-0.5" />
 
             {/* Boundary controls */}
             <button
               onClick={() => setShowRhBoundaries(!showRhBoundaries)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
                 showRhBoundaries
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30'
+                  : 'text-app-text-primary0 hover:text-app-text-secondary'
               }`}
               title="Toggle RH alarm boundary lines"
             >
-              <Sliders className="w-3 h-3 text-amber-400" />
+              <Sliders className="w-3 h-3 text-app-accent" />
               <span>RH Bounds</span>
             </button>
 
@@ -475,12 +475,12 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               onClick={() => setShowTempBoundaries(!showTempBoundaries)}
               className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
                 showTempBoundaries
-                  ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-sky-500/20 text-app-status-info border border-app-status-info/30'
+                  : 'text-app-text-primary0 hover:text-app-text-secondary'
               }`}
               title="Toggle Temperature alarm boundary lines"
             >
-              <Sliders className="w-3 h-3 text-sky-400" />
+              <Sliders className="w-3 h-3 text-app-status-info" />
               <span>Temp Bounds</span>
             </button>
           </div>
@@ -752,34 +752,34 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       </div>
 
       {/* Interactive Time Graph Control Bar (Zoom, Pan, Slider & Reset placed above legend in bottom-left) */}
-      <div className="mt-2 pt-2 flex flex-wrap items-center justify-between gap-2.5 text-xs text-slate-400">
+      <div className="mt-2 pt-2 flex flex-wrap items-center justify-between gap-2.5 text-xs text-app-text-secondary">
         <div className="flex flex-wrap items-center gap-2">
           {/* Zoom & Navigation Button Cluster */}
-          <div className="flex items-center gap-1 bg-slate-950/90 p-1 rounded-xl border border-slate-800 shadow-sm">
+          <div className="flex items-center gap-1 bg-app-bg/90 p-1 rounded-xl border border-app-border shadow-sm">
             <button
               onClick={() => handlePan('left')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               title="Pan Left (Shift Back in Time)"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleZoomIn}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               title="Zoom In (+25%)"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleZoomOut}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               title="Zoom Out (-25%)"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handlePan('right')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated transition cursor-pointer"
               title="Pan Right (Shift Forward in Time)"
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -787,7 +787,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             {isZoomed && (
               <button
                 onClick={handleResetZoom}
-                className="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer flex items-center gap-1 text-[11px] font-medium"
+                className="px-2 py-1 rounded-lg bg-app-accent/20 text-app-accent hover:bg-app-accent/30 transition cursor-pointer flex items-center gap-1 text-[11px] font-medium"
                 title="Reset to Full Range"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -798,8 +798,8 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               onClick={() => setShowBrush(!showBrush)}
               className={`p-1.5 rounded-lg transition cursor-pointer ${
                 showBrush
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30'
+                  : 'text-app-text-secondary hover:text-app-text-primary hover:bg-app-surface-elevated'
               }`}
               title="Toggle Timeline Scroll & Range Slider"
             >
@@ -807,17 +807,17 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             </button>
           </div>
 
-          <span className="text-[11px] text-slate-500 hidden sm:inline">
+          <span className="text-[11px] text-app-text-primary0 hidden sm:inline">
             💡 Drag across chart or use buttons to pan & zoom
           </span>
         </div>
 
         {isZoomed && (
-          <div className="text-[11px] font-mono text-amber-400/90 flex items-center gap-1.5 bg-amber-950/40 px-2 py-1 rounded-lg border border-amber-500/20">
+          <div className="text-[11px] font-mono text-app-accent/90 flex items-center gap-1.5 bg-app-bg/40 px-2 py-1 rounded-lg border border-app-accent/20">
             <span>Custom Zoom Window</span>
             <button
               onClick={handleResetZoom}
-              className="text-amber-300 hover:underline cursor-pointer flex items-center gap-0.5 ml-1"
+              className="text-app-accent hover:underline cursor-pointer flex items-center gap-0.5 ml-1"
             >
               (Reset)
             </button>
@@ -826,15 +826,15 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       </div>
 
       {/* Footer Legend / Threshold Envelope Summary */}
-      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2.5 text-[11px] text-slate-400">
+      <div className="mt-3 pt-2.5 border-t border-app-border/80 flex flex-wrap items-center justify-between gap-2.5 text-[11px] text-app-text-secondary">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-amber-400" />
-            <span className="text-slate-300 font-medium">RH %</span>
+            <span className="text-app-text-secondary font-medium">RH %</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-sky-400" />
-            <span className="text-slate-300 font-medium">Temp ({tempSymbol})</span>
+            <div className="w-3 h-0.5 bg-app-status-info" />
+            <span className="text-app-text-secondary font-medium">Temp ({tempSymbol})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 border-t border-dashed border-purple-400" />
@@ -843,15 +843,15 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-mono">
-          <div className="flex items-center gap-1.5 text-amber-300">
+          <div className="flex items-center gap-1.5 text-app-accent">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             <span>
               RH Safe: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% (Crit: &lt;
               {thresholds.rhLowCritical}% / &gt;{thresholds.rhHighCritical}%)
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-sky-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+          <div className="flex items-center gap-1.5 text-app-status-info">
+            <span className="w-1.5 h-1.5 rounded-full bg-app-status-info" />
             <span>
               Temp Safe: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}
             </span>
