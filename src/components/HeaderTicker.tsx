@@ -37,7 +37,8 @@ import {
   Droplets,
   Thermometer,
   Wifi,
-  Activity
+  Activity,
+  Palette
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
@@ -55,6 +56,7 @@ interface HeaderTickerProps {
   onOpenAboutModal: () => void;
   onOpenDevWarning: () => void;
   onOpenPushModal: () => void;
+  onOpenThemeWizard: () => void;
   activeAlarmCount: number;
   currentUser: UserProfile | null;
   isDemoMode: boolean;
@@ -74,6 +76,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   onOpenAboutModal,
   onOpenDevWarning,
   onOpenPushModal,
+  onOpenThemeWizard,
   activeAlarmCount,
   currentUser,
   isDemoMode,
@@ -222,7 +225,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           onClick={() => onSelectDevice(device.id)}
           className={`inline-flex items-center gap-2.5 px-3 py-1 rounded-md transition-all text-xs font-medium cursor-pointer shrink-0 ${
             isSelected
-              ? 'bg-app-accent/15 border border-app-accent/40 text-amber-200 shadow-sm'
+              ? 'bg-app-accent/15 border border-app-accent/40 text-app-accent shadow-sm'
               : 'bg-app-surface/80 border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary'
           }`}
           title={`Select ${device.name}`}
@@ -271,7 +274,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           <span
             className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
               rh >= 65 && rh <= 73
-                ? 'bg-app-bg/80 text-emerald-300 border border-app-status-nominal/20'
+                ? 'bg-app-bg/80 text-app-status-nominal border border-app-status-nominal/20'
                 : 'bg-app-bg/80 text-app-accent border border-app-accent/20'
             }`}
           >
@@ -319,7 +322,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
     baseNodes.push(
       <div
         key={`${keyPrefix}-fleet-status`}
-        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-bg/30 border border-app-accent/20 text-xs font-mono text-amber-200 shrink-0 select-none"
+        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-surface/60 border border-app-accent/20 text-xs font-mono text-app-text-primary shrink-0 select-none"
       >
         <Activity className="w-3.5 h-3.5 text-app-accent" />
         <span className="font-semibold text-app-accent">Fleet Active:</span>
@@ -348,12 +351,12 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
         <div className="flex items-center gap-1.5 text-app-accent font-bold uppercase tracking-wider text-[11px] pr-3 shrink-0 border-r border-app-border z-10 bg-app-bg">
           <span className="relative flex h-2 w-2">
             <span
-              className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
-                activeOrSleepingDevices.length > 0 ? 'bg-app-status-nominal' : 'bg-amber-400'
+              className={`animate-ping absolute inline-flex h-full w-full rounded ${
+                activeOrSleepingDevices.length > 0 ? 'bg-app-status-nominal' : 'bg-app-status-warning'
               } opacity-75`}
             ></span>
             <span
-              className={`relative inline-flex rounded-full h-2 w-2 ${
+              className={`relative inline-flex rounded h-2 w-2 ${
                 activeOrSleepingDevices.length > 0 ? 'bg-app-status-nominal' : 'bg-app-accent'
               }`}
             ></span>
@@ -516,16 +519,16 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onOpenAboutModal}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 flex items-center justify-center shadow-md shadow-app-bg/40 border border-app-accent/30 hover:scale-105 transition cursor-pointer shrink-0"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-app-accent text-app-accent-text flex items-center justify-center shadow-md border border-app-accent/30 hover:scale-105 transition cursor-pointer shrink-0"
             title="About HUMID1 Dashboard"
           >
-            <Flame className="w-5 h-5 text-amber-200" />
+            <Flame className="w-5 h-5" />
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={onOpenAboutModal}
-                className="font-display font-bold text-base sm:text-lg text-amber-100 tracking-wider hover:text-amber-200 transition text-left truncate cursor-pointer"
+                className="font-display font-bold text-base sm:text-lg text-app-text-primary tracking-wider hover:text-app-accent transition text-left truncate cursor-pointer"
                 title="View About & System Specs"
               >
                 <span className="sm:hidden">HUMID1</span>
@@ -540,7 +543,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
                 <span className="hidden xs:inline">v{APP_CONFIG.version} (Dev)</span>
                 <span className="xs:hidden">Dev</span>
               </button>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-app-status-nominal/10 text-emerald-300 border border-app-status-nominal/20 hidden xl:flex items-center gap-1 shrink-0">
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-app-status-nominal/10 text-app-status-nominal border border-app-status-nominal/20 hidden xl:flex items-center gap-1 shrink-0">
                 <ShieldCheck className="w-3 h-3 text-app-status-nominal" />
                 SSO Active
               </span>
@@ -553,26 +556,15 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
 
         {/* Center / Right Controls Cluster */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Theme Selector Dropdown */}
-          <div className="relative shrink-0 hidden sm:block">
-            <select
-              value={currentTheme.id}
-              onChange={(e) => setTheme(e.target.value)}
-              className="h-9 pl-3 pr-8 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-xs font-mono text-app-text-primary transition-colors shadow-sm cursor-pointer appearance-none outline-none"
-              title="Change application theme"
-            >
-              {presets.map((t) => (
-                <option key={t.id} value={t.id} className="bg-app-surface text-app-text-primary">
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-app-text-secondary">
-              <svg className="fill-current h-3.5 w-3.5 text-app-text-primary0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
-          </div>
+          {/* Theme Studio & Color Wizard Trigger (Paintbrush Icon) */}
+          <button
+            onClick={onOpenThemeWizard}
+            className="hidden sm:flex h-9 px-2.5 rounded-lg bg-app-surface-elevated border border-app-border-highlight hover:border-app-accent/50 text-app-accent transition-colors cursor-pointer items-center justify-center gap-1.5 text-xs font-semibold shrink-0"
+            title="Theme Studio & Color Wizard (Customize colors, TOML palettes & XML)"
+          >
+            <Palette className="w-4 h-4 text-app-accent" />
+            <span className="hidden lg:inline">Theme Studio</span>
+          </button>
 
           {/* Quick Unit Switcher (°F / °C) - Always Visible */}
           <button
@@ -593,7 +585,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           >
             <Bell className="w-4 h-4" />
             {activeAlarmCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-slate-900 animate-pulse">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded bg-app-status-critical text-[10px] font-bold text-white shadow-sm ring-2 ring-app-bg animate-pulse">
                 {activeAlarmCount}
               </span>
             )}
@@ -641,7 +633,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             onClick={handleAuthClick}
             className={`hidden md:inline-flex h-9 items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-medium border transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
               isAuth
-                ? 'bg-app-bg/70 border-app-status-nominal/40 text-emerald-300 hover:bg-emerald-900/80 hover:border-app-status-nominal'
+                ? 'bg-app-bg/70 border-app-status-nominal/40 text-app-status-nominal hover:bg-app-status-nominal/20 hover:border-app-status-nominal'
                 : 'bg-app-surface-elevated border-app-border-highlight hover:border-app-accent/50 text-app-text-primary hover:text-app-text-primary'
             }`}
             title={isAuth ? `Authenticated as ${auth.user?.profile?.email || authUsername}. Click to Sign Out.` : 'Sign In with Authentik'}
@@ -717,8 +709,8 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
               }}
               className={`h-7 px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
                 isAuth
-                  ? 'bg-app-status-critical/15 border border-app-status-critical/30 text-rose-300 hover:bg-app-status-critical/25'
-                  : 'bg-app-accent text-app-accent-text font-bold hover:bg-amber-400'
+                  ? 'bg-app-status-critical/15 border border-app-status-critical/30 text-app-status-critical hover:bg-app-status-critical/25'
+                  : 'bg-app-accent text-app-accent-text font-bold hover:bg-app-accent-hover'
               }`}
             >
               {isAuth ? (
@@ -741,34 +733,28 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
               setIsMobileMenuOpen(false);
               onOpenClaimModal();
             }}
-            className="w-full h-10 rounded-xl bg-gradient-to-r from-amber-600 to-app-accent-hover hover:from-app-accent hover:to-amber-400 text-app-accent-text font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-app-bg/40 transition cursor-pointer"
+            className="w-full h-10 rounded-xl bg-app-accent hover:bg-app-accent-hover text-app-accent-text font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-app-bg/40 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Claim New Humidor Device</span>
           </button>
 
-          {/* Mobile Theme Selector */}
-          <div className="space-y-1.5 pt-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-app-text-primary0 block pl-1">Theme Preset</span>
-            <div className="relative">
-              <select
-                value={currentTheme.id}
-                onChange={(e) => setTheme(e.target.value)}
-                className="w-full h-10 pl-3 pr-8 rounded-xl bg-app-surface-elevated border border-app-border-highlight hover:border-app-border-highlight text-xs font-mono text-app-text-primary transition-colors shadow-sm cursor-pointer appearance-none outline-none"
-              >
-                {presets.map((t) => (
-                  <option key={t.id} value={t.id} className="bg-app-surface text-app-text-primary">
-                    {t.name} — {t.description}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-app-text-secondary">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                </svg>
-              </div>
+          {/* Mobile Theme Studio Trigger */}
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onOpenThemeWizard();
+            }}
+            className="w-full h-10 px-3.5 rounded-xl bg-app-surface-elevated border border-app-border-highlight hover:border-app-accent/50 text-app-accent text-xs font-semibold flex items-center justify-between transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-app-accent" />
+              <span>Theme Studio & Wizard</span>
             </div>
-          </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-app-accent/20 text-app-accent">
+              {currentTheme.name}
+            </span>
+          </button>
 
           {/* Quick Actions Grid in Mobile Menu */}
           <div className="grid grid-cols-2 gap-2 pt-1">

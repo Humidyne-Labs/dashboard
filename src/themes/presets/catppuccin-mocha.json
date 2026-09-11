@@ -1,0 +1,43 @@
+{
+  "id": "catppuccin-mocha",
+  "name": "Catppuccin Mocha",
+  "author": "Linux TOML Community",
+  "version": "1.0.0",
+  "description": "Soothing pastel theme for high-focus telemetry monitoring",
+  "colors": {
+    "background": "#11111b",
+    "surface": "#1e1e2e",
+    "surfaceElevated": "#313244",
+    "surfaceSubtle": "#181825",
+    "border": "#45475a",
+    "borderHighlight": "#585b70",
+    "textPrimary": "#cdd6f4",
+    "textSecondary": "#a6adc8",
+    "textMuted": "#6c7086",
+    "accent": "#fab387",
+    "accentHover": "#f9e2af",
+    "accentText": "#11111b",
+    "statusNominal": "#a6e3a1",
+    "statusWarning": "#f9e2af",
+    "statusCritical": "#f38ba8",
+    "statusInfo": "#89b4fa"
+  },
+  "charts": {
+    "gridColor": "#45475a",
+    "rhLine": "#fab387",
+    "rhGradientStart": "#fab387",
+    "tempLine": "#89b4fa",
+    "tooltipBackground": "#11111b",
+    "tooltipBorder": "#585b70"
+  },
+  "styles": {
+    "borderRadius": "16px",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "'JetBrains Mono', monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

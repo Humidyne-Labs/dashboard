@@ -87,11 +87,11 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
                   Browser Push Status
                 </span>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wide border ${
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wide border ${
                     permission === 'granted'
-                      ? 'bg-app-status-nominal/20 text-emerald-300 border-app-status-nominal/30'
+                      ? 'bg-app-status-nominal/20 text-app-status-nominal border-app-status-nominal/30'
                       : permission === 'denied'
-                      ? 'bg-app-status-critical/20 text-rose-300 border-app-status-critical/30'
+                      ? 'bg-app-status-critical/20 text-app-status-critical border-app-status-critical/30'
                       : 'bg-app-accent/20 text-app-accent border-app-accent/30'
                   }`}
                 >
@@ -111,7 +111,7 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
               <button
                 id="grant-push-permission-btn"
                 onClick={handleRequestPermission}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text text-xs font-bold transition shrink-0 cursor-pointer shadow-md active:scale-95"
+                className="px-4 py-2 rounded-xl bg-app-accent hover:bg-app-accent-hover text-app-accent-text text-xs font-bold transition shrink-0 cursor-pointer shadow-md active:scale-95"
               >
                 Enable Notifications
               </button>
@@ -185,20 +185,20 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono text-app-text-secondary">
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">Package ID</span>
-                <span className="text-emerald-300 font-bold">com.humid1.app</span>
+                <span className="text-app-text-muted block text-[10px]">Package ID</span>
+                <span className="text-app-status-nominal font-bold">com.humid1.app</span>
               </div>
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">TWA Asset Verification</span>
+                <span className="text-app-text-muted block text-[10px]">TWA Asset Verification</span>
                 <span className="text-app-status-info font-bold">/.well-known/assetlinks.json</span>
               </div>
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">PWA Manifest</span>
+                <span className="text-app-text-muted block text-[10px]">PWA Manifest</span>
                 <span className="text-app-accent font-bold">manifest.webmanifest</span>
               </div>
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">Service Worker</span>
-                <span className="text-purple-300 font-bold">Workbox v7 Precache &amp; Auto-Update</span>
+                <span className="text-app-text-muted block text-[10px]">Service Worker</span>
+                <span className="text-app-accent font-bold">Workbox v7 Precache &amp; Auto-Update</span>
               </div>
             </div>
           </div>
@@ -206,7 +206,7 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-app-border bg-app-bg/70 flex items-center justify-between">
-          <span className="text-[11px] text-app-text-primary0 font-mono">
+          <span className="text-[11px] text-app-text-muted font-mono">
             Vite PWA + Workbox + Web Push API
           </span>
           <button

@@ -50,7 +50,7 @@ export const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-app-surface border border-app-border rounded-3xl w-full max-w-md p-6 shadow-2xl shadow-black/80 relative">
+      <div className="bg-app-surface border border-app-border rounded-3xl w-full max-w-md p-6 shadow-2xl relative">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-app-text-secondary hover:text-app-text-primary p-1 rounded-lg hover:bg-app-surface-elevated transition-colors cursor-pointer"
@@ -63,20 +63,20 @@ export const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
             <Radio className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Claim Physical Device</h3>
+            <h3 className="text-base font-bold text-app-text-primary">Claim Physical Device</h3>
             <p className="text-xs text-app-text-secondary">Pair ESP32 humidor hardware to your ThingsBoard account</p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-critical/30 text-rose-200 text-xs flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-critical/30 text-app-status-critical text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-nominal/30 text-emerald-300 text-xs flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-nominal/30 text-app-status-nominal text-xs flex items-center gap-2">
             <Check className="w-4 h-4 text-app-status-nominal shrink-0" />
             <span>Device claimed and provisioned successfully!</span>
           </div>
@@ -107,7 +107,7 @@ export const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
               onChange={(e) => setSecretKey(e.target.value)}
               className="w-full bg-app-bg border border-app-border-highlight rounded-xl px-3 py-2 text-xs text-app-text-primary font-mono focus:outline-none focus:border-app-accent"
             />
-            <span className="text-[10px] text-app-text-primary0 mt-1 block">
+            <span className="text-[10px] text-app-text-muted mt-1 block">
               Found printed on the ESP32 enclosure QR label or packaging insert.
             </span>
           </div>
@@ -123,7 +123,7 @@ export const ClaimDeviceModal: React.FC<ClaimDeviceModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-app-accent hover:bg-amber-400 text-app-accent-text transition-all shadow-md shadow-app-bg/40 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-app-accent hover:bg-app-accent-hover text-app-accent-text transition-all shadow-md shadow-app-bg/40 flex items-center gap-1.5 cursor-pointer"
             >
               {loading ? (
                 <>

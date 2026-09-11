@@ -1,0 +1,43 @@
+{
+  "id": "obsidian-luxury",
+  "name": "Obsidian Gold",
+  "author": "Humid1 Community",
+  "version": "1.0.0",
+  "description": "Ultra-rich deep obsidian canvas with polished champagne gold accents",
+  "colors": {
+    "background": "#050507",
+    "surface": "#0c0d12",
+    "surfaceElevated": "#141620",
+    "surfaceSubtle": "#08080c",
+    "border": "#222533",
+    "borderHighlight": "#363a50",
+    "textPrimary": "#f1f5f9",
+    "textSecondary": "#94a3b8",
+    "textMuted": "#64748b",
+    "accent": "#fbbf24",
+    "accentHover": "#f59e0b",
+    "accentText": "#050507",
+    "statusNominal": "#34d399",
+    "statusWarning": "#fbbf24",
+    "statusCritical": "#fb7185",
+    "statusInfo": "#38bdf8"
+  },
+  "charts": {
+    "gridColor": "#222533",
+    "rhLine": "#fbbf24",
+    "rhGradientStart": "#fbbf24",
+    "tempLine": "#38bdf8",
+    "tooltipBackground": "#08080c",
+    "tooltipBorder": "#363a50"
+  },
+  "styles": {
+    "borderRadius": "16px",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "'Plus Jakarta Sans', ui-sans-serif, system-ui",
+    "monoFamily": "'JetBrains Mono', ui-monospace, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

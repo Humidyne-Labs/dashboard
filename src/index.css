@@ -21,9 +21,16 @@
   --color-app-status-critical: var(--app-status-critical);
   --color-app-status-info: var(--app-status-info);
 
+  --radius-3xl: var(--app-card-radius);
   --radius-2xl: var(--app-card-radius);
   --radius-xl: var(--app-border-radius);
   --radius-lg: var(--app-button-radius);
+  --radius-md: var(--app-button-radius);
+  --radius-sm: var(--app-button-radius);
+  --radius-xs: var(--app-button-radius);
+  --radius-full: var(--app-button-radius);
+  --radius-DEFAULT: var(--app-button-radius);
+  --radius-none: 0px;
 }
 
 :root {
@@ -69,6 +76,79 @@
   .font-mono {
     font-family: var(--app-font-mono) !important;
   }
+}
+
+/* ==========================================================================
+   Universal Dynamic Border Radius Overrides Linked to CSS Design Tokens
+   When the user sets radii to 0px, ALL elements become crisp 0px square corners.
+   When the user increases radii, all elements scale smoothly with the theme.
+   ========================================================================== */
+.rounded-none {
+  border-radius: 0px !important;
+}
+
+.rounded-xs,
+.rounded-sm,
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-full {
+  border-radius: var(--app-button-radius, 10px) !important;
+}
+
+.rounded-t-lg {
+  border-top-left-radius: var(--app-button-radius, 10px) !important;
+  border-top-right-radius: var(--app-button-radius, 10px) !important;
+  border-bottom-left-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+
+.rounded-xl {
+  border-radius: var(--app-border-radius, 16px) !important;
+}
+
+.rounded-t-xl {
+  border-top-left-radius: var(--app-border-radius, 16px) !important;
+  border-top-right-radius: var(--app-border-radius, 16px) !important;
+}
+
+.rounded-b-xl {
+  border-bottom-left-radius: var(--app-border-radius, 16px) !important;
+  border-bottom-right-radius: var(--app-border-radius, 16px) !important;
+}
+
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: var(--app-card-radius, 16px) !important;
+}
+
+.rounded-t-2xl {
+  border-top-left-radius: var(--app-card-radius, 16px) !important;
+  border-top-right-radius: var(--app-card-radius, 16px) !important;
+}
+
+.rounded-b-2xl {
+  border-bottom-left-radius: var(--app-card-radius, 16px) !important;
+  border-bottom-right-radius: var(--app-card-radius, 16px) !important;
+}
+
+/* ==========================================================================
+   Universal Glassmorphism Backdrop Blur Overrides
+   ========================================================================== */
+.backdrop-blur-none {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.backdrop-blur,
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  backdrop-filter: blur(var(--app-backdrop-blur, 12px)) !important;
+  -webkit-backdrop-filter: blur(var(--app-backdrop-blur, 12px)) !important;
 }
 
 /* Custom scrollbar */

@@ -27,19 +27,19 @@ export const DEFAULT_THRESHOLDS: AlarmThresholds = {
 };
 
 export interface ThresholdPreset {
-  id: 'sensitive' | 'normal' | 'relaxed';
+  id: 'strict' | 'sensitive' | 'normal' | 'relaxed';
   name: string;
   description: string;
   thresholds: AlarmThresholds;
 }
 
 /**
- * Presets: 'sensitive', 'normal', and 'relaxed' in canonical Kelvin (K)
+ * Presets: 'strict', 'normal', and 'relaxed' in canonical Kelvin (K)
  */
 export const THRESHOLD_PRESETS: ThresholdPreset[] = [
   {
-    id: 'sensitive',
-    name: 'Sensitive',
+    id: 'strict',
+    name: 'Strict',
     description: 'Strict tolerance bands (±2% RH, ±2°F/1.1K) and low hysteresis (0.28K) for tight, proactive monitoring.',
     thresholds: {
       rhLowCritical: 65.0,
@@ -172,7 +172,7 @@ export const toKelvinTemp = (val: number, assumedUnit: TempUnit | 'K' = 'F'): nu
 };
 
 export const getPresetThresholds = (
-  presetId: 'sensitive' | 'normal' | 'relaxed'
+  presetId: 'strict' | 'sensitive' | 'normal' | 'relaxed'
 ): AlarmThresholds => {
   const preset = THRESHOLD_PRESETS.find((p) => p.id === presetId);
   return preset ? { ...preset.thresholds } : { ...DEFAULT_THRESHOLDS };
@@ -236,7 +236,7 @@ class AlarmThresholdService {
     return this.saveThresholds(DEFAULT_THRESHOLDS);
   }
 
-  public applyPreset(presetId: 'sensitive' | 'normal' | 'relaxed'): AlarmThresholds {
+  public applyPreset(presetId: 'strict' | 'sensitive' | 'normal' | 'relaxed'): AlarmThresholds {
     const preset = THRESHOLD_PRESETS.find((p) => p.id === presetId);
     if (preset) {
       return this.saveThresholds(preset.thresholds);

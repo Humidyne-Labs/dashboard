@@ -1,20 +1,16 @@
 import { Theme } from './types';
-import { cedarDarkTheme } from './presets/cedar-dark';
-import { obsidianLuxuryTheme } from './presets/obsidian-luxury';
-import { mahoganyWarmTheme } from './presets/mahogany-warm';
-import { emeraldBotanicalTheme } from './presets/emerald-botanical';
-import { studioLightTheme } from './presets/studio-light';
+
+// Dynamically import all JSON theme presets from ./presets/*.json at runtime
+const presetModules = import.meta.glob('./presets/*.json', { eager: true });
 
 export * from './types';
+export * from './themeParser';
 
-export const THEME_PRESETS: Theme[] = [
-  cedarDarkTheme,
-  obsidianLuxuryTheme,
-  mahoganyWarmTheme,
-  emeraldBotanicalTheme,
-  studioLightTheme
-];
+export const THEME_PRESETS: Theme[] = Object.values(presetModules).map((mod: any) => {
+  return (mod.default || mod) as Theme;
+});
 
-export const getThemeById = (id: string): Theme => {
-  return THEME_PRESETS.find(t => t.id === id) || cedarDarkTheme;
+export const getThemeById = (id: string, customPresets: Theme[] = []): Theme => {
+  const all = [...THEME_PRESETS, ...customPresets];
+  return all.find(t => t.id === id) || THEME_PRESETS[0];
 };

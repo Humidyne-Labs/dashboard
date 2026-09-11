@@ -70,7 +70,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
         color: 'text-app-accent',
         bg: 'bg-app-bg/40',
         border: 'border-app-accent/30',
-        barColor: 'bg-amber-400',
+        barColor: 'bg-app-accent',
         desc: `Approaching upper threshold limit (${thresholds.rhHighCritical}%).`,
       };
     }
@@ -111,7 +111,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
         color: 'text-app-accent',
         bg: 'bg-app-bg/40',
         border: 'border-app-accent/30',
-        barColor: 'bg-amber-400',
+        barColor: 'bg-app-accent',
       };
     }
     if (k < thresholds.tempLowCritical) {
@@ -126,10 +126,10 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
     if (k < thresholds.tempLowWarning) {
       return {
         label: `LOW WARNING (<${dispTempLowWarn}${tempUnitSymbol})`,
-        color: 'text-blue-300',
+        color: 'text-app-status-info',
         bg: 'bg-app-bg/40',
         border: 'border-app-status-info/30',
-        barColor: 'bg-blue-400',
+        barColor: 'bg-app-status-info',
       };
     }
     return {
@@ -170,7 +170,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-app-text-primary">
                 {rh.toFixed(1)}
               </span>
               <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">%</span>
@@ -182,13 +182,13 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
           {/* Progress Bar with configured target highlight */}
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden relative border border-app-border">
+            <div className="h-2 w-full bg-app-bg rounded overflow-hidden relative border border-app-border">
               <div
-                className={`h-full ${rhStatus.barColor} transition-all duration-500 rounded-full`}
+                className={`h-full ${rhStatus.barColor} transition-all duration-500 rounded`}
                 style={{ width: `${Math.min(Math.max(rh, 0), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-muted">
               <span>{thresholds.rhLowCritical}%</span>
               <span className="text-app-status-nominal">{thresholds.rhLowWarning}%–{thresholds.rhHighWarning}%</span>
               <span>{thresholds.rhHighCritical}%</span>
@@ -218,7 +218,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-app-text-primary">
                 {displayTemp}
               </span>
               <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">{tempUnitSymbol}</span>
@@ -229,9 +229,9 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden relative border border-app-border">
+            <div className="h-2 w-full bg-app-bg rounded overflow-hidden relative border border-app-border">
               <div
-                className={`h-full ${tempStatus.barColor} transition-all duration-500 rounded-full`}
+                className={`h-full ${tempStatus.barColor} transition-all duration-500 rounded`}
                 style={{
                   width: `${Math.min(
                     Math.max(
@@ -245,7 +245,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
                 }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-muted">
               <span>{dispTempLowWarn}{tempUnitSymbol}</span>
               <span className="text-app-status-nominal">Safe Range</span>
               <span>{dispTempHighCrit}{tempUnitSymbol}</span>
@@ -288,13 +288,13 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden border border-app-border">
+            <div className="h-2 w-full bg-app-bg rounded overflow-hidden border border-app-border">
               <div
-                className={`h-full ${battery > 50 ? 'bg-app-status-nominal' : battery > thresholds.batteryLowCritical ? 'bg-app-accent' : 'bg-app-status-critical'} transition-all duration-500 rounded-full`}
+                className={`h-full ${battery > 50 ? 'bg-app-status-nominal' : battery > thresholds.batteryLowCritical ? 'bg-app-accent' : 'bg-app-status-critical'} transition-all duration-500 rounded`}
                 style={{ width: `${Math.min(Math.max(battery, 0), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-muted">
               <span>0%</span>
               <span>Deep-Sleep RTC</span>
               <span>100%</span>
@@ -326,7 +326,7 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
 
           <div className="my-2 sm:my-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
+              <span className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-app-text-primary">
                 {rssi}
               </span>
               <span className="text-xl sm:text-2xl font-bold text-app-text-secondary font-display">dBm</span>
@@ -337,13 +337,13 @@ export const ClimateGauges: React.FC<ClimateGaugesProps> = ({
           </div>
 
           <div className="space-y-1 mt-2 sm:mt-4">
-            <div className="h-2 w-full bg-app-bg rounded-full overflow-hidden border border-app-border">
+            <div className="h-2 w-full bg-app-bg rounded overflow-hidden border border-app-border">
               <div
-                className="h-full bg-sky-500 transition-all duration-500 rounded-full"
+                className="h-full bg-app-status-info transition-all duration-500 rounded"
                 style={{ width: `${Math.min(Math.max(((rssi + 100) / 70) * 100, 5), 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-primary0">
+            <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-app-text-muted">
               <span>-100 dBm</span>
               <span>Gateway Link</span>
               <span>-30 dBm</span>

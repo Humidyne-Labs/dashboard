@@ -18,6 +18,8 @@ import { RemoveDeviceModal } from './components/RemoveDeviceModal';
 import { DevelopmentWarningModal } from './components/DevelopmentWarningModal';
 import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
+import { ThemeWizardModal } from './components/ThemeWizardModal';
+import { alarmThresholdService } from './services/alarmThresholds';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getEnv } from './utils/env';
 import { Flame, Cpu, Info, AlertTriangle } from 'lucide-react';
@@ -74,6 +76,7 @@ export default function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isDevWarningOpen, setIsDevWarningOpen] = useState(false);
   const [isPushModalOpen, setIsPushModalOpen] = useState(false);
+  const [isThemeWizardOpen, setIsThemeWizardOpen] = useState(false);
 
   const appTitle = getEnv('VITE_APP_TITLE', 'HUMID1-DASHBOARD');
   const appDesc = getEnv('VITE_APP_DESCRIPTION', 'Precision Humidor Monitoring & Telemetry Stack');
@@ -180,6 +183,7 @@ export default function App() {
           onOpenAboutModal={() => setIsAboutModalOpen(true)}
           onOpenDevWarning={() => setIsDevWarningOpen(true)}
           onOpenPushModal={() => setIsPushModalOpen(true)}
+          onOpenThemeWizard={() => setIsThemeWizardOpen(true)}
           onOpenAlarmsModal={() => {
             const el = document.getElementById('alarms-feed-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -237,7 +241,7 @@ export default function App() {
                 <Cpu className="w-10 h-10" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white mb-1">No Claimed Humidor Devices</h3>
+                <h3 className="text-base font-bold text-app-text-primary mb-1">No Claimed Humidor Devices</h3>
                 <p className="text-xs text-app-text-secondary max-w-md mx-auto leading-relaxed">
                   Authenticated as <span className="text-app-status-nominal font-mono font-medium">{userEmail}</span>. There are no ESP32 telemetry hardware units assigned to this account yet.
                 </p>
@@ -256,36 +260,36 @@ export default function App() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-app-border/80 bg-app-bg/80 py-6 text-xs text-app-text-primary0">
-          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-app-accent" />
+        <footer className="border-t border-app-border/80 bg-app-bg/80 py-5 text-xs text-app-text-secondary">
+          <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+            <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+              <Flame className="w-4 h-4 text-app-accent shrink-0" />
               <button
                 onClick={() => setIsAboutModalOpen(true)}
-                className="font-display font-semibold text-app-text-secondary hover:text-app-accent transition cursor-pointer"
+                className="font-display font-semibold text-app-text-primary hover:text-app-accent transition cursor-pointer whitespace-nowrap"
               >
                 {appTitle}
               </button>
-              <span>— {appDesc}</span>
+              <span className="hidden sm:inline text-app-text-muted">— {appDesc}</span>
             </div>
-            <div className="flex items-center gap-4 text-[11px] font-mono">
+            <div className="flex items-center gap-3 text-[11px] font-mono flex-wrap justify-center">
               <button
                 onClick={() => setIsDevWarningOpen(true)}
-                className="text-app-accent/90 hover:text-app-accent flex items-center gap-1 cursor-pointer transition"
+                className="text-app-accent hover:underline flex items-center gap-1 cursor-pointer transition whitespace-nowrap"
               >
-                <AlertTriangle className="w-3 h-3 text-app-accent" />
-                <span>Dev Preview Notice</span>
+                <AlertTriangle className="w-3 h-3 text-app-accent shrink-0" />
+                <span>Dev Preview</span>
               </button>
-              <span>•</span>
+              <span className="text-app-text-muted">•</span>
               <button
                 onClick={() => setIsAboutModalOpen(true)}
-                className="hover:text-app-text-secondary flex items-center gap-1 cursor-pointer transition"
+                className="hover:text-app-text-primary flex items-center gap-1 cursor-pointer transition whitespace-nowrap"
               >
-                <Info className="w-3 h-3" />
-                <span>About &amp; Specs</span>
+                <Info className="w-3 h-3 shrink-0" />
+                <span>Specs</span>
               </button>
-              <span>•</span>
-              <span>ThingsBoard CE</span>
+              <span className="text-app-text-muted">•</span>
+              <span className="text-app-text-muted whitespace-nowrap">ThingsBoard CE</span>
             </div>
           </div>
         </footer>
@@ -320,6 +324,12 @@ export default function App() {
         <PushNotificationModal
           isOpen={isPushModalOpen}
           onClose={() => setIsPushModalOpen(false)}
+        />
+        <ThemeWizardModal
+          isOpen={isThemeWizardOpen}
+          onClose={() => setIsThemeWizardOpen(false)}
+          activeDevice={selectedDevice}
+          activeThresholds={alarmThresholdService.getThresholds()}
         />
         <RemoveDeviceModal
           isOpen={isRemoveModalOpen}

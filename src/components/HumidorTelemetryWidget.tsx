@@ -176,7 +176,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
                 @enerlab/tb-client
               </span>
             </div>
-            <h2 className="text-lg font-bold text-white tracking-tight">
+            <h2 className="text-lg font-bold text-app-text-primary tracking-tight">
               {deviceName || device?.name || 'Humidor Telemetry Monitor'}
             </h2>
           </div>
@@ -186,8 +186,8 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* New Packet Badge situated to the LEFT of the controls to prevent shifting */}
           {newPacketArrived && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono bg-app-status-nominal/20 border border-emerald-400 text-emerald-200 animate-pulse shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono bg-app-status-nominal/20 border border-app-status-nominal/40 text-app-status-nominal animate-pulse shadow-sm">
+              <span className="w-1.5 h-1.5 rounded bg-app-status-nominal" />
               <span>New Packet!</span>
             </div>
           )}
@@ -259,20 +259,20 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             <div
               className={`h-8.5 flex items-center gap-1.5 px-2.5 rounded-lg text-[11px] font-mono border transition-all ${
                 error
-                  ? 'bg-app-status-critical/10 border-app-status-critical/30 text-rose-300'
+                  ? 'bg-app-status-critical/10 border-app-status-critical/30 text-app-status-critical'
                   : isPaused
                   ? 'bg-app-accent/10 border-app-accent/30 text-app-accent'
                   : isDeviceSleeping
-                  ? 'bg-sky-500/15 border-app-status-info/40 text-app-status-info'
-                  : 'bg-app-status-nominal/10 border-app-status-nominal/30 text-emerald-300'
+                  ? 'bg-app-status-info/15 border-app-status-info/40 text-app-status-info'
+                  : 'bg-app-status-nominal/10 border-app-status-nominal/30 text-app-status-nominal'
               }`}
             >
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
+                className={`w-1.5 h-1.5 rounded ${
                   error
                     ? 'bg-app-status-critical animate-pulse'
                     : isPaused
-                    ? 'bg-amber-400'
+                    ? 'bg-app-status-warning'
                     : isDeviceSleeping
                     ? 'bg-app-status-info'
                     : 'bg-app-status-nominal'
@@ -294,7 +294,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
 
       {/* Error Alert Banner if unauthenticated or timeout */}
       {error && (
-        <div className="mb-4 p-3 bg-app-status-critical/10 border border-app-status-critical/30 rounded-xl flex items-start gap-2.5 text-xs text-rose-300">
+        <div className="mb-4 p-3 bg-app-status-critical/10 border border-app-status-critical/30 rounded-xl flex items-start gap-2.5 text-xs text-app-status-critical">
           <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold">ThingsBoard Client Notice: </span>
@@ -303,7 +303,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
           {error.includes('UNAUTHORIZED') && (
             <button
               onClick={() => setShowLoginModal(true)}
-              className="h-7 px-2.5 text-[11px] font-medium bg-app-status-critical/20 hover:bg-app-status-critical/30 text-rose-200 border border-app-status-critical/40 rounded transition cursor-pointer"
+              className="h-7 px-2.5 text-[11px] font-medium bg-app-status-critical/20 hover:bg-app-status-critical/30 text-app-status-critical border border-app-status-critical/40 rounded transition cursor-pointer"
             >
               Sign In
             </button>
@@ -314,13 +314,13 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
       {/* Primary Telemetry Metrics Grid (Matches Real Device Telemetry: RH, Temp, Battery, RSSI) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-5">
         {/* Relative Humidity */}
-        <div className="bg-app-surface-elevated/40 border border-app-border-highlight/60 rounded-xl p-3.5 relative overflow-hidden group hover:border-cyan-500/40 transition">
+        <div className="bg-app-surface-elevated/40 border border-app-border-highlight/60 rounded-xl p-3.5 relative overflow-hidden group hover:border-app-status-info/40 transition">
           <div className="flex items-center justify-between text-app-text-secondary text-xs font-medium">
             <span>Relative Humidity</span>
-            <Droplets className="w-4 h-4 text-cyan-400" />
+            <Droplets className="w-4 h-4 text-app-status-info" />
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono text-cyan-300">
+            <span className="text-2xl font-bold font-mono text-app-status-info">
               {humVal}
             </span>
             <span className="text-xs font-mono text-app-text-secondary">%</span>
@@ -356,7 +356,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             <Battery className="w-4 h-4 text-app-status-nominal" />
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono text-emerald-300">
+            <span className="text-2xl font-bold font-mono text-app-status-nominal">
               {batteryVal !== '--' ? batteryVal : '100'}
             </span>
             <span className="text-xs font-mono text-app-text-secondary">%</span>
@@ -368,20 +368,20 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
         </div>
 
         {/* Signal RSSI */}
-        <div className="bg-app-surface-elevated/40 border border-app-border-highlight/60 rounded-xl p-3.5 relative overflow-hidden group hover:border-indigo-500/40 transition">
+        <div className="bg-app-surface-elevated/40 border border-app-border-highlight/60 rounded-xl p-3.5 relative overflow-hidden group hover:border-app-accent/40 transition">
           <div className="flex items-center justify-between text-app-text-secondary text-xs font-medium">
             <span>RF Signal (RSSI)</span>
-            <Wifi className="w-4 h-4 text-indigo-400" />
+            <Wifi className="w-4 h-4 text-app-accent" />
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono text-indigo-300">
+            <span className="text-2xl font-bold font-mono text-app-accent">
               {rssiVal}
             </span>
             <span className="text-xs font-mono text-app-text-secondary">dBm</span>
           </div>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-app-text-secondary">
             <span>ESP32 Wi-Fi</span>
-            <span className="text-indigo-400 font-mono">Telemetry</span>
+            <span className="text-app-accent font-mono">Telemetry</span>
           </div>
         </div>
       </div>
@@ -391,22 +391,22 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5 text-app-text-secondary">
             <Clock className="w-3.5 h-3.5 text-app-status-info" />
-            <span className="text-app-text-primary0">Sleep Interval:</span>
-            <span className="font-mono font-semibold text-white">
+            <span className="text-app-text-secondary">Sleep Interval:</span>
+            <span className="font-mono font-semibold text-app-text-primary">
               {humidorDevice?.sharedAttributes?.sleep_interval_min || (humidorDevice?.sharedAttributes?.sleep_interval_sec ? Math.round(humidorDevice.sharedAttributes.sleep_interval_sec / 60) : 15)}m
             </span>
           </div>
 
           <div className="flex items-center gap-1.5 text-app-text-secondary">
-            <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-app-text-primary0">Safe Envelope:</span>
-            <span className="font-mono font-semibold text-white">{rhSafeLow}–{rhSafeHigh}% RH</span>
+            <Droplets className="w-3.5 h-3.5 text-app-status-info" />
+            <span className="text-app-text-secondary">Safe Envelope:</span>
+            <span className="font-mono font-semibold text-app-text-primary">{rhSafeLow}–{rhSafeHigh}% RH</span>
           </div>
 
           <div className="flex items-center gap-1.5 text-app-text-secondary">
             <Volume2 className="w-3.5 h-3.5 text-app-accent" />
-            <span className="text-app-text-primary0">Sound:</span>
-            <span className="font-mono font-semibold text-white">
+            <span className="text-app-text-secondary">Sound:</span>
+            <span className="font-mono font-semibold text-app-text-primary">
               {humidorDevice?.clientAttributes?.has_sd_card === false
                 ? 'SD Locked'
                 : humidorDevice?.sharedAttributes?.sound_enabled !== false
@@ -417,7 +417,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
 
           {isDeviceSleeping && (
             <div className="flex items-center gap-1.5 text-app-status-info font-mono text-[11px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-app-status-info" />
+              <span className="w-1.5 h-1.5 rounded bg-app-status-info" />
               <span>Device in Variable Sleep (Awaiting next wakeup)</span>
             </div>
           )}
@@ -444,7 +444,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
           </div>
 
           {rawKeysCount === 0 ? (
-            <p className="text-app-text-primary0 font-mono text-center py-2 text-xs">
+            <p className="text-app-text-secondary font-mono text-center py-2 text-xs">
               No timeseries keys returned yet from device. Awaiting incoming packet.
             </p>
           ) : (
@@ -456,11 +456,11 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
                 >
                   <span className="text-app-accent/90 font-semibold">{k}</span>
                   <div className="text-right">
-                    <span className="text-white font-bold block">
+                    <span className="text-app-text-primary font-bold block">
                       {typeof entry?.value === 'object' ? JSON.stringify(entry.value) : String(entry?.value)}
                     </span>
                     {entry?.ts && (
-                      <span className="text-[10px] text-app-text-primary0 block">
+                      <span className="text-[10px] text-app-text-muted block">
                         {new Date(entry.ts).toLocaleTimeString()}
                       </span>
                     )}
@@ -475,22 +475,22 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
       {/* Footer Info & Architecture Telemetry Badge */}
       <div className="pt-3 border-t border-app-border/60 flex flex-wrap items-center justify-between gap-3 text-xs text-app-text-secondary font-mono">
         <div className="flex items-center gap-2">
-          <Server className="w-3.5 h-3.5 text-app-text-primary0" />
-          <span className="text-app-text-primary0">Target:</span>
+          <Server className="w-3.5 h-3.5 text-app-text-secondary" />
+          <span className="text-app-text-secondary">Target:</span>
           <span className="text-app-text-secondary">{serverUrl}</span>
           <span className="text-app-text-muted">|</span>
-          <span className="text-app-text-primary0">Device ID:</span>
+          <span className="text-app-text-secondary">Device ID:</span>
           <span className="text-app-accent/90">{deviceId.substring(0, 13)}...</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
           {lastUpdated && (
             <div className="flex items-center gap-1.5 text-app-text-secondary">
-              <span className="text-app-text-primary0">Hardware Packet:</span>
+              <span className="text-app-text-secondary">Hardware Packet:</span>
               <span className="text-app-accent font-bold">
                 {new Date(lastUpdated).toLocaleTimeString()}
               </span>
-              <span className="text-app-text-primary0">({formatTimeAgo(lastUpdated)})</span>
+              <span className="text-app-text-secondary">({formatTimeAgo(lastUpdated)})</span>
             </div>
           )}
 
@@ -512,7 +512,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             <div className="flex items-center justify-between mb-4 border-b border-app-border pb-3">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-app-accent" />
-                <h3 className="text-base font-bold text-white">ThingsBoard Session Auth</h3>
+                <h3 className="text-base font-bold text-app-text-primary">ThingsBoard Session Auth</h3>
               </div>
               <button
                 onClick={() => setShowLoginModal(false)}
@@ -527,9 +527,9 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
             </p>
 
             {thingsboard.isDemoMode() && (
-              <div className="mb-4 p-3 bg-app-accent/10 border border-app-accent/30 rounded-xl text-xs text-amber-200">
+              <div className="mb-4 p-3 bg-app-accent/10 border border-app-accent/30 rounded-xl text-xs text-app-accent">
                 <span className="font-bold text-app-accent block mb-0.5">Demo Sandbox Mode Active</span>
-                <p className="text-[11px] text-app-accent/80">Session authentication is automatically bypassed in Demo Mode. Real server credentials are not required.</p>
+                <p className="text-[11px] text-app-text-secondary">Session authentication is automatically bypassed in Demo Mode. Real server credentials are not required.</p>
               </div>
             )}
 
@@ -541,7 +541,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="tenant@thingsboard.org"
-                  className="w-full bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-mono"
+                  className="w-full bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-2 text-sm text-app-text-primary focus:outline-none focus:border-app-accent font-mono"
                   required
                 />
               </div>
@@ -553,13 +553,13 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400"
+                  className="w-full bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-2 text-sm text-app-text-primary focus:outline-none focus:border-app-accent"
                   required
                 />
               </div>
 
               {loginError && (
-                <div className="p-2.5 bg-app-status-critical/10 border border-app-status-critical/30 text-rose-300 text-xs rounded-lg">
+                <div className="p-2.5 bg-app-status-critical/10 border border-app-status-critical/30 text-app-status-critical text-xs rounded-lg">
                   {loginError}
                 </div>
               )}
@@ -567,7 +567,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
               <button
                 type="submit"
                 disabled={isAuthenticating}
-                className="w-full py-2.5 px-4 bg-app-accent hover:bg-amber-400 text-app-accent-text font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-app-accent hover:opacity-90 text-app-accent-text font-bold rounded-lg text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isAuthenticating ? (
                   <>
@@ -595,7 +595,7 @@ export const HumidorTelemetryWidget: React.FC<HumidorTelemetryWidgetProps> = ({
                     localStorage.setItem('tb_jwt_override', e.target.value);
                   }}
                   placeholder="eyJhbGciOiJIUzUxMiJ9..."
-                  className="flex-1 bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                  className="flex-1 bg-app-surface-elevated border border-app-border-highlight rounded-lg px-3 py-1.5 text-xs text-app-text-primary font-mono focus:outline-none focus:border-app-accent"
                 />
                 <button
                   type="button"

@@ -1,4 +1,5 @@
 import { HumidorDevice, SharedAttributes, AlarmThresholds, TempUnit } from '../types';
+import { Theme } from '../themes/types';
 
 export interface ParsedXmlConfig {
   version: string;
@@ -19,6 +20,7 @@ export interface ParsedXmlConfig {
     temp_unit?: TempUnit;
   };
   thresholds?: Partial<AlarmThresholds>;
+  theme?: Theme;
 }
 
 /**
@@ -26,7 +28,8 @@ export interface ParsedXmlConfig {
  */
 export function exportDeviceConfigToXml(
   device: HumidorDevice,
-  thresholds?: AlarmThresholds
+  thresholds?: AlarmThresholds,
+  activeTheme?: Theme
 ): string {
   const currentThresholds = thresholds || device.sharedAttributes?.alarm_thresholds;
   const shared = device.sharedAttributes || ({} as SharedAttributes);
@@ -82,6 +85,51 @@ export function exportDeviceConfigToXml(
     xml += `  </alarm-thresholds>\n`;
   }
 
+  if (activeTheme) {
+    xml += `\n  <!-- UI Theme & Color Palette Tokens -->\n`;
+    xml += `  <theme-config id="${escapeXml(activeTheme.id)}" name="${escapeXml(activeTheme.name)}">\n`;
+    xml += `    <author>${escapeXml(activeTheme.author || 'HUMID1 XML Import')}</author>\n`;
+    xml += `    <version>${escapeXml(activeTheme.version || '1.0.0')}</version>\n`;
+    xml += `    <description>${escapeXml(activeTheme.description || 'Imported from XML device configuration')}</description>\n`;
+    xml += `    <colors>\n`;
+    xml += `      <background>${activeTheme.colors.background}</background>\n`;
+    xml += `      <surface>${activeTheme.colors.surface}</surface>\n`;
+    xml += `      <surface-elevated>${activeTheme.colors.surfaceElevated}</surface-elevated>\n`;
+    xml += `      <surface-subtle>${activeTheme.colors.surfaceSubtle}</surface-subtle>\n`;
+    xml += `      <border>${activeTheme.colors.border}</border>\n`;
+    xml += `      <border-highlight>${activeTheme.colors.borderHighlight}</border-highlight>\n`;
+    xml += `      <text-primary>${activeTheme.colors.textPrimary}</text-primary>\n`;
+    xml += `      <text-secondary>${activeTheme.colors.textSecondary}</text-secondary>\n`;
+    xml += `      <text-muted>${activeTheme.colors.textMuted}</text-muted>\n`;
+    xml += `      <accent>${activeTheme.colors.accent}</accent>\n`;
+    xml += `      <accent-hover>${activeTheme.colors.accentHover}</accent-hover>\n`;
+    xml += `      <accent-text>${activeTheme.colors.accentText}</accent-text>\n`;
+    xml += `      <status-nominal>${activeTheme.colors.statusNominal}</status-nominal>\n`;
+    xml += `      <status-warning>${activeTheme.colors.statusWarning}</status-warning>\n`;
+    xml += `      <status-critical>${activeTheme.colors.statusCritical}</status-critical>\n`;
+    xml += `      <status-info>${activeTheme.colors.statusInfo}</status-info>\n`;
+    xml += `    </colors>\n`;
+    xml += `    <charts>\n`;
+    xml += `      <grid-color>${activeTheme.charts.gridColor}</grid-color>\n`;
+    xml += `      <rh-line>${activeTheme.charts.rhLine}</rh-line>\n`;
+    xml += `      <rh-gradient-start>${activeTheme.charts.rhGradientStart}</rh-gradient-start>\n`;
+    xml += `      <temp-line>${activeTheme.charts.tempLine}</temp-line>\n`;
+    xml += `      <tooltip-background>${activeTheme.charts.tooltipBackground}</tooltip-background>\n`;
+    xml += `      <tooltip-border>${activeTheme.charts.tooltipBorder}</tooltip-border>\n`;
+    xml += `    </charts>\n`;
+    xml += `    <styles>\n`;
+    xml += `      <border-radius>${activeTheme.styles.borderRadius}</border-radius>\n`;
+    xml += `      <card-radius>${activeTheme.styles.cardRadius}</card-radius>\n`;
+    xml += `      <button-radius>${activeTheme.styles.buttonRadius}</button-radius>\n`;
+    xml += `      <font-family>${escapeXml(activeTheme.styles.fontFamily)}</font-family>\n`;
+    xml += `      <mono-family>${escapeXml(activeTheme.styles.monoFamily)}</mono-family>\n`;
+    xml += `      <backdrop-blur>${activeTheme.styles.backdropBlur}</backdrop-blur>\n`;
+    xml += `      <border-width>${activeTheme.styles.borderWidth}</border-width>\n`;
+    xml += `      <density>${activeTheme.styles.density}</density>\n`;
+    xml += `    </styles>\n`;
+    xml += `  </theme-config>\n`;
+  }
+
   xml += `</humid1-device-config>\n`;
   return xml;
 }
@@ -92,9 +140,10 @@ export function exportDeviceConfigToXml(
 export function downloadDeviceConfigXml(
   device: HumidorDevice,
   thresholds?: AlarmThresholds,
+  activeTheme?: Theme,
   customFileName?: string
 ): void {
-  const xmlContent = exportDeviceConfigToXml(device, thresholds);
+  const xmlContent = exportDeviceConfigToXml(device, thresholds, activeTheme);
   const safeName = (device.name || 'device')
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, '-')
@@ -268,6 +317,67 @@ export function parseDeviceConfigFromXml(xmlString: string): {
     const battHist = parseNum(['batt-hist', 'battHist', 'batt_hist'], 0, 20);
     if (battHist !== undefined) thresholds.battHist = battHist;
 
+    // Parse theme-config
+    const themeEl = root.querySelector('theme-config');
+    let themeConfig: Theme | undefined = undefined;
+    if (themeEl) {
+      const themeId = themeEl.getAttribute('id') || `xml-imported-${Date.now()}`;
+      const themeName = themeEl.getAttribute('name') || 'XML Config Theme';
+      const colorsEl = themeEl.querySelector('colors');
+      const chartsEl = themeEl.querySelector('charts');
+      const stylesEl = themeEl.querySelector('styles');
+
+      if (colorsEl) {
+        const bg = getText(colorsEl, ['background']) || '#0b0f19';
+        const surf = getText(colorsEl, ['surface']) || '#111827';
+        const acc = getText(colorsEl, ['accent']) || '#d97706';
+
+        themeConfig = {
+          id: themeId,
+          name: themeName,
+          author: getText(themeEl, ['author']) || 'HUMID1 XML Import',
+          version: getText(themeEl, ['version']) || '1.0.0',
+          description: getText(themeEl, ['description']) || 'Imported from XML device configuration',
+          colors: {
+            background: bg,
+            surface: surf,
+            surfaceElevated: getText(colorsEl, ['surface-elevated', 'surfaceElevated']) || '#1f2937',
+            surfaceSubtle: getText(colorsEl, ['surface-subtle', 'surfaceSubtle']) || '#0e1422',
+            border: getText(colorsEl, ['border']) || '#1f2937',
+            borderHighlight: getText(colorsEl, ['border-highlight', 'borderHighlight']) || '#374151',
+            textPrimary: getText(colorsEl, ['text-primary', 'textPrimary']) || '#f9fafb',
+            textSecondary: getText(colorsEl, ['text-secondary', 'textSecondary']) || '#9ca3af',
+            textMuted: getText(colorsEl, ['text-muted', 'textMuted']) || '#6b7280',
+            accent: acc,
+            accentHover: getText(colorsEl, ['accent-hover', 'accentHover']) || acc,
+            accentText: getText(colorsEl, ['accent-text', 'accentText']) || '#ffffff',
+            statusNominal: getText(colorsEl, ['status-nominal', 'statusNominal']) || '#10b981',
+            statusWarning: getText(colorsEl, ['status-warning', 'statusWarning']) || '#f59e0b',
+            statusCritical: getText(colorsEl, ['status-critical', 'statusCritical']) || '#ef4444',
+            statusInfo: getText(colorsEl, ['status-info', 'statusInfo']) || '#06b6d4',
+          },
+          charts: {
+            gridColor: getText(chartsEl, ['grid-color', 'gridColor']) || '#1f2937',
+            rhLine: getText(chartsEl, ['rh-line', 'rhLine']) || '#10b981',
+            rhGradientStart: getText(chartsEl, ['rh-gradient-start', 'rhGradientStart']) || '#10b981',
+            tempLine: getText(chartsEl, ['temp-line', 'tempLine']) || acc,
+            tooltipBackground: getText(chartsEl, ['tooltip-background', 'tooltipBackground']) || surf,
+            tooltipBorder: getText(chartsEl, ['tooltip-border', 'tooltipBorder']) || '#374151',
+          },
+          styles: {
+            borderRadius: getText(stylesEl, ['border-radius', 'borderRadius']) || "12px",
+            cardRadius: getText(stylesEl, ['card-radius', 'cardRadius']) || "16px",
+            buttonRadius: getText(stylesEl, ['button-radius', 'buttonRadius']) || "10px",
+            fontFamily: getText(stylesEl, ['font-family', 'fontFamily']) || "'Plus Jakarta Sans', sans-serif",
+            monoFamily: getText(stylesEl, ['mono-family', 'monoFamily']) || "'JetBrains Mono', monospace",
+            backdropBlur: getText(stylesEl, ['backdrop-blur', 'backdropBlur']) || "12px",
+            borderWidth: getText(stylesEl, ['border-width', 'borderWidth']) || "1px",
+            density: getText(stylesEl, ['density']) || "comfortable",
+          },
+        };
+      }
+    }
+
     return {
       success: true,
       data: {
@@ -276,6 +386,7 @@ export function parseDeviceConfigFromXml(xmlString: string): {
         metadata,
         sharedAttributes,
         thresholds: Object.keys(thresholds).length > 0 ? thresholds : undefined,
+        theme: themeConfig,
       },
     };
   } catch (err: any) {

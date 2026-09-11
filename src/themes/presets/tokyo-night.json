@@ -1,0 +1,43 @@
+{
+  "id": "tokyo-night",
+  "name": "Tokyo Night",
+  "author": "Linux TOML Community",
+  "version": "1.0.0",
+  "description": "Clean neon cyberpunk atmosphere with deep navy canvas and violet cyan accents",
+  "colors": {
+    "background": "#1a1b26",
+    "surface": "#24283b",
+    "surfaceElevated": "#2f354f",
+    "surfaceSubtle": "#16161e",
+    "border": "#414868",
+    "borderHighlight": "#565f89",
+    "textPrimary": "#c0caf5",
+    "textSecondary": "#a9b1d6",
+    "textMuted": "#565f89",
+    "accent": "#ff9e64",
+    "accentHover": "#e0af68",
+    "accentText": "#1a1b26",
+    "statusNominal": "#9ece6a",
+    "statusWarning": "#e0af68",
+    "statusCritical": "#f7768e",
+    "statusInfo": "#7dcfff"
+  },
+  "charts": {
+    "gridColor": "#414868",
+    "rhLine": "#ff9e64",
+    "rhGradientStart": "#ff9e64",
+    "tempLine": "#7dcfff",
+    "tooltipBackground": "#16161e",
+    "tooltipBorder": "#565f89"
+  },
+  "styles": {
+    "borderRadius": "16px",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "'Space Grotesk', sans-serif",
+    "monoFamily": "'JetBrains Mono', monospace",
+    "backdropBlur": "14px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

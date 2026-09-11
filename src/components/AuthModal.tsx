@@ -68,7 +68,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-app-bg/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-app-surface border border-app-border rounded-3xl w-full max-w-lg p-6 shadow-2xl shadow-black/80 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-app-surface border border-app-border rounded-3xl w-full max-w-lg p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-app-text-secondary hover:text-app-text-primary p-1 rounded-lg hover:bg-app-surface-elevated transition-colors"
@@ -81,13 +81,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <Settings className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white">Platform & SSO Configuration</h3>
+            <h3 className="text-base font-bold text-app-text-primary">Platform & SSO Configuration</h3>
             <p className="text-xs text-app-text-secondary">Manage Authentik OIDC Provider and ThingsBoard endpoints</p>
           </div>
         </div>
 
         {savedSuccess && (
-          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-nominal/30 text-emerald-300 text-xs flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-app-bg/70 border border-app-status-nominal/30 text-app-status-nominal text-xs flex items-center gap-2">
             <Check className="w-4 h-4 text-app-status-nominal" />
             <span>Settings saved successfully. Refreshing session...</span>
           </div>
@@ -101,7 +101,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <ShieldCheck className="w-4 h-4" />
                 <span>Authentik SSO Settings</span>
               </div>
-              <span className="text-[10px] font-mono text-app-text-primary0">OIDC PKCE</span>
+              <span className="text-[10px] font-mono text-app-text-muted">OIDC PKCE</span>
             </div>
 
             <div>
@@ -210,7 +210,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-app-accent hover:bg-amber-400 text-app-accent-text transition-all shadow-md shadow-app-bg/40"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-app-accent hover:bg-app-accent-hover text-app-accent-text transition-all shadow-md shadow-app-bg/40 cursor-pointer"
               >
                 Save & Apply
               </button>

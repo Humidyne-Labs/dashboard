@@ -1,0 +1,43 @@
+{
+  "id": "emerald-botanical",
+  "name": "Emerald Reserve",
+  "author": "Humid1 Community",
+  "version": "1.0.0",
+  "description": "Deep forest pine canvas with bright emerald telemetry highlights",
+  "colors": {
+    "background": "#021a12",
+    "surface": "#06291e",
+    "surfaceElevated": "#0d3b2c",
+    "surfaceSubtle": "#01120c",
+    "border": "#13523f",
+    "borderHighlight": "#1e6e56",
+    "textPrimary": "#f0fdf4",
+    "textSecondary": "#86efac",
+    "textMuted": "#4ade80",
+    "accent": "#10b981",
+    "accentHover": "#059669",
+    "accentText": "#021a12",
+    "statusNominal": "#10b981",
+    "statusWarning": "#f59e0b",
+    "statusCritical": "#f43f5e",
+    "statusInfo": "#38bdf8"
+  },
+  "charts": {
+    "gridColor": "#13523f",
+    "rhLine": "#10b981",
+    "rhGradientStart": "#10b981",
+    "tempLine": "#38bdf8",
+    "tooltipBackground": "#01120c",
+    "tooltipBorder": "#1e6e56"
+  },
+  "styles": {
+    "borderRadius": "16px",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "'Outfit', sans-serif",
+    "monoFamily": "'Fira Code', monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

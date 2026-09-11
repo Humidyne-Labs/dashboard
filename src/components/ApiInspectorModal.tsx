@@ -132,13 +132,13 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
       case 'GET':
-        return 'bg-app-bg/80 text-app-status-info border-sky-800/60';
+        return 'bg-app-bg/80 text-app-status-info border-app-status-info/40';
       case 'POST':
-        return 'bg-app-bg/80 text-emerald-300 border-emerald-800/60';
+        return 'bg-app-bg/80 text-app-status-nominal border-app-status-nominal/40';
       case 'PUT':
-        return 'bg-app-bg/80 text-app-accent border-amber-800/60';
+        return 'bg-app-bg/80 text-app-accent border-app-accent/40';
       case 'DELETE':
-        return 'bg-app-bg/80 text-rose-300 border-rose-800/60';
+        return 'bg-app-bg/80 text-app-status-critical border-app-status-critical/40';
       default:
         return 'bg-app-surface-elevated text-app-text-secondary border-app-border-highlight';
     }
@@ -226,13 +226,13 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
             onClick={() => setActiveTab('logs')}
             className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition cursor-pointer ${
               activeTab === 'logs'
-                ? 'border-amber-400 text-app-accent bg-app-accent/5'
+                ? 'border-app-accent text-app-accent bg-app-accent/5'
                 : 'border-transparent text-app-text-secondary hover:text-app-text-primary'
             }`}
           >
             <Terminal className="w-4 h-4" />
             <span>Live API Logs</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-app-surface-elevated font-mono text-app-text-secondary border border-app-border-highlight">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-app-surface-elevated font-mono text-app-text-secondary border border-app-border-highlight">
               {transactions.length}
             </span>
           </button>
@@ -241,7 +241,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
             onClick={() => setActiveTab('token')}
             className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition cursor-pointer ${
               activeTab === 'token'
-                ? 'border-amber-400 text-app-accent bg-app-accent/5'
+                ? 'border-app-accent text-app-accent bg-app-accent/5'
                 : 'border-transparent text-app-text-secondary hover:text-app-text-primary'
             }`}
           >
@@ -249,14 +249,14 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
             <span>Token & Auth Diagnostics</span>
             {activeTokenNormalized ? (
               isTbToken ? (
-                <span className="w-2 h-2 rounded-full bg-app-status-nominal"></span>
+                <span className="w-2 h-2 rounded bg-app-status-nominal"></span>
               ) : isOidcToken ? (
-                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span className="w-2 h-2 rounded bg-app-accent"></span>
               ) : (
-                <span className="w-2 h-2 rounded-full bg-app-status-info"></span>
+                <span className="w-2 h-2 rounded bg-app-status-info"></span>
               )
             ) : (
-              <span className="w-2 h-2 rounded-full bg-app-status-critical"></span>
+              <span className="w-2 h-2 rounded bg-app-status-critical"></span>
             )}
           </button>
         </div>
@@ -304,7 +304,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
 
                 <button
                   onClick={handleClear}
-                  className="px-2.5 py-1 rounded-xl bg-app-bg/60 hover:bg-rose-900/60 border border-rose-800 text-rose-300 text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1 rounded-xl bg-app-bg/60 hover:bg-app-status-critical/20 border border-app-status-critical/40 text-app-status-critical text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
                   title="Clear all logged transactions"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -316,9 +316,9 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
             {/* Split View */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
               {/* Left Transactions List */}
-              <div className="lg:col-span-5 border-r border-app-border overflow-y-auto bg-app-bg/30 divide-y divide-slate-800/60">
+              <div className="lg:col-span-5 border-r border-app-border overflow-y-auto bg-app-bg/30 divide-y divide-app-border/60">
                 {filteredTransactions.length === 0 ? (
-                  <div className="p-8 text-center text-app-text-primary0 text-xs font-mono">
+                  <div className="p-8 text-center text-app-text-muted text-xs font-mono">
                     No transactions captured yet. Trigger an action, test a token, or claim a device to observe real-time requests.
                   </div>
                 ) : (
@@ -332,7 +332,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                         onClick={() => setSelectedTxId(tx.id)}
                         className={`p-3 transition cursor-pointer flex flex-col gap-1.5 ${
                           isSelected
-                            ? 'bg-app-accent/10 border-l-4 border-l-amber-500'
+                            ? 'bg-app-accent/10 border-l-4 border-l-app-accent'
                             : 'hover:bg-app-surface/60'
                         }`}
                       >
@@ -356,8 +356,8 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                             <span
                               className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
                                 isSuccess
-                                  ? 'bg-app-bg text-emerald-300 border border-emerald-800/50'
-                                  : 'bg-app-bg text-rose-300 border border-rose-800/50'
+                                  ? 'bg-app-bg text-app-status-nominal border border-app-status-nominal/40'
+                                  : 'bg-app-bg text-app-status-critical border border-app-status-critical/40'
                               }`}
                             >
                               {tx.responseStatus}
@@ -459,7 +459,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                         <CheckCircle2 className="w-3.5 h-3.5 text-app-status-nominal" />
                         <span>Response Body Payload</span>
                       </span>
-                      <pre className="bg-app-bg p-3.5 rounded-xl border border-app-border text-xs font-mono text-emerald-300 max-h-56 overflow-auto">
+                      <pre className="bg-app-bg p-3.5 rounded-xl border border-app-border text-xs font-mono text-app-status-nominal max-h-56 overflow-auto">
                         {selectedTx.responsePayload !== undefined
                           ? typeof selectedTx.responsePayload === 'string'
                             ? selectedTx.responsePayload
@@ -471,7 +471,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-app-text-primary0 font-mono text-xs">
+                  <div className="flex-1 flex items-center justify-center text-app-text-muted font-mono text-xs">
                     Select a transaction on the left to inspect full request/response details.
                   </div>
                 )}
@@ -499,22 +499,22 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                 <div>
                   {activeTokenNormalized ? (
                     isTbToken ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-bg text-emerald-300 border border-emerald-700/50">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-app-bg text-app-status-nominal border border-app-status-nominal/40">
                         <ShieldCheck className="w-4 h-4 text-app-status-nominal" />
                         Native ThingsBoard JWT
                       </span>
                     ) : isOidcToken ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-bg text-app-accent border border-amber-700/50">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-app-bg text-app-accent border border-app-accent/40">
                         <ShieldAlert className="w-4 h-4 text-app-accent" />
                         Authentik OIDC Token (Incompatible with TB API)
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-bg text-app-status-info border border-sky-700/50">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-app-bg text-app-status-info border border-app-status-info/40">
                         Generic JWT
                       </span>
                     )
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-app-bg text-rose-300 border border-rose-700/50">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-app-bg text-app-status-critical border border-app-status-critical/40">
                       <AlertCircle className="w-4 h-4 text-app-status-critical" />
                       No Token Detected
                     </span>
@@ -550,19 +550,19 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
                         <div className="p-2 rounded bg-app-surface border border-app-border">
-                          <span className="text-app-text-primary0 block text-[10px]">Subject (sub)</span>
+                          <span className="text-app-text-muted block text-[10px]">Subject (sub)</span>
                           <span className="text-app-text-primary font-bold truncate block">
                             {String(activePayload.sub || 'N/A')}
                           </span>
                         </div>
                         <div className="p-2 rounded bg-app-surface border border-app-border">
-                          <span className="text-app-text-primary0 block text-[10px]">Issuer (iss)</span>
+                          <span className="text-app-text-muted block text-[10px]">Issuer (iss)</span>
                           <span className="text-app-text-primary truncate block">
                             {String(activePayload.iss || 'ThingsBoard (Internal)')}
                           </span>
                         </div>
                         <div className="p-2 rounded bg-app-surface border border-app-border">
-                          <span className="text-app-text-primary0 block text-[10px]">Scopes / Authority</span>
+                          <span className="text-app-text-muted block text-[10px]">Scopes / Authority</span>
                           <span className="text-app-accent font-bold truncate block">
                             {Array.isArray(activePayload.scopes)
                               ? activePayload.scopes.join(', ')
@@ -571,19 +571,19 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                         </div>
                         {Boolean(activePayload.userId) && (
                           <div className="p-2 rounded bg-app-surface border border-app-border">
-                            <span className="text-app-text-primary0 block text-[10px]">ThingsBoard User ID</span>
+                            <span className="text-app-text-muted block text-[10px]">ThingsBoard User ID</span>
                             <span className="text-app-text-secondary truncate block">{String(activePayload.userId)}</span>
                           </div>
                         )}
                         {Boolean(activePayload.tenantId) && (
                           <div className="p-2 rounded bg-app-surface border border-app-border">
-                            <span className="text-app-text-primary0 block text-[10px]">Tenant ID</span>
+                            <span className="text-app-text-muted block text-[10px]">Tenant ID</span>
                             <span className="text-app-text-secondary truncate block">{String(activePayload.tenantId)}</span>
                           </div>
                         )}
                         {Boolean(activePayload.exp) && (
                           <div className="p-2 rounded bg-app-surface border border-app-border">
-                            <span className="text-app-text-primary0 block text-[10px]">Expiration</span>
+                            <span className="text-app-text-muted block text-[10px]">Expiration</span>
                             <span className="text-app-status-nominal block">
                               {new Date((activePayload.exp as number) * 1000).toLocaleString()}
                             </span>
@@ -594,13 +594,13 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                   )}
 
                   {isOidcToken && (
-                    <div className="p-3.5 rounded-xl bg-app-bg/60 border border-amber-800/60 text-amber-200 text-xs space-y-1">
+                    <div className="p-3.5 rounded-xl bg-app-accent/10 border border-app-accent/30 text-app-text-primary text-xs space-y-1">
                       <div className="font-bold flex items-center gap-1.5 text-app-accent">
                         <AlertCircle className="w-4 h-4 shrink-0" />
                         <span>Token Authentication Notice:</span>
                       </div>
-                      <p className="text-[11px] leading-relaxed text-amber-200/90">
-                        This token was issued by <code className="text-amber-100 font-mono">auth.humid1.com</code> (Authentik). ThingsBoard’s security filter validates requests using its native JWT session issued by ThingsBoard.
+                      <p className="text-[11px] leading-relaxed text-app-text-secondary">
+                        This token was issued by <code className="text-app-accent font-mono">auth.humid1.com</code> (Authentik). ThingsBoard’s security filter validates requests using its native JWT session issued by ThingsBoard.
                       </p>
                     </div>
                   )}
@@ -670,7 +670,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                   type="button"
                   onClick={handleRunTokenTest}
                   disabled={isTestingToken || !testTokenNormalized}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text text-xs font-bold transition shadow-lg shadow-app-bg/30 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-app-accent hover:bg-app-accent-hover text-app-accent-text text-xs font-bold transition shadow-lg shadow-app-bg/30 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isTestingToken ? (
                     <>
@@ -712,8 +712,8 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                 <div
                   className={`mt-4 p-4 rounded-xl border ${
                     testResult.success
-                      ? 'bg-app-bg/40 border-emerald-800/60 text-emerald-200'
-                      : 'bg-app-bg/40 border-rose-800/60 text-rose-200'
+                      ? 'bg-app-bg/40 border-app-status-nominal/40 text-app-status-nominal'
+                      : 'bg-app-bg/40 border-app-status-critical/40 text-app-status-critical'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">

@@ -27,6 +27,7 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 │   │   ├── ClimateGauges.tsx           # Real-time RH%, Temperature, Battery, and RSSI gauges
 │   │   ├── ControlPanel.tsx            # Remote hardware parameters & threshold adjustment panel
 │   │   ├── DevelopmentWarningModal.tsx # Demo mode and mock environment alert banner
+│   │   ├── DeviceHardwareWidget.tsx    # Live hardware bus, SPI flash, sensor & RTC status widget
 │   │   ├── DeviceStatusHeader.tsx      # Active hardware unit selector & health diagnostics
 │   │   ├── HeaderTicker.tsx            # Stock-ticker style live multi-device status marquee
 │   │   ├── HistoricalChart.tsx         # Synchronized Recharts dual-axis climate history with LTTB downsampling
@@ -36,7 +37,14 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 │   │   ├── PushNotificationModal.tsx   # Web Push API configuration and test trigger dialog
 │   │   ├── PWAInstallButton.tsx        # Dynamic Progressive Web App install prompt button
 │   │   ├── RemoveDeviceModal.tsx       # Device unclaim / delete confirmation dialog
-│   │   └── ServerConfigModal.tsx       # Runtime endpoints & domain configuration modal
+│   │   ├── ServerConfigModal.tsx       # Runtime endpoints & domain configuration modal
+│   │   └── ThemeWizardModal.tsx        # Dynamic Theme Studio with Linux TOML & XML palette import/export
+│   ├── context/
+│   │   └── ThemeContext.tsx            # Global CSS variables & runtime theme state manager
+│   ├── themes/
+│   │   ├── presets/                    # Built-in themes (Espresso, Obsidian, Forest, Cedar, etc.)
+│   │   ├── themeParser.ts              # Linux TOML parser, XML theme converter & WCAG contrast engine
+│   │   └── types.ts                    # Complete theme palette and typography interfaces
 │   ├── config/
 │   │   └── env.ts                      # Domain aggregator & runtime environment loader
 │   ├── hooks/
@@ -53,8 +61,10 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 │   │   └── thingsboard.ts              # Unified ThingsBoard IoT engine (telemetry, RPC, claiming)
 │   ├── utils/
 │   │   ├── authTokens.ts               # JWT normalization, expiration check & token discovery
+│   │   ├── deviceXmlConfig.ts          # XML device profile generator, validator & importer
 │   │   ├── downsample.ts               # LTTB time-series downsampling algorithm for high performance
 │   │   ├── env.ts                      # Universal environment variable accessor
+│   │   ├── tickerConfig.ts             # Marquee ticker metrics configuration
 │   │   └── url.ts                      # Domain and URL normalization helpers
 │   ├── types.ts                        # Centralized TypeScript interface & enum definitions
 │   ├── App.tsx                         # Root application orchestrator
@@ -70,15 +80,17 @@ HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScri
 ## ⚡ Key Features
 
 - **Multi-Device Live Marquee Ticker:** Continuously scrolling top-bar ticker displaying real-time humidity, temperature, battery, and connection status across all claimed units.
-- **Precision Climate Gauges & Mobile Layout:** Responsive, touch-friendly climate cards and gauges with dynamic °F/°C switching and comfort range boundaries optimized for phones and tablets.
+- **Dynamic Theme Studio & Linux TOML Engine:** Full theme customizer with real-time palette tuner, border radius/width scaling, Linux TOML palette file importer, WCAG 2.1 AA auto-contrast enforcer, and XML theme export.
+- **Hardware XML Profile Synchronization:** Export complete humidor threshold envelopes, RTC sleep cycles, and telemetry profiles to standardized XML files, with one-click XML restore and cross-device replication.
+- **Precision Climate Gauges & Mobile Layout:** Responsive, touch-friendly climate cards and gauges with dynamic °F/°C switching and comfort range boundaries optimized for phones, tablets, and desktops.
 - **Runtime Configurable Alarm Thresholds:** Configure target relative humidity, warning/critical RH bounds, high/low temperature limits, and low battery thresholds directly in the UI during runtime, syncing with ThingsBoard shared attributes.
-- **Synchronized Historical Analytics:** High-resolution dual-axis time-series charts (12h, 24h, 3d, 7d ranges) powered by Recharts with dynamic threshold reference lines.
+- **Synchronized Historical Analytics:** High-resolution dual-axis time-series charts (1h to 7d ranges) with interactive zoom, LTTB downsampling, and dynamic threshold reference lines.
 - **Role-Aware Permission Safeguards:** Automatic handling of `CUSTOMER_USER` privileges—preventing unauthorized calls to tenant admin endpoints and seamlessly delegating device removal to safe claiming/unclaiming workflows.
 - **ThingsBoard SDK & REST Integration:** Powered by `@enerlab/thingsboard-client` with proactive and reactive 401 token refresh interceptors.
 - **Authentik SSO & OIDC Security:** Unified authentication gate supporting OAuth2 SSO redirects and direct REST token inspection.
 - **Remote Hardware Control:** Adjust RTC deep-sleep wake intervals, visual device themes, and sound alert toggles with hardware safety lockout rules.
 - **Live OTA Firmware Updates:** Track firmware release states (`DOWNLOADING`, `VERIFIED`, `UPDATING`) with real-time percentage progress indicators.
-- **Real-Time Alarms Management:** Acknowledge and clear active humidor threshold violations and system warnings with one click.
+- **Real-Time Alarms Management:** Acknowledge and clear active humidor threshold violations and system warnings with balanced batch operations (`Ack`, `Clear`, `Purge`).
 - **Decoupled Asset CI/CD Workflows:** Manifests and Bubblewrap TWA builds pull brand assets directly from public repository URLs, eliminating local runner server overhead.
 - **Built-in API Transaction Inspector:** Real-time diagnostics modal recording every outbound request, response status, duration, and payload.
 

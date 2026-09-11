@@ -54,7 +54,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
   const [showBrush, setShowBrush] = useState(false);
   const [historyData, setHistoryData] = useState<HistoricalTelemetryPoint[]>(device.history || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [, setLastBatchTime] = useState<Date | null>(null);
+  const [lastBatchTime, setLastBatchTime] = useState<Date | null>(new Date());
   const [thresholds, setThresholds] = useState<AlarmThresholds>(
     alarmThresholdService.getThresholds()
   );
@@ -374,115 +374,132 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
 
   return (
     <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3.5 sm:p-5 lg:p-6 shadow-xl backdrop-blur-sm w-full">
-      {/* Controls Row: Pulse Icon, Day-Scale Selector & Refresh on the Left, Series & Bounds Pushed to the Right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-3.5 border-b border-app-border/80">
-        {/* Left: Pulse/Activity Icon + Zoom Indicator + Day-scale selector + Refresh */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Pulse / Activity Icon */}
-          <div 
-            className="p-1.5 rounded-xl bg-app-accent/10 text-app-accent border border-app-accent/20 shrink-0 flex items-center justify-center shadow-xs"
-            title="Climate Telemetry History Series"
-          >
-            <Activity className="w-4 h-4" />
+      {/* Top Header & Toolbar: Row 1 = Title & Series Controls, Row 2 = Inline Range Cluster & Refresh */}
+      <div className="space-y-2.5 pb-3 sm:pb-3.5 border-b border-app-border/80">
+        {/* Row 1: Widget Icon & Title + Series Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <div 
+              className="h-8 w-8 rounded-xl bg-app-accent/10 text-app-accent border border-app-accent/20 shrink-0 flex items-center justify-center shadow-xs"
+              title="Climate Telemetry History Series"
+            >
+              <Activity className="w-4 h-4" />
+            </div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-app-text-primary uppercase tracking-wide">
+                Historical Telemetry
+              </h3>
+              {isZoomed && (
+                <span className="px-2 py-0.5 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent text-[10px] font-mono flex items-center gap-1 shadow-xs">
+                  <span>Zoom: {zoomDurationLabel}</span>
+                  <button
+                    onClick={handleResetZoom}
+                    className="hover:text-app-text-primary font-bold ml-0.5 cursor-pointer"
+                    title="Reset Zoom"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
           </div>
 
-          {isZoomed && (
-            <span className="px-2 py-0.5 rounded-md bg-app-accent/20 border border-app-accent/40 text-app-accent text-[10px] font-mono flex items-center gap-1 shadow-xs">
-              <span>Zoomed: {zoomDurationLabel}</span>
-              <button
-                onClick={handleResetZoom}
-                className="hover:text-app-text-primary font-bold ml-1 cursor-pointer"
-                title="Reset Zoom"
-              >
-                ×
-              </button>
-            </span>
-          )}
-
-          {/* Time range preset selector (day-scale) */}
-          <div className="flex items-center gap-1 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs font-mono">
-            {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => handleRangeChange(r)}
-                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                  range === r && !isZoomed
-                    ? 'bg-app-accent-hover text-app-accent-text font-bold shadow-sm'
-                    : 'text-app-text-secondary hover:text-app-text-primary'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-
-          {/* Manual Refresh Button to the right of the day-selector */}
-          <button
-            onClick={loadHistory}
-            disabled={isLoading}
-            className="h-8 px-2.5 rounded-xl bg-app-bg/80 border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs shadow-xs"
-            title="Manual Batch Window Refresh"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-app-accent' : 'text-app-text-secondary'}`} />
-            <span className="text-[11px] font-medium">Refresh</span>
-          </button>
-        </div>
-
-        {/* Right: Series and Bounds Selectors pushed to the right */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-start sm:justify-end">
-          <div className="flex items-center gap-1.5 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs">
-            {/* Series filters */}
+          {/* Series & Boundary filters */}
+          <div className="flex items-center justify-center sm:justify-end gap-1 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs flex-wrap w-full sm:w-auto">
             <button
               onClick={() => setShowRh(!showRh)}
-              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+              className={`h-7 px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-xs whitespace-nowrap flex-1 sm:flex-initial ${
                 showRh
-                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30'
-                  : 'text-app-text-primary0 hover:text-app-text-secondary'
+                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30 shadow-xs'
+                  : 'text-app-text-muted hover:text-app-text-secondary'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="w-2 h-2 rounded-full bg-app-accent shrink-0" />
               <span>RH %</span>
             </button>
             <button
               onClick={() => setShowTemp(!showTemp)}
-              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+              className={`h-7 px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-xs whitespace-nowrap flex-1 sm:flex-initial ${
                 showTemp
-                  ? 'bg-sky-500/20 text-app-status-info border border-app-status-info/30'
-                  : 'text-app-text-primary0 hover:text-app-text-secondary'
+                  ? 'bg-app-status-info/20 text-app-status-info border border-app-status-info/30 shadow-xs'
+                  : 'text-app-text-muted hover:text-app-text-secondary'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-app-status-info" />
+              <span className="w-2 h-2 rounded-full bg-app-status-info shrink-0" />
               <span>Temp</span>
             </button>
 
-            <div className="h-3.5 w-px bg-app-surface-elevated mx-0.5" />
+            <div className="hidden sm:block h-3.5 w-px bg-app-surface-elevated mx-0.5 shrink-0" />
 
-            {/* Boundary controls */}
             <button
               onClick={() => setShowRhBoundaries(!showRhBoundaries)}
-              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+              className={`h-7 px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-xs whitespace-nowrap flex-1 sm:flex-initial ${
                 showRhBoundaries
-                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30'
-                  : 'text-app-text-primary0 hover:text-app-text-secondary'
+                  ? 'bg-app-accent/20 text-app-accent border border-app-accent/30 shadow-xs'
+                  : 'text-app-text-muted hover:text-app-text-secondary'
               }`}
               title="Toggle RH alarm boundary lines"
             >
-              <Sliders className="w-3 h-3 text-app-accent" />
+              <Sliders className="w-3 h-3 text-app-accent shrink-0" />
               <span>RH Bounds</span>
             </button>
 
             <button
               onClick={() => setShowTempBoundaries(!showTempBoundaries)}
-              className={`px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs ${
+              className={`h-7 px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-xs whitespace-nowrap flex-1 sm:flex-initial ${
                 showTempBoundaries
-                  ? 'bg-sky-500/20 text-app-status-info border border-app-status-info/30'
-                  : 'text-app-text-primary0 hover:text-app-text-secondary'
+                  ? 'bg-app-status-info/20 text-app-status-info border border-app-status-info/30 shadow-xs'
+                  : 'text-app-text-muted hover:text-app-text-secondary'
               }`}
               title="Toggle Temperature alarm boundary lines"
             >
-              <Sliders className="w-3 h-3 text-app-status-info" />
+              <Sliders className="w-3 h-3 text-app-status-info shrink-0" />
               <span>Temp Bounds</span>
             </button>
+          </div>
+        </div>
+
+        {/* Row 2: Day/Hour Presets Inline with Refresh Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+            {/* Time range preset selector (day-scale) */}
+            <div className="grid grid-cols-6 sm:flex items-center gap-0.5 sm:gap-1 bg-app-bg/80 p-1 rounded-xl border border-app-border text-xs font-mono flex-1 sm:flex-initial text-center">
+              {(['1h', '6h', '12h', '24h', '3d', '7d'] as TimeRange[]).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => handleRangeChange(r)}
+                  className={`px-2 py-1 rounded-lg transition-colors cursor-pointer text-center ${
+                    range === r && !isZoomed
+                      ? 'bg-app-accent-hover text-app-accent-text font-bold shadow-sm'
+                      : 'text-app-text-secondary hover:text-app-text-primary'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            {/* Inline Refresh Button */}
+            <button
+              onClick={loadHistory}
+              disabled={isLoading}
+              className="h-8 px-3 rounded-xl bg-app-bg/80 border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 text-xs shadow-xs shrink-0 whitespace-nowrap"
+              title="Refresh telemetry dataset"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-app-accent' : 'text-app-text-secondary'}`} />
+              <span className="text-[11px] font-medium">Refresh</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-end gap-2 text-[11px] font-mono text-app-text-muted">
+            <span>
+              {displayHistory.length} pts
+            </span>
+            {lastBatchTime && (
+              <span className="text-[10px] text-app-text-muted">
+                Updated: {lastBatchTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -492,7 +509,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={displayHistory}
-            margin={{ top: 12, right: 6, left: -14, bottom: showBrush ? 20 : 0 }}
+            margin={{ top: 12, right: 0, left: 0, bottom: showBrush ? 20 : 0 }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -521,6 +538,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             {/* Left Y-Axis: Humidity */}
             <YAxis
               yAxisId="rh"
+              width={36}
               domain={[calculatedRhMin, calculatedRhMax]}
               stroke={currentTheme.charts.rhLine}
               fontSize={10}
@@ -532,6 +550,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             {/* Right Y-Axis: Temperature */}
             <YAxis
               yAxisId="temp"
+              width={36}
               orientation="right"
               domain={[calculatedTempMin, calculatedTempMax]}
               stroke={currentTheme.charts.tempLine}
@@ -545,7 +564,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
               contentStyle={{
                 backgroundColor: currentTheme.charts.tooltipBackground,
                 borderColor: currentTheme.charts.tooltipBorder,
-                borderRadius: '0.75rem',
+                borderRadius: 'var(--app-button-radius)',
                 fontSize: '11px',
                 color: currentTheme.colors.textPrimary,
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5)',
@@ -577,13 +596,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="rh"
                   y={thresholds.rhLowCritical}
-                  stroke="#ef4444"
+                  stroke={currentTheme.colors.statusCritical}
                   strokeDasharray="3 3"
                   strokeWidth={1.5}
-                  strokeOpacity={0.7}
+                  strokeOpacity={0.85}
                   label={{
                     value: `RH Low Crit (${thresholds.rhLowCritical}%)`,
-                    fill: '#f87171',
+                    fill: currentTheme.colors.statusCritical,
                     fontSize: 9,
                     position: 'insideBottomLeft',
                   }}
@@ -591,13 +610,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="rh"
                   y={thresholds.rhLowWarning}
-                  stroke="#f59e0b"
+                  stroke={currentTheme.colors.statusWarning}
                   strokeDasharray="4 4"
                   strokeWidth={1}
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.8}
                   label={{
                     value: `RH Low Warn (${thresholds.rhLowWarning}%)`,
-                    fill: '#fbbf24',
+                    fill: currentTheme.colors.statusWarning,
                     fontSize: 9,
                     position: 'insideBottomLeft',
                   }}
@@ -605,13 +624,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="rh"
                   y={thresholds.rhHighWarning}
-                  stroke="#f59e0b"
+                  stroke={currentTheme.colors.statusWarning}
                   strokeDasharray="4 4"
                   strokeWidth={1}
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.8}
                   label={{
                     value: `RH High Warn (${thresholds.rhHighWarning}%)`,
-                    fill: '#fbbf24',
+                    fill: currentTheme.colors.statusWarning,
                     fontSize: 9,
                     position: 'insideTopLeft',
                   }}
@@ -619,13 +638,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="rh"
                   y={thresholds.rhHighCritical}
-                  stroke="#ef4444"
+                  stroke={currentTheme.colors.statusCritical}
                   strokeDasharray="3 3"
                   strokeWidth={1.5}
-                  strokeOpacity={0.7}
+                  strokeOpacity={0.85}
                   label={{
                     value: `RH High Crit (${thresholds.rhHighCritical}%)`,
-                    fill: '#f87171',
+                    fill: currentTheme.colors.statusCritical,
                     fontSize: 9,
                     position: 'insideTopLeft',
                   }}
@@ -639,13 +658,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="temp"
                   y={dispTempLowCritical}
-                  stroke="#3b82f6"
+                  stroke={currentTheme.colors.statusInfo}
                   strokeDasharray="3 3"
                   strokeWidth={1.5}
-                  strokeOpacity={0.7}
+                  strokeOpacity={0.85}
                   label={{
                     value: `Temp Low Crit (${dispTempLowCritical}°)`,
-                    fill: '#60a5fa',
+                    fill: currentTheme.colors.statusInfo,
                     fontSize: 9,
                     position: 'insideBottomRight',
                   }}
@@ -653,13 +672,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="temp"
                   y={dispTempLowWarning}
-                  stroke="#0284c7"
+                  stroke={currentTheme.colors.statusInfo}
                   strokeDasharray="4 4"
                   strokeWidth={1}
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.7}
                   label={{
                     value: `Temp Low Warn (${dispTempLowWarning}°)`,
-                    fill: '#38bdf8',
+                    fill: currentTheme.colors.statusInfo,
                     fontSize: 9,
                     position: 'insideBottomRight',
                   }}
@@ -667,13 +686,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="temp"
                   y={dispTempHighWarning}
-                  stroke="#f59e0b"
+                  stroke={currentTheme.colors.statusWarning}
                   strokeDasharray="4 4"
                   strokeWidth={1}
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.8}
                   label={{
                     value: `Temp High Warn (${dispTempHighWarning}°)`,
-                    fill: '#fbbf24',
+                    fill: currentTheme.colors.statusWarning,
                     fontSize: 9,
                     position: 'insideTopRight',
                   }}
@@ -681,13 +700,13 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
                 <ReferenceLine
                   yAxisId="temp"
                   y={dispTempHighCritical}
-                  stroke="#ef4444"
+                  stroke={currentTheme.colors.statusCritical}
                   strokeDasharray="3 3"
                   strokeWidth={1.5}
-                  strokeOpacity={0.7}
+                  strokeOpacity={0.85}
                   label={{
                     value: `Temp High Crit (${dispTempHighCritical}°)`,
-                    fill: '#f87171',
+                    fill: currentTheme.colors.statusCritical,
                     fontSize: 9,
                     position: 'insideTopRight',
                   }}
@@ -829,7 +848,7 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
       <div className="mt-3 pt-2.5 border-t border-app-border/80 flex flex-wrap items-center justify-between gap-2.5 text-[11px] text-app-text-secondary">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 bg-amber-400" />
+            <div className="w-3 h-0.5 bg-app-accent" />
             <span className="text-app-text-secondary font-medium">RH %</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -837,21 +856,21 @@ export const HistoricalChart: React.FC<HistoricalChartProps> = ({
             <span className="text-app-text-secondary font-medium">Temp ({tempSymbol})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-0.5 border-t border-dashed border-purple-400" />
-            <span className="text-purple-300 font-medium">Boundary Lines</span>
+            <div className="w-3 h-0.5 border-t border-dashed border-app-accent/60" />
+            <span className="text-app-text-secondary font-medium">Boundary Lines</span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-mono">
           <div className="flex items-center gap-1.5 text-app-accent">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span className="w-1.5 h-1.5 rounded bg-app-accent" />
             <span>
               RH Safe: {thresholds.rhLowWarning}%–{thresholds.rhHighWarning}% (Crit: &lt;
               {thresholds.rhLowCritical}% / &gt;{thresholds.rhHighCritical}%)
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-app-status-info">
-            <span className="w-1.5 h-1.5 rounded-full bg-app-status-info" />
+            <span className="w-1.5 h-1.5 rounded bg-app-status-info" />
             <span>
               Temp Safe: {dispTempLowWarning}°–{dispTempHighWarning}°{tempUnit}
             </span>

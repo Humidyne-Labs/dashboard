@@ -54,7 +54,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         type="button"
         onClick={handleInstallClick}
         disabled={installing}
-        className={`h-9 flex items-center gap-1.5 px-3 rounded-lg bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text font-bold text-xs tracking-wide transition shadow-sm cursor-pointer active:scale-95 disabled:opacity-50 whitespace-nowrap ${className}`}
+        className={`h-9 flex items-center gap-1.5 px-3 rounded-lg bg-app-accent hover:bg-app-accent-hover text-app-accent-text font-bold text-xs tracking-wide transition shadow-sm cursor-pointer active:scale-95 disabled:opacity-50 whitespace-nowrap ${className}`}
         title={isIOS ? 'Install HUMID1 on iPhone/iPad' : 'Install HUMID1 Native App'}
       >
         <Download className="w-3.5 h-3.5 text-app-accent-text stroke-[2.5]" />
@@ -86,7 +86,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
 
             <div className="space-y-3 text-xs text-app-text-secondary bg-app-bg/80 p-4 rounded-xl border border-app-border">
               <div className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-app-accent/20 text-app-accent font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded bg-app-accent/20 text-app-accent font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
                   1
                 </span>
                 <p>
@@ -95,7 +95,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-app-accent/20 text-app-accent font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded bg-app-accent/20 text-app-accent font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
                   2
                 </span>
                 <p>
@@ -104,11 +104,11 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="w-5 h-5 rounded-full bg-app-status-nominal/20 text-emerald-300 font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
+                <span className="w-5 h-5 rounded bg-app-status-nominal/20 text-app-status-nominal font-mono font-bold flex items-center justify-center shrink-0 text-[11px]">
                   3
                 </span>
                 <p>
-                  Tap <strong className="text-emerald-300">Add</strong> in the top-right corner to launch HUMID1 as a full-screen native app.
+                  Tap <strong className="text-app-status-nominal">Add</strong> in the top-right corner to launch HUMID1 as a full-screen native app.
                 </p>
               </div>
             </div>

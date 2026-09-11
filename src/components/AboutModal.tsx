@@ -112,7 +112,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-app-text-primary font-display">HUMID1</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-app-accent/20 text-app-accent border border-app-accent/30">
+                <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-app-accent/20 text-app-accent border border-app-accent/30">
                   v{version}
                 </span>
               </div>
@@ -160,7 +160,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 <span>Legal &amp; Licensing</span>
               </div>
               <div className="text-xs text-app-text-primary font-mono">
-                License: <span className="text-emerald-300 font-bold">{license}</span>
+                License: <span className="text-app-status-nominal font-bold">{license}</span>
               </div>
               <div className="text-xs text-app-text-secondary font-mono">{copyright}</div>
             </div>
@@ -178,13 +178,13 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             {/* Contributors */}
             <div className="bg-app-bg/60 p-4 rounded-2xl border border-app-border/80 space-y-1.5">
               <div className="flex items-center gap-2 text-xs font-bold text-app-text-secondary font-mono">
-                <Sparkles className="w-4 h-4 text-purple-400" />
+                <Sparkles className="w-4 h-4 text-app-accent" />
                 <span>Contributors</span>
               </div>
               <ul className="text-xs text-app-text-primary space-y-1">
                 {contributors.map((c, idx) => (
                   <li key={idx} className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                    <span className="w-1.5 h-1.5 rounded bg-app-accent" />
                     <span>{c}</span>
                   </li>
                 ))}
@@ -201,31 +201,31 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono text-app-text-secondary">
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">Data Retention TTL</span>
+                <span className="text-app-text-muted block text-[10px]">Data Retention TTL</span>
                 <span className="text-app-accent font-bold">{dataRetention}</span>
-                <span className="text-[10px] text-app-text-primary0 block">SQL_DATA_RETENTION_TTL=604800</span>
+                <span className="text-[10px] text-app-text-muted block">SQL_DATA_RETENTION_TTL=604800</span>
               </div>
 
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">IoT Core Platform</span>
-                <span className="text-emerald-300 font-bold">ThingsBoard CE REST &amp; WSS</span>
-                <span className="text-[10px] text-app-text-primary0 block truncate">{APP_CONFIG.domains.thingsboardUrl}</span>
+                <span className="text-app-text-muted block text-[10px]">IoT Core Platform</span>
+                <span className="text-app-status-nominal font-bold">ThingsBoard CE REST &amp; WSS</span>
+                <span className="text-[10px] text-app-text-muted block truncate">{APP_CONFIG.domains.thingsboardUrl}</span>
               </div>
 
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">Identity &amp; Auth</span>
+                <span className="text-app-text-muted block text-[10px]">Identity &amp; Auth</span>
                 <span className="text-app-status-info font-bold">Authentik OIDC (PKCE) + Native JWT</span>
-                <span className="text-[10px] text-app-text-primary0 block truncate">{APP_CONFIG.domains.authentikUrl}</span>
+                <span className="text-[10px] text-app-text-muted block truncate">{APP_CONFIG.domains.authentikUrl}</span>
               </div>
 
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border">
-                <span className="text-app-text-primary0 block text-[10px]">Frontend Stack</span>
-                <span className="text-purple-300 font-bold">React 18 + Vite + Tailwind CSS</span>
-                <span className="text-[10px] text-app-text-primary0 block">Docker Multi-stage runtime</span>
+                <span className="text-app-text-muted block text-[10px]">Frontend Stack</span>
+                <span className="text-app-accent font-bold">React 18 + Vite + Tailwind CSS</span>
+                <span className="text-[10px] text-app-text-muted block">Docker Multi-stage runtime</span>
               </div>
 
               <div className="p-2.5 rounded-xl bg-app-surface border border-app-border sm:col-span-2">
-                <span className="text-app-text-primary0 block text-[10px]">PWA &amp; Native Android TWA Stack</span>
+                <span className="text-app-text-muted block text-[10px]">PWA &amp; Native Android TWA Stack</span>
                 <span className="text-app-accent font-bold">Vite PWA (Workbox v7) + Google Bubblewrap CLI</span>
                 <span className="text-[10px] text-app-text-secondary block">com.humid1.app • Web Push API • /.well-known/assetlinks.json</span>
               </div>
@@ -235,7 +235,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
         {/* Footer with Close Button */}
         <div className="px-6 py-4 border-t border-app-border bg-app-bg/70 flex items-center justify-between">
-          <span className="text-[11px] text-app-text-primary0 font-mono">
+          <span className="text-[11px] text-app-text-muted font-mono">
             {APP_CONFIG.domains.dashboardUrl}
           </span>
           <button

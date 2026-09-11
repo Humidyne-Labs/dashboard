@@ -172,7 +172,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             </div>
             <Loader2 className="w-5 h-5 text-app-accent animate-spin absolute -top-1 -right-1" />
           </div>
-          <h2 className="text-lg font-bold text-white tracking-wide">
+          <h2 className="text-lg font-bold text-app-text-primary tracking-wide">
             HUMID1<span className="text-app-accent">_OS</span>
           </h2>
           <p className="text-xs text-app-text-secondary font-mono">
@@ -190,7 +190,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Otherwise, render the polished authentication gate
   return (
-    <div className="min-h-screen bg-app-bg flex flex-col items-center justify-center p-4 selection:bg-app-accent/30 selection:text-amber-200 relative">
+    <div className="min-h-screen bg-app-bg flex flex-col items-center justify-center p-4 selection:bg-app-accent/30 selection:text-app-accent relative">
       {/* Top Floating Diagnostics Bar */}
       <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
         <button
@@ -200,7 +200,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         >
           <Terminal className="w-4 h-4 text-app-accent" />
           <span className="hidden sm:inline">Diagnostics & Logs</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-app-surface-elevated text-[10px] text-app-accent border border-app-border-highlight">
+          <span className="px-1.5 py-0.2 rounded bg-app-surface-elevated text-[10px] text-app-accent border border-app-border-highlight">
             {txCount}
           </span>
         </button>
@@ -214,15 +214,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-app-surface border border-app-border rounded-3xl p-7 shadow-2xl shadow-black/80 relative">
+      <div className="w-full max-w-md bg-app-surface border border-app-border rounded-3xl p-7 shadow-2xl relative">
         {/* Top Header & Logo */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-app-accent/20 to-app-accent-hover/10 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-md shadow-amber-500/10">
+            <div className="w-10 h-10 rounded-xl bg-app-accent/20 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-md">
               <Radio className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
+              <h1 className="text-lg font-extrabold tracking-tight text-app-text-primary flex items-center gap-1.5">
                 HUMID1<span className="text-app-accent">_OS</span>
               </h1>
               <p className="text-[11px] font-mono text-app-text-secondary">
@@ -234,26 +234,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
         {/* Primary Alert / Error Feedback */}
         {auth.error && (
-          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-rose-200 text-xs flex items-start gap-2.5">
+          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-app-status-critical text-xs flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1">
-              <div className="font-bold text-rose-300">Authentik OIDC Error:</div>
-              <div className="font-mono text-[11px] leading-relaxed text-rose-200/90">{auth.error.message}</div>
+              <div className="font-bold text-app-status-critical">Authentik OIDC Error:</div>
+              <div className="font-mono text-[11px] leading-relaxed text-app-status-critical/90">{auth.error.message}</div>
             </div>
           </div>
         )}
 
         {loginError && (
-          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-rose-200 text-xs flex flex-col gap-2">
+          <div className="mb-5 p-3.5 rounded-2xl bg-app-bg/70 border border-app-status-critical/30 text-app-status-critical text-xs flex flex-col gap-2">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-app-status-critical shrink-0 mt-0.5" />
-              <div className="flex-1 font-mono text-[11px] leading-relaxed text-rose-200/90">{loginError}</div>
+              <div className="flex-1 font-mono text-[11px] leading-relaxed text-app-status-critical/90">{loginError}</div>
             </div>
-            <div className="flex items-center justify-end gap-2 pt-1 border-t border-rose-900/50">
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-app-status-critical/30">
               <button
                 type="button"
                 onClick={() => openDiagnosticsModal('logs')}
-                className="text-[11px] text-app-accent hover:text-amber-200 underline font-mono flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-app-accent hover:opacity-80 underline font-mono flex items-center gap-1 cursor-pointer"
               >
                 <Terminal className="w-3 h-3" /> View Request Log
               </button>
@@ -265,7 +265,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <div className="space-y-3 mb-6">
           <button
             onClick={handleThingsBoardSsoLogin}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text font-bold text-sm shadow-lg shadow-app-bg/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-app-accent hover:bg-app-accent-hover text-app-accent-text font-bold text-sm shadow-lg shadow-app-bg/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4" />
             <span>Sign In with ThingsBoard SSO (Authentik)</span>
@@ -289,7 +289,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                   window.location.reload();
                 } catch {}
               }}
-              className="text-app-text-primary0 hover:text-app-accent flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-app-text-muted hover:text-app-accent flex items-center gap-1 cursor-pointer transition-colors"
               title="Reset & show pre-release active development warning notice"
             >
               <Info className="w-3 h-3" /> Dev Info Notice
@@ -307,15 +307,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           {/* OIDC Config Summary Pill */}
           <div className="p-3 rounded-xl bg-app-bg/70 border border-app-border text-[11px] space-y-1 text-app-text-secondary font-mono">
             <div className="flex justify-between">
-              <span className="text-app-text-primary0">SSO Provider:</span>
+              <span className="text-app-text-muted">SSO Provider:</span>
               <span className="text-app-text-secondary font-semibold">{oidcParams.authentikUrl}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-app-text-primary0">ThingsBoard Gateway:</span>
+              <span className="text-app-text-muted">ThingsBoard Gateway:</span>
               <span className="text-app-accent font-semibold">app.humid1.com/oauth2</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-app-text-primary0">Authentik App:</span>
+              <span className="text-app-text-muted">Authentik App:</span>
               <span className="text-app-text-secondary font-semibold truncate max-w-[200px]" title={oidcParams.appSlug}>
                 {oidcParams.appSlug}
               </span>
@@ -326,7 +326,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         {/* Divider */}
         <div className="relative flex py-2 items-center mb-5">
           <div className="flex-grow border-t border-app-border"></div>
-          <span className="flex-shrink mx-3 text-app-text-primary0 text-[10px] uppercase font-mono tracking-wider">
+          <span className="flex-shrink mx-3 text-app-text-muted text-[10px] uppercase font-mono tracking-wider">
             Or Alternate Access
           </span>
           <div className="flex-grow border-t border-app-border"></div>

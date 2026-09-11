@@ -38,7 +38,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
     >
       <div className="bg-app-surface border border-app-accent/40 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden text-app-text-primary animate-scaleIn">
         {/* Banner Top Accent */}
-        <div className="bg-gradient-to-r from-app-accent via-amber-400 to-app-accent-hover h-2 w-full" />
+        <div className="bg-app-accent h-2 w-full" />
 
         <div className="p-6 sm:p-7 space-y-5">
           {/* Icon & Title */}
@@ -48,7 +48,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-app-accent/20 text-app-accent border border-app-accent/30">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-app-accent/20 text-app-accent border border-app-accent/30">
                   Pre-Release Build {APP_CONFIG.version}
                 </span>
               </div>
@@ -71,7 +71,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
                 <Bug className="w-3.5 h-3.5 text-app-accent shrink-0" />
                 <span>Active Bug Squash Phase</span>
               </div>
-              <div className="flex items-center gap-1.5 text-emerald-300/90">
+              <div className="flex items-center gap-1.5 text-app-status-nominal">
                 <CheckCircle className="w-3.5 h-3.5 text-app-status-nominal shrink-0" />
                 <span>Live Telemetry Active</span>
               </div>
@@ -85,7 +85,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
                 type="checkbox"
                 checked={dontShowAgain}
                 onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="w-4 h-4 rounded border-app-border-highlight bg-app-bg text-app-accent focus:ring-amber-500/40 focus:ring-offset-0 transition cursor-pointer"
+                className="w-4 h-4 rounded border-app-border-highlight bg-app-bg text-app-accent focus:ring-app-accent/40 focus:ring-offset-0 transition cursor-pointer"
               />
               <span>Don't show this notice again on this device</span>
             </label>
@@ -97,7 +97,7 @@ export const DevelopmentWarningModal: React.FC<DevelopmentWarningModalProps> = (
               id="dismiss-dev-warning-btn"
               type="button"
               onClick={handleDismiss}
-              className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-app-accent to-app-accent-hover hover:from-app-accent hover:to-app-accent-hover text-app-accent-text font-bold text-xs tracking-wide transition-all shadow-lg shadow-app-bg/40 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              className="w-full py-3 px-5 rounded-xl bg-app-accent hover:bg-app-accent-hover text-app-accent-text font-bold text-xs tracking-wide transition-all shadow-lg shadow-app-bg/40 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
               <span>I Understand &amp; Continue</span>
               <ChevronRight className="w-4 h-4" />

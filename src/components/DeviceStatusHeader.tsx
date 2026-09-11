@@ -102,17 +102,17 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
       bars = 3;
     } else if (rssi >= -80) {
       quality = 'Fair';
-      color = 'text-orange-400';
+      color = 'text-app-status-warning';
       bars = 2;
     }
 
     return (
       <div className="flex items-center gap-2" title={`Signal: ${rssi} dBm (${quality})`}>
         <div className="flex items-end gap-0.5 h-4">
-          <div className={`w-1 rounded-xs ${bars >= 1 ? 'bg-app-status-nominal' : 'bg-slate-700'} h-1.5`} />
-          <div className={`w-1 rounded-xs ${bars >= 2 ? (bars >= 3 ? 'bg-app-status-nominal' : 'bg-amber-400') : 'bg-slate-700'} h-2.5`} />
-          <div className={`w-1 rounded-xs ${bars >= 3 ? (bars >= 4 ? 'bg-app-status-nominal' : 'bg-amber-400') : 'bg-slate-700'} h-3.5`} />
-          <div className={`w-1 rounded-xs ${bars >= 4 ? 'bg-app-status-nominal' : 'bg-slate-700'} h-4.5`} />
+          <div className={`w-1 rounded-xs ${bars >= 1 ? 'bg-app-status-nominal' : 'bg-app-border'} h-1.5`} />
+          <div className={`w-1 rounded-xs ${bars >= 2 ? (bars >= 3 ? 'bg-app-status-nominal' : 'bg-app-status-warning') : 'bg-app-border'} h-2.5`} />
+          <div className={`w-1 rounded-xs ${bars >= 3 ? (bars >= 4 ? 'bg-app-status-nominal' : 'bg-app-status-warning') : 'bg-app-border'} h-3.5`} />
+          <div className={`w-1 rounded-xs ${bars >= 4 ? 'bg-app-status-nominal' : 'bg-app-border'} h-4.5`} />
         </div>
         <span className={`text-xs font-mono font-medium ${color}`}>
           {rssi} dBm
@@ -121,11 +121,14 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
     );
   };
 
-  const timeAgo = (ts: number) => {
+  const timeAgo = (ts?: number) => {
+    if (!ts || isNaN(ts) || ts <= 0) return 'Just now';
     const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 0) return 'Just now';
     if (diff < 60) return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
   };
 
   const isPushActive = pushPerm === 'granted';
@@ -133,15 +136,15 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
   return (
     <div className="space-y-3">
       {/* Row 1: Main Dropdown, Live Status Badge, Packet Ticker, and Remove Button */}
-      <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-black/20 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+      <div className="bg-app-surface/90 border border-app-border rounded-2xl p-3 sm:p-4 shadow-xl shadow-black/20 backdrop-blur-sm space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3.5">
         {/* Main Controls Group: Dropdown, Live Badge, Packet Ticker */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-1">
           {/* Main Dropdown Selector */}
-          <div className="relative min-w-[200px] sm:min-w-[240px]">
+          <div className="relative w-full sm:w-auto sm:min-w-[240px]">
             <select
               value={device.id}
               onChange={(e) => onSelectDevice(e.target.value)}
-              className="w-full appearance-none bg-app-bg/90 border border-app-border-highlight hover:border-app-accent/60 rounded-xl px-4 py-2 pr-10 text-sm sm:text-base font-bold text-app-text-primary focus:outline-none focus:ring-2 focus:ring-amber-500/30 cursor-pointer transition-all shadow-inner"
+              className="w-full appearance-none bg-app-bg/90 border border-app-border-highlight hover:border-app-accent/60 rounded-xl px-3.5 py-2 pr-10 text-sm sm:text-base font-bold text-app-text-primary focus:outline-none focus:ring-2 focus:ring-app-accent/30 cursor-pointer transition-all shadow-inner"
             >
               {allDevices.map((d) => (
                 <option key={d.id} value={d.id} className="bg-app-surface text-app-text-primary">
@@ -152,41 +155,44 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             <ChevronDown className="w-4 h-4 text-app-text-secondary absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Live Status Badge */}
-          {device.status === 'ONLINE' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-app-bg/60 text-emerald-300 border border-app-status-nominal/30 shadow-xs">
-              <span className="h-2 w-2 rounded-full bg-app-status-nominal animate-pulse" />
-              Live Telemetry
-            </span>
-          ) : device.status === 'SLEEP' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-app-surface-elevated text-app-text-secondary border border-app-border-highlight">
-              <span className="h-2 w-2 rounded-full bg-slate-400" />
-              Deep Sleep (RTC)
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-app-bg/60 text-rose-300 border border-app-status-critical/30">
-              <span className="h-2 w-2 rounded-full bg-app-status-critical" />
-              Unreachable / Offline
-            </span>
-          )}
+          {/* Status Badge & Packet Ticker */}
+          <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-start">
+            {/* Live Status Badge */}
+            {device.status === 'ONLINE' ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-app-bg/60 text-app-status-nominal border border-app-status-nominal/30 shadow-xs whitespace-nowrap">
+                <span className="h-2 w-2 rounded bg-app-status-nominal animate-pulse" />
+                Live Telemetry
+              </span>
+            ) : device.status === 'SLEEP' ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-app-surface-elevated text-app-text-secondary border border-app-border-highlight whitespace-nowrap">
+                <span className="h-2 w-2 rounded bg-app-text-muted" />
+                Deep Sleep (RTC)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-app-bg/60 text-app-status-critical border border-app-status-critical/30 whitespace-nowrap">
+                <span className="h-2 w-2 rounded bg-app-status-critical" />
+                Unreachable / Offline
+              </span>
+            )}
 
-          {/* Packet Ticker */}
-          <div className="flex items-center gap-1.5 text-xs text-app-text-secondary font-mono bg-app-bg/60 px-3 py-1.5 rounded-full border border-app-border shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-app-accent/90" />
-            <span>Last Packet: {timeAgo(device.lastActivityTime)}</span>
+            {/* Packet Ticker */}
+            <div className="flex items-center gap-1.5 text-xs text-app-text-secondary font-mono bg-app-bg/60 px-2.5 py-1.5 rounded-lg border border-app-border shadow-xs whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 text-app-accent/90 shrink-0" />
+              <span>Last Packet: {timeAgo(device.lastActivityTime)}</span>
+            </div>
           </div>
         </div>
 
         {/* Remove Badge / Action Button */}
         {onRemoveDevice && (
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-app-border/40 shrink-0">
             <button
               type="button"
               onClick={onRemoveDevice}
-              className="h-8.5 px-3 rounded-xl text-xs font-medium border border-app-status-critical/30 bg-app-status-critical/10 hover:bg-app-status-critical/20 text-rose-300 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+              className="w-full sm:w-auto h-8.5 px-3 rounded-xl text-xs font-medium border border-app-status-critical/30 bg-app-status-critical/10 hover:bg-app-status-critical/20 text-app-status-critical flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer whitespace-nowrap shrink-0"
               title="Remove or unclaim this humidor device"
             >
-              <Trash2 className="w-3.5 h-3.5 text-app-status-critical" />
+              <Trash2 className="w-3.5 h-3.5 text-app-status-critical shrink-0" />
               <span>Remove Device</span>
             </button>
           </div>
@@ -213,12 +219,12 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             onClick={handlePushClick}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
               isPushActive
-                ? 'bg-app-bg/60 hover:bg-amber-900/70 text-app-accent border-app-accent/30'
+                ? 'bg-app-bg/60 hover:bg-app-accent/20 text-app-accent border-app-accent/30'
                 : 'bg-app-bg hover:bg-app-surface-elevated text-app-text-secondary border-app-border hover:text-app-text-secondary'
             }`}
             title={`Web Push Notifications: ${isPushActive ? 'Active' : 'Click to configure/enable'}`}
           >
-            <BellRing className={`w-3.5 h-3.5 ${isPushActive ? 'text-app-accent' : 'text-app-text-primary0'}`} />
+            <BellRing className={`w-3.5 h-3.5 ${isPushActive ? 'text-app-accent' : 'text-app-text-muted'}`} />
             <span>{isPushActive ? 'Push: ON' : 'Push: Setup'}</span>
           </button>
 
@@ -229,7 +235,7 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             disabled={isUpdatingEmail}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
               emailAlertsEnabled
-                ? 'bg-app-bg/60 hover:bg-sky-900/70 text-app-status-info border-app-status-info/30'
+                ? 'bg-app-bg/60 hover:bg-app-status-info/20 text-app-status-info border-app-status-info/30'
                 : 'bg-app-bg hover:bg-app-surface-elevated text-app-text-secondary border-app-border hover:text-app-text-secondary'
             }`}
             title={`ThingsBoard Email Alerts: ${emailAlertsEnabled ? 'Active' : 'Opted Out'}. Click to toggle.`}
@@ -239,7 +245,7 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             ) : emailAlertsEnabled ? (
               <MailCheck className="w-3.5 h-3.5 text-app-status-info" />
             ) : (
-              <MailX className="w-3.5 h-3.5 text-app-text-primary0" />
+              <MailX className="w-3.5 h-3.5 text-app-text-muted" />
             )}
             <span>{emailAlertsEnabled ? 'Email: ON' : 'Email: OFF'}</span>
           </button>
@@ -250,7 +256,7 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             onClick={handleTogglePushSound}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
               pushSoundEnabled
-                ? 'bg-app-bg/60 hover:bg-amber-900/70 text-app-accent border-app-accent/30'
+                ? 'bg-app-bg/60 hover:bg-app-accent/20 text-app-accent border-app-accent/30'
                 : 'bg-app-bg hover:bg-app-surface-elevated text-app-text-secondary border-app-border hover:text-app-text-secondary'
             }`}
             title={`Push Alert Sound & Chimes: ${pushSoundEnabled ? 'Active' : 'Muted'}. Click to toggle.`}
@@ -258,7 +264,7 @@ export const DeviceStatusHeader: React.FC<DeviceStatusHeaderProps> = ({
             {pushSoundEnabled ? (
               <Volume2 className="w-3.5 h-3.5 text-app-accent" />
             ) : (
-              <VolumeX className="w-3.5 h-3.5 text-app-text-primary0" />
+              <VolumeX className="w-3.5 h-3.5 text-app-text-muted" />
             )}
             <span>{pushSoundEnabled ? 'Sound: ON' : 'Sound: Muted'}</span>
           </button>

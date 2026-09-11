@@ -31,7 +31,7 @@ export const DeviceHardwareWidget: React.FC<DeviceHardwareWidgetProps> = ({
           <span className="font-mono text-app-text-primary font-bold truncate block text-xs sm:text-sm" title={device.name}>
             {device.clientAttributes.device_name || device.name}
           </span>
-          <span className="text-[10px] font-mono text-app-text-primary0 truncate block mt-0.5">
+          <span className="text-[10px] font-mono text-app-text-muted truncate block mt-0.5">
             {device.id.slice(0, 16)}...
           </span>
         </div>
@@ -56,16 +56,16 @@ export const DeviceHardwareWidget: React.FC<DeviceHardwareWidgetProps> = ({
       {/* 3. MicroSD Peripheral Storage */}
       <div className="bg-app-surface/80 border border-app-border/90 p-3.5 rounded-xl shadow-md backdrop-blur-xs flex flex-col justify-between hover:border-app-border-highlight/80 transition">
         <div className="flex items-center gap-1.5 text-app-text-secondary mb-1.5">
-          <HardDrive className="w-3.5 h-3.5 text-indigo-400" />
+          <HardDrive className="w-3.5 h-3.5 text-app-accent" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-app-text-secondary">MicroSD Storage</span>
         </div>
         <div>
           <span className={`font-semibold text-xs sm:text-sm block ${
-            device.clientAttributes.has_sd_card ? 'text-emerald-300' : 'text-app-accent'
+            device.clientAttributes.has_sd_card ? 'text-app-status-nominal' : 'text-app-accent'
           }`}>
             {device.clientAttributes.has_sd_card ? 'Storage Mounted' : 'Not Detected'}
           </span>
-          <span className="text-[10px] font-mono text-app-text-primary0 truncate block mt-0.5">
+          <span className="text-[10px] font-mono text-app-text-muted truncate block mt-0.5">
             {device.clientAttributes.has_sd_card ? 'Active' : 'Offline / Missing'}
           </span>
         </div>
@@ -74,14 +74,14 @@ export const DeviceHardwareWidget: React.FC<DeviceHardwareWidgetProps> = ({
       {/* 4. Active Firmware Version */}
       <div className="bg-app-surface/80 border border-app-border/90 p-3.5 rounded-xl shadow-md backdrop-blur-xs flex flex-col justify-between hover:border-app-border-highlight/80 transition">
         <div className="flex items-center gap-1.5 text-app-text-secondary mb-1.5">
-          <Layers className="w-3.5 h-3.5 text-purple-400" />
+          <Layers className="w-3.5 h-3.5 text-app-accent" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-app-text-secondary">Firmware</span>
         </div>
         <div>
           <span className="font-mono text-app-accent font-bold text-xs sm:text-sm block">
             {device.clientAttributes.fw_version || 'v1.0.4'}
           </span>
-          <span className="text-[10px] font-mono text-app-text-primary0 truncate block mt-0.5">
+          <span className="text-[10px] font-mono text-app-text-muted truncate block mt-0.5">
             ota_0 Partition
           </span>
         </div>

@@ -1,0 +1,43 @@
+{
+  "id": "gruvbox-dark",
+  "name": "Gruvbox Dark",
+  "author": "Linux TOML Community",
+  "version": "1.0.0",
+  "description": "Retro groove dark palette with warm earthy tones and soft sage green",
+  "colors": {
+    "background": "#1d2021",
+    "surface": "#282828",
+    "surfaceElevated": "#3c3836",
+    "surfaceSubtle": "#141617",
+    "border": "#504945",
+    "borderHighlight": "#665c54",
+    "textPrimary": "#fbf1c7",
+    "textSecondary": "#d5c4a1",
+    "textMuted": "#928374",
+    "accent": "#d79921",
+    "accentHover": "#b57614",
+    "accentText": "#1d2021",
+    "statusNominal": "#98971a",
+    "statusWarning": "#d79921",
+    "statusCritical": "#cc241d",
+    "statusInfo": "#458588"
+  },
+  "charts": {
+    "gridColor": "#504945",
+    "rhLine": "#d79921",
+    "rhGradientStart": "#d79921",
+    "tempLine": "#458588",
+    "tooltipBackground": "#1d2021",
+    "tooltipBorder": "#665c54"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "12px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Space Grotesk', sans-serif",
+    "monoFamily": "'Fira Code', monospace",
+    "backdropBlur": "8px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

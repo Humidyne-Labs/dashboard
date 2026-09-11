@@ -42,7 +42,9 @@ HUMID1’s visual architecture is focused on readability, high-contrast diagnost
   5. **Unit Parameter Controls & Threshold Tuning (`ControlPanel.tsx`)**: Handles on-the-fly parameter tuning (deep-sleep intervals, hardware theme presets, threshold bounds, audibles) and triggers interactive hardware RPC commands (`ping`, `testBuzzer`, `syncTime`).
   6. **Over-The-Air Update Center (`OtaUpdateCenter.tsx`)**: Houses firmware version matrix status panels and renders dynamic OTA download/flash progress loops.
   7. **Alarms Management Feed (`AlarmsFeed.tsx`)**: Reports active and historic hardware warnings, integrating visual trigger bells and manual operators to acknowledge (`POST /api/alarm/{id}/ack`) or clear (`POST /api/alarm/{id}/clear`) alerts.
-  8. **Notification & Modal Suite**: Features `PushNotificationModal.tsx` (Web Push API subscription management), `PWAInstallButton.tsx` (native PWA install prompt), `AboutModal.tsx` (system release metadata & credits), and `DevelopmentWarningModal.tsx` (environment diagnostics).
+  8. **Dynamic Theme Studio & Linux TOML Importer (`ThemeWizardModal.tsx`, `ThemeContext.tsx`)**: Full CSS custom property runtime engine with built-in theme presets, real-time HSL/HEX color tuners, Linux TOML palette file conversion, WCAG 2.1 AA auto-contrast enforcer, and XML theme serialization.
+  9. **XML Device Configuration Engine (`deviceXmlConfig.ts`)**: Generates and parses comprehensive XML profiles encoding humidity/temperature threshold envelopes, buzzer and alert preferences, RTC sleep timings, telemetry sampling intervals, and theme assignments for zero-touch hardware cloning.
+  10. **Notification & Modal Suite**: Features `PushNotificationModal.tsx` (Web Push API subscription management), `PWAInstallButton.tsx` (native PWA install prompt), `AboutModal.tsx` (system release metadata & credits), and `DevelopmentWarningModal.tsx` (environment diagnostics).
 
 ---
 

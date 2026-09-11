@@ -1,0 +1,43 @@
+{
+  "id": "cedar-dark",
+  "name": "Classic Cedar Dark",
+  "author": "Humid1 Community",
+  "version": "1.0.0",
+  "description": "Warm Spanish cedar amber accents over deep charcoal slate",
+  "colors": {
+    "background": "#020617",
+    "surface": "#0b0f19",
+    "surfaceElevated": "#111827",
+    "surfaceSubtle": "#030712",
+    "border": "#1e293b",
+    "borderHighlight": "#334155",
+    "textPrimary": "#f8fafc",
+    "textSecondary": "#94a3b8",
+    "textMuted": "#64748b",
+    "accent": "#f59e0b",
+    "accentHover": "#d97706",
+    "accentText": "#020617",
+    "statusNominal": "#10b981",
+    "statusWarning": "#f59e0b",
+    "statusCritical": "#f43f5e",
+    "statusInfo": "#38bdf8"
+  },
+  "charts": {
+    "gridColor": "#1e293b",
+    "rhLine": "#f59e0b",
+    "rhGradientStart": "#f59e0b",
+    "tempLine": "#38bdf8",
+    "tooltipBackground": "#090d16",
+    "tooltipBorder": "#334155"
+  },
+  "styles": {
+    "borderRadius": "16px",
+    "cardRadius": "16px",
+    "buttonRadius": "10px",
+    "fontFamily": "'Plus Jakarta Sans', ui-sans-serif, system-ui",
+    "monoFamily": "'JetBrains Mono', ui-monospace, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}
