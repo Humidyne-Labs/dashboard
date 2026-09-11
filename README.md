@@ -1,6 +1,6 @@
 # HUMID1 Dashboard
 
-> **Production-Grade IoT Telemetry & Climate Control Platform for Precision Cigar Humidors**
+> **Production-Grade IoT Telemetry & Climate Control Platform for Precision Cigar Humidors (or cornbread)**
 
 HUMID1 is a modern, high-performance web dashboard built with React 18, TypeScript, Tailwind CSS, and Vite. It connects directly to the ThingsBoard IoT engine and Authentik Identity Provider to provide real-time climate monitoring, dual-axis telemetry visualization, hardware claiming, shared-attribute remote controls, over-the-air (OTA) firmware update orchestration, and real-time alarms.
 
