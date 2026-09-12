@@ -17,8 +17,6 @@ export default defineConfig({
         'pwa-192x192.png',
         'pwa-512x512.png',
         'pwa-maskable-512x512.png',
-        'config.js',
-        'env-config.js',
       ],
       manifest: {
         id: '/',
@@ -71,6 +69,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
+        globIgnores: ['config.js', 'env-config.js'],
         navigateFallbackDenylist: [/^\/oauth2/, /^\/login\/oauth2/],
         runtimeCaching: [
           {
