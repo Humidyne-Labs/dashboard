@@ -1,55 +1,55 @@
 ## Dashboard, Settings and Navigation  
 
 ### Authorization Screen  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Auth-Dialog.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Auth-Dialog.png" alt="Authorization Screen" width="80%">
 
 ### Main Dashboard I  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_1.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_1.png" alt="Main Dashboard I" width="80%">
 
 ### Main Dashboard II  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_2.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_2.png" alt="Main Dashboard II" width="80%">
 
 ### About Dialog  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/About-Dialog.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/About-Dialog.png" alt="About Dialog" width="80%">
 
 ### Development Notice Popup  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/DEV-Notice.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/DEV-Notice.png" alt="Development Notice Popup" width="80%">
 
 ### Live Diagnostics
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/API-Live-Diagnostics.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/API-Live-Diagnostics.png" alt="Live Diagnostics" width="80%">
 
 ### Advanced Settings Dialog  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Settings-Dialog.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Settings-Dialog.png" alt="Advanced Settings Dialog" width="80%">
 
 ### Device Claiming Dialog  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Claim-Device.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Claim-Device.png" alt="Device Claiming Dialog" width="80%">
 
 ## Theme Support  
 
 ### Theme Wizard Presets  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard.png" alt="Theme Wizard Presets" width="80%">
 
 ### Theme Wizard Palette  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Palette.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Palette.png" alt="Theme Wizard Palette" width="80%">
 
 ### Theme Wizard Font  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Font.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Font.png" alt="Theme Wizard Font" width="80%">
 
 ### Theme Wizard Style  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Style.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Style.png" alt="Theme Wizard Style" width="80%">
 
 ## Dashboard Widgets  
 
 ### Timeseries Graph Zoom Preview I  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_1.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_1.png" alt="Timeseries Graph Zoom Preview I" width="80%">
 
 ### Timeseries Graph Zoom Preview II  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_2.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_2.png" alt="Timeseries Graph Zoom Preview II" width="80%">
 
 ## Envelope Notifications  
 
 ### Sample Email Correspondence  
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Email-Sample.png)  
+<img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Email-Sample.png" alt="Sample Email Correspondence" width="80%">
 
 ### Sample Device Export XML (**humid1-test-sensor-b077bd-config.xml**)  
 
@@ -151,25 +151,25 @@
 > Display Technology - LTPS l 120Hz refresh rate  
 > Aspect Ratio - 20:9  
 
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_1.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_2.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_3.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_4.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_5.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_6.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_7.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_8.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_9.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_10.png)  
-
-![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_11.png)  
-
+<table>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_1.png" alt="Mobile UI Snapshot 1"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_2.png" alt="Mobile UI Snapshot 2"></td>
+    <td><img src=https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_3.png alt="Mobile UI Snapshot 3"></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_4.png" alt="Mobile UI Snapshot 4"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_5.png" alt="Mobile UI Snapshot 5"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_6.png" alt="Mobile UI Snapshot 6"></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_7.png" alt="Mobile UI Snapshot 7"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_8.png" alt="Mobile UI Snapshot 8"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_9.png" alt="Mobile UI Snapshot 9"></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_10.png" alt="Mobile UI Snapshot 10"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_11.png" alt="Mobile UI Snapshot 11"></td>
+    <td></td>
+  </tr>
+</table>
