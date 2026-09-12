@@ -1,5 +1,7 @@
 ## Dashboard, Settings and Navigation  
 
+<!-- The dashboard in its current state won't actually allow users to sign-in with plain TB credentials, one must use the SSO portal, for security, and 'forced' TOTP, via a 3rd party authentication application or offline hardware based TOPT token. There is also currently no physical means to allow a user to create a native TB account, one must use the SSO registration flow in order to receive access to the servers hosted web applications. This was done in an attempt to secure user accounts, prevent leaks, and consolidate all web application accounts into one manageable dashboard for efficient administration. Thank you for your understand. -->
+
 ### Authorization Screen  
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Auth-Dialog.png" alt="Authorization Screen" width="80%">
 
