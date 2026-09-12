@@ -1,0 +1,43 @@
+{
+  "id": "everforest",
+  "name": "EverForest",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#181d20",
+    "surface": "#2d353b",
+    "surfaceElevated": "#343f44",
+    "surfaceSubtle": "#111517",
+    "border": "#3d484d",
+    "borderHighlight": "#475258",
+    "textPrimary": "#d3c6aa",
+    "textSecondary": "#9da9a0",
+    "textMuted": "#79868e",
+    "accent": "#7fbbb3",
+    "accentHover": "#dbbc7f",
+    "accentText": "#020617",
+    "statusNominal": "#a5b887",
+    "statusWarning": "#d0b88a",
+    "statusCritical": "#da8a8c",
+    "statusInfo": "#8ab996"
+  },
+  "charts": {
+    "gridColor": "#3d484d",
+    "rhLine": "#7fbbb3",
+    "rhGradientStart": "#7fbbb3",
+    "tempLine": "#8ab996",
+    "tooltipBackground": "#2d353b",
+    "tooltipBorder": "#475258"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

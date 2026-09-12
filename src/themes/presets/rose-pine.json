@@ -1,0 +1,43 @@
+{
+  "id": "rose-pine",
+  "name": "Rose Pine",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Light mode)",
+  "colors": {
+    "background": "#faf4ed",
+    "surface": "#faf4ed",
+    "surfaceElevated": "#ede7e1",
+    "surfaceSubtle": "#e1dbd5",
+    "border": "#dfdad9",
+    "borderHighlight": "#cecacd",
+    "textPrimary": "#514d71",
+    "textSecondary": "#6e6a86",
+    "textMuted": "#888297",
+    "accent": "#56949f",
+    "accentHover": "#ea9d34",
+    "accentText": "#020617",
+    "statusNominal": "#336478",
+    "statusWarning": "#d59a4a",
+    "statusCritical": "#ab6c7e",
+    "statusInfo": "#cd8c89"
+  },
+  "charts": {
+    "gridColor": "#dfdad9",
+    "rhLine": "#56949f",
+    "rhGradientStart": "#56949f",
+    "tempLine": "#cd8c89",
+    "tooltipBackground": "#faf4ed",
+    "tooltipBorder": "#cecacd"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

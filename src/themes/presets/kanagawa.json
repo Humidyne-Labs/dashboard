@@ -1,0 +1,43 @@
+{
+  "id": "kanagawa",
+  "name": "Kanagawa",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#111116",
+    "surface": "#1f1f28",
+    "surfaceElevated": "#223249",
+    "surfaceSubtle": "#0a0a0d",
+    "border": "#363646",
+    "borderHighlight": "#54546d",
+    "textPrimary": "#dcd7ba",
+    "textSecondary": "#c8c093",
+    "textMuted": "#727169",
+    "accent": "#dcd7ba",
+    "accentHover": "#e6c384",
+    "accentText": "#020617",
+    "statusNominal": "#788f6f",
+    "statusWarning": "#b6a078",
+    "statusCritical": "#b44f52",
+    "statusInfo": "#6f9087"
+  },
+  "charts": {
+    "gridColor": "#363646",
+    "rhLine": "#dcd7ba",
+    "rhGradientStart": "#dcd7ba",
+    "tempLine": "#6f9087",
+    "tooltipBackground": "#1f1f28",
+    "tooltipBorder": "#54546d"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

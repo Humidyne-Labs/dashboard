@@ -1,0 +1,43 @@
+{
+  "id": "miasma",
+  "name": "Miasma",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#121212",
+    "surface": "#222222",
+    "surfaceElevated": "#2c2c2c",
+    "surfaceSubtle": "#0a0a0a",
+    "border": "#383838",
+    "borderHighlight": "#666666",
+    "textPrimary": "#c2c2b0",
+    "textSecondary": "#8a8a7e",
+    "textMuted": "#717171",
+    "accent": "#78824b",
+    "accentHover": "#b36d43",
+    "accentText": "#020617",
+    "statusNominal": "#648264",
+    "statusWarning": "#a67050",
+    "statusCritical": "#635646",
+    "statusInfo": "#bba062"
+  },
+  "charts": {
+    "gridColor": "#383838",
+    "rhLine": "#78824b",
+    "rhGradientStart": "#78824b",
+    "tempLine": "#bba062",
+    "tooltipBackground": "#222222",
+    "tooltipBorder": "#666666"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

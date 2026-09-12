@@ -1,0 +1,43 @@
+{
+  "id": "lupine",
+  "name": "Lupine",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Light mode)",
+  "colors": {
+    "background": "#fafafa",
+    "surface": "#fafafa",
+    "surfaceElevated": "#ececec",
+    "surfaceSubtle": "#dedede",
+    "border": "#d0d0d0",
+    "borderHighlight": "#9e9e9e",
+    "textPrimary": "#000000",
+    "textSecondary": "#424242",
+    "textMuted": "#757575",
+    "accent": "#3264eb",
+    "accentHover": "#358fff",
+    "accentText": "#ffffff",
+    "statusNominal": "#5742bd",
+    "statusWarning": "#1c6fc4",
+    "statusCritical": "#b118ad",
+    "statusInfo": "#256ac5"
+  },
+  "charts": {
+    "gridColor": "#d0d0d0",
+    "rhLine": "#3264eb",
+    "rhGradientStart": "#3264eb",
+    "tempLine": "#256ac5",
+    "tooltipBackground": "#fafafa",
+    "tooltipBorder": "#9e9e9e"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

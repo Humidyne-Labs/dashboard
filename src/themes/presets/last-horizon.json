@@ -1,0 +1,43 @@
+{
+  "id": "last-horizon",
+  "name": "Last Horizon",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#060606",
+    "surface": "#0c0b0c",
+    "surfaceElevated": "#0c0b0c",
+    "surfaceSubtle": "#000000",
+    "border": "#584e51",
+    "borderHighlight": "#766d70",
+    "textPrimary": "#e2dddc",
+    "textSecondary": "#cfd3cd",
+    "textMuted": "#706367",
+    "accent": "#b59790",
+    "accentHover": "#6b5e73",
+    "accentText": "#020617",
+    "statusNominal": "#8ca6ab",
+    "statusWarning": "#6a6171",
+    "statusCritical": "#bb9084",
+    "statusInfo": "#a7a3b4"
+  },
+  "charts": {
+    "gridColor": "#584e51",
+    "rhLine": "#b59790",
+    "rhGradientStart": "#b59790",
+    "tempLine": "#a7a3b4",
+    "tooltipBackground": "#0c0b0c",
+    "tooltipBorder": "#766d70"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

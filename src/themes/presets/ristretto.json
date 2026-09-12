@@ -1,0 +1,43 @@
+{
+  "id": "ristretto",
+  "name": "Ristretto",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#181414",
+    "surface": "#2c2525",
+    "surfaceElevated": "#3d2f2a",
+    "surfaceSubtle": "#100d0d",
+    "border": "#403e41",
+    "borderHighlight": "#72696a",
+    "textPrimary": "#e6d9db",
+    "textSecondary": "#c3b7b8",
+    "textMuted": "#7c7273",
+    "accent": "#f38d70",
+    "accentHover": "#fcd675",
+    "accentText": "#020617",
+    "statusNominal": "#accf84",
+    "statusWarning": "#e8c67d",
+    "statusCritical": "#ec798e",
+    "statusInfo": "#8fd0c5"
+  },
+  "charts": {
+    "gridColor": "#403e41",
+    "rhLine": "#f38d70",
+    "rhGradientStart": "#f38d70",
+    "tempLine": "#8fd0c5",
+    "tooltipBackground": "#2c2525",
+    "tooltipBorder": "#72696a"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

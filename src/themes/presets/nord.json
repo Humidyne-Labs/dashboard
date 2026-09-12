@@ -1,0 +1,43 @@
+{
+  "id": "nord",
+  "name": "Nord",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#191c23",
+    "surface": "#2e3440",
+    "surfaceElevated": "#3b4252",
+    "surfaceSubtle": "#13151a",
+    "border": "#434c5e",
+    "borderHighlight": "#4c566a",
+    "textPrimary": "#d8dee9",
+    "textSecondary": "#adb5c4",
+    "textMuted": "#788393",
+    "accent": "#81a1c1",
+    "accentHover": "#ebcb8b",
+    "accentText": "#020617",
+    "statusNominal": "#a3b892",
+    "statusWarning": "#e0c796",
+    "statusCritical": "#b46c73",
+    "statusInfo": "#91bbc8"
+  },
+  "charts": {
+    "gridColor": "#434c5e",
+    "rhLine": "#81a1c1",
+    "rhGradientStart": "#81a1c1",
+    "tempLine": "#91bbc8",
+    "tooltipBackground": "#2e3440",
+    "tooltipBorder": "#4c566a"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

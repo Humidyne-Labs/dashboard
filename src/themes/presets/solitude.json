@@ -1,0 +1,43 @@
+{
+  "id": "solitude",
+  "name": "Solitude",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#080a0b",
+    "surface": "#101315",
+    "surfaceElevated": "#101315",
+    "surfaceSubtle": "#020202",
+    "border": "#343d41",
+    "borderHighlight": "#4b4e55",
+    "textPrimary": "#a5aeb4",
+    "textSecondary": "#cbc2be",
+    "textMuted": "#666b74",
+    "accent": "#798186",
+    "accentHover": "#c9c2b4",
+    "accentText": "#020617",
+    "statusNominal": "#a0a5a8",
+    "statusWarning": "#d9dbdc",
+    "statusCritical": "#575d5f",
+    "statusInfo": "#707070"
+  },
+  "charts": {
+    "gridColor": "#343d41",
+    "rhLine": "#798186",
+    "rhGradientStart": "#798186",
+    "tempLine": "#707070",
+    "tooltipBackground": "#101315",
+    "tooltipBorder": "#4b4e55"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

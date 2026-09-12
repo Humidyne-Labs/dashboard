@@ -1,0 +1,43 @@
+{
+  "id": "vantablack",
+  "name": "VantaBlack",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#070707",
+    "surface": "#000000",
+    "surfaceElevated": "#1a1a1a",
+    "surfaceSubtle": "#000000",
+    "border": "#1a1a1a",
+    "borderHighlight": "#7a7a7a",
+    "textPrimary": "#ffffff",
+    "textSecondary": "#ececec",
+    "textMuted": "#626262",
+    "accent": "#8d8d8d",
+    "accentHover": "#cecece",
+    "accentText": "#020617",
+    "statusNominal": "#b6b6b6",
+    "statusWarning": "#cecece",
+    "statusCritical": "#a4a4a4",
+    "statusInfo": "#b0b0b0"
+  },
+  "charts": {
+    "gridColor": "#1a1a1a",
+    "rhLine": "#8d8d8d",
+    "rhGradientStart": "#8d8d8d",
+    "tempLine": "#b0b0b0",
+    "tooltipBackground": "#000000",
+    "tooltipBorder": "#7a7a7a"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "hackerman",
+  "name": "HackerMan",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#06060c",
+    "surface": "#0b0c16",
+    "surfaceElevated": "#151828",
+    "surfaceSubtle": "#010102",
+    "border": "#1f253a",
+    "borderHighlight": "#2d3450",
+    "textPrimary": "#ddf7ff",
+    "textSecondary": "#b5c5db",
+    "textMuted": "#6a6e95",
+    "accent": "#91eca5",
+    "accentHover": "#b2f1e5",
+    "accentText": "#020617",
+    "statusNominal": "#56e190",
+    "statusWarning": "#63e3c9",
+    "statusCritical": "#64e47e",
+    "statusInfo": "#89eaea"
+  },
+  "charts": {
+    "gridColor": "#1f253a",
+    "rhLine": "#91eca5",
+    "rhGradientStart": "#91eca5",
+    "tempLine": "#89eaea",
+    "tooltipBackground": "#0b0c16",
+    "tooltipBorder": "#2d3450"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

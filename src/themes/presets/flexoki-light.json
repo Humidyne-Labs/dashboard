@@ -1,0 +1,43 @@
+{
+  "id": "flexoki-light",
+  "name": "Flexoki Light",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Light mode)",
+  "colors": {
+    "background": "#fffcf0",
+    "surface": "#fffcf0",
+    "surfaceElevated": "#f2efe4",
+    "surfaceSubtle": "#e5e2d8",
+    "border": "#cecdc3",
+    "borderHighlight": "#b7b5ac",
+    "textPrimary": "#100f0f",
+    "textSecondary": "#403e3c",
+    "textMuted": "#878580",
+    "accent": "#1e5da8",
+    "accentHover": "#c39b22",
+    "accentText": "#ffffff",
+    "statusNominal": "#96b420",
+    "statusWarning": "#c39b22",
+    "statusCritical": "#dc4436",
+    "statusInfo": "#22c1b3"
+  },
+  "charts": {
+    "gridColor": "#cecdc3",
+    "rhLine": "#1e5da8",
+    "rhGradientStart": "#1e5da8",
+    "tempLine": "#22c1b3",
+    "tooltipBackground": "#fffcf0",
+    "tooltipBorder": "#b7b5ac"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

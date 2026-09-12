@@ -1,0 +1,43 @@
+{
+  "id": "gruvbox",
+  "name": "GruvBox",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#161616",
+    "surface": "#282828",
+    "surfaceElevated": "#3c3836",
+    "surfaceSubtle": "#0e0e0e",
+    "border": "#504945",
+    "borderHighlight": "#665c54",
+    "textPrimary": "#d4be98",
+    "textSecondary": "#bdae93",
+    "textMuted": "#817468",
+    "accent": "#7daea3",
+    "accentHover": "#d8a657",
+    "accentText": "#020617",
+    "statusNominal": "#a3ad6f",
+    "statusWarning": "#c9a266",
+    "statusCritical": "#da7772",
+    "statusInfo": "#8dae88"
+  },
+  "charts": {
+    "gridColor": "#504945",
+    "rhLine": "#7daea3",
+    "rhGradientStart": "#7daea3",
+    "tempLine": "#8dae88",
+    "tooltipBackground": "#282828",
+    "tooltipBorder": "#665c54"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

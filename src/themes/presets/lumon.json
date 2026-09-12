@@ -1,0 +1,43 @@
+{
+  "id": "lumon",
+  "name": "Lumon",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#0b1216",
+    "surface": "#16242d",
+    "surfaceElevated": "#1b2d40",
+    "surfaceSubtle": "#060a0c",
+    "border": "#243d56",
+    "borderHighlight": "#304860",
+    "textPrimary": "#f2fcff",
+    "textSecondary": "#d6e2ee",
+    "textMuted": "#4d86b0",
+    "accent": "#8bc9eb",
+    "accentHover": "#9dcae5",
+    "accentText": "#020617",
+    "statusNominal": "#6993b1",
+    "statusWarning": "#7aa2be",
+    "statusCritical": "#5984a4",
+    "statusInfo": "#bce0ee"
+  },
+  "charts": {
+    "gridColor": "#243d56",
+    "rhLine": "#8bc9eb",
+    "rhGradientStart": "#8bc9eb",
+    "tempLine": "#bce0ee",
+    "tooltipBackground": "#16242d",
+    "tooltipBorder": "#304860"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

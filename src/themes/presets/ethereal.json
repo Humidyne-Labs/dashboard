@@ -1,0 +1,43 @@
+{
+  "id": "ethereal",
+  "name": "Ethereal",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#030610",
+    "surface": "#060b1e",
+    "surfaceElevated": "#131a3a",
+    "surfaceSubtle": "#010103",
+    "border": "#252e56",
+    "borderHighlight": "#6d7db6",
+    "textPrimary": "#ffcead",
+    "textSecondary": "#c9b8a6",
+    "textMuted": "#6d7db6",
+    "accent": "#7077e6",
+    "accentHover": "#efd9a4",
+    "accentText": "#020617",
+    "statusNominal": "#56e15f",
+    "statusWarning": "#e1b857",
+    "statusCritical": "#e46463",
+    "statusInfo": "#89c6ea"
+  },
+  "charts": {
+    "gridColor": "#252e56",
+    "rhLine": "#7077e6",
+    "rhGradientStart": "#7077e6",
+    "tempLine": "#89c6ea",
+    "tooltipBackground": "#060b1e",
+    "tooltipBorder": "#6d7db6"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

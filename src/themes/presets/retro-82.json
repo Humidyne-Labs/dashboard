@@ -1,0 +1,43 @@
+{
+  "id": "retro-82",
+  "name": "Retro 82",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#020c17",
+    "surface": "#05182e",
+    "surfaceElevated": "#0a2540",
+    "surfaceSubtle": "#010509",
+    "border": "#134e5a",
+    "borderHighlight": "#2a6b78",
+    "textPrimary": "#f6dcac",
+    "textSecondary": "#a7c9c6",
+    "textMuted": "#3f8f8a",
+    "accent": "#efaa73",
+    "accentHover": "#e97b3c",
+    "accentText": "#020617",
+    "statusNominal": "#137580",
+    "statusWarning": "#d58151",
+    "statusCritical": "#df623e",
+    "statusInfo": "#92b9b4"
+  },
+  "charts": {
+    "gridColor": "#134e5a",
+    "rhLine": "#efaa73",
+    "rhGradientStart": "#efaa73",
+    "tempLine": "#92b9b4",
+    "tooltipBackground": "#05182e",
+    "tooltipBorder": "#2a6b78"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}

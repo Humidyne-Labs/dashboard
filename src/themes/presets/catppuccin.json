@@ -1,0 +1,43 @@
+{
+  "id": "catppuccin",
+  "name": "Catppuccin",
+  "author": "Omarchy Theme Pack",
+  "version": "1.0.0",
+  "description": "Linux TOML palette theme (Dark mode)",
+  "colors": {
+    "background": "#101019",
+    "surface": "#1e1e2e",
+    "surfaceElevated": "#313244",
+    "surfaceSubtle": "#0a0a10",
+    "border": "#45475a",
+    "borderHighlight": "#585b70",
+    "textPrimary": "#cdd6f4",
+    "textSecondary": "#bac2de",
+    "textMuted": "#6c7086",
+    "accent": "#97b7ed",
+    "accentHover": "#f2dfb6",
+    "accentText": "#020617",
+    "statusNominal": "#9eed97",
+    "statusWarning": "#f2e0b6",
+    "statusCritical": "#ec92ab",
+    "statusInfo": "#8bebdb"
+  },
+  "charts": {
+    "gridColor": "#45475a",
+    "rhLine": "#97b7ed",
+    "rhGradientStart": "#97b7ed",
+    "tempLine": "#8bebdb",
+    "tooltipBackground": "#1e1e2e",
+    "tooltipBorder": "#585b70"
+  },
+  "styles": {
+    "borderRadius": "12px",
+    "cardRadius": "16px",
+    "buttonRadius": "8px",
+    "fontFamily": "'Inter', sans-serif",
+    "monoFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    "backdropBlur": "12px",
+    "borderWidth": "1px",
+    "density": "comfortable"
+  }
+}
