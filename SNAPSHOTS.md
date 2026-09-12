@@ -139,3 +139,37 @@
   </theme-config>
 </humid1-device-config>
 ```
+
+## Mobile Platform Snapshots  
+
+> moto g stylus 5G - 2023  
+> Android 14 - *Upside Down Cake*  
+> 
+> Display Size - 6.6" FHD+  
+> Resolution - Full HD+ (2400 x 1080)  
+> Screen to Body Ratio - Active Area-Touch Panel (AA-TP): 92.42%  
+> Display Technology - LTPS l 120Hz refresh rate  
+> Aspect Ratio - 20:9  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_1.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_2.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_3.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_4.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_5.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_6.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_7.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_8.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_9.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_10.png)  
+
+![image](https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_11.png)  
+
