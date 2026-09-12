@@ -3,23 +3,10 @@ set -e
 
 # Robust environment variable sanitization helper
 sanitize_val() {
-  # 1. Strip trailing hash comments (e.g. # comment)
-  val=$(echo "$1" | sed 's/#.*//')
-  # 2. Trim leading/trailing whitespace
-  val=$(echo "$val" | xargs 2>/dev/null || echo "$val" | awk '{$1=$1;print}')
-  # 3. Repeatedly strip surrounding single/double quotes
-  while true; do
-    case "$val" in
-      \"*\" | \'*\' )
-        val=$(echo "$val" | sed 's/^.//; s/.$//')
-        ;;
-      * )
-        break
-        ;;
-    esac
-  done
-  # 4. Final trim
-  val=$(echo "$val" | xargs 2>/dev/null || echo "$val" | awk '{$1=$1;print}')
+  # 1. Remove trailing carriage returns and hash comments (e.g. # comment)
+  val=$(echo "$1" | tr -d '\r' | sed 's/#.*//')
+  # 2. Strip any leading or trailing spaces, double quotes, or single quotes
+  val=$(echo "$val" | sed -e 's/^[ "'\'']*//' -e 's/[ "'\'']*$//')
   echo "$val"
 }
 
