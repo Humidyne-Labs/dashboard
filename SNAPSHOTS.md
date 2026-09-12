@@ -141,6 +141,7 @@
 ```
 
 ## Mobile Platform Snapshots  
+<!-- Please note, the wrapper around the dashboard present in the android package may alter the dashboards dynamic layout. I have not yet had the opportunity to 'actually' test the android APK, only the web dashboard, via chrome. 'IF' there is a notable impact to the dashboards layout, a future revision will attempt to addresses any malformations in the UI. Note Recorded at 9/12/2026. -->
 
 > moto g stylus 5G - 2023  
 > Android 14 - *Upside Down Cake*  
