@@ -37,12 +37,23 @@ function getLookupKeys(key: string): string[] {
 export function getEnv(key: string, defaultValue: string = ''): string {
   const candidateKeys = getLookupKeys(key);
 
+  const cleanValue = (val: any): string | null => {
+    if (val === undefined || val === null) return null;
+    let s = String(val).trim();
+    if (s === '' || s.startsWith('__')) return null;
+    // Strip surrounding quotes if present
+    while ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.substring(1, s.length - 1).trim();
+    }
+    return s;
+  };
+
   // 1. Check window.__ENV__
   if (typeof window !== 'undefined' && window.__ENV__) {
     for (const k of candidateKeys) {
-      const val = window.__ENV__[k];
-      if (val !== undefined && val !== null && String(val).trim() !== '' && !String(val).startsWith('__')) {
-        return String(val).trim();
+      const val = cleanValue(window.__ENV__[k]);
+      if (val !== null) {
+        return val;
       }
     }
   }
@@ -50,9 +61,9 @@ export function getEnv(key: string, defaultValue: string = ''): string {
   // 2. Check window.__HUMID1_CONFIG__
   if (typeof window !== 'undefined' && window.__HUMID1_CONFIG__) {
     for (const k of candidateKeys) {
-      const val = window.__HUMID1_CONFIG__[k];
-      if (val !== undefined && val !== null && String(val).trim() !== '' && !String(val).startsWith('__')) {
-        return String(val).trim();
+      const val = cleanValue(window.__HUMID1_CONFIG__[k]);
+      if (val !== null) {
+        return val;
       }
     }
   }
@@ -62,9 +73,9 @@ export function getEnv(key: string, defaultValue: string = ''): string {
     const metaEnv = import.meta.env as any;
     if (metaEnv) {
       for (const k of candidateKeys) {
-        const viteVal = metaEnv[k];
-        if (viteVal !== undefined && viteVal !== null && String(viteVal).trim() !== '' && !String(viteVal).startsWith('__')) {
-          return String(viteVal).trim();
+        const val = cleanValue(metaEnv[k]);
+        if (val !== null) {
+          return val;
         }
       }
     }
