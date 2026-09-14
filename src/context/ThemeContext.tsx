@@ -45,9 +45,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return JSON.parse(savedThemeJson);
       }
       const savedId = localStorage.getItem('humid1-theme-id');
-      return getThemeById(savedId || 'cedar-dark', customPresets);
+      return getThemeById(savedId || 'tokyo-night', customPresets);
     } catch {
-      return getThemeById('cedar-dark');
+      return getThemeById('tokyo-night');
     }
   });
 
@@ -126,7 +126,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCustomPresets(updated);
     localStorage.setItem('humid1-custom-presets', JSON.stringify(updated));
     if (currentTheme.id === id) {
-      setTheme('cedar-dark');
+      setTheme('tokyo-night');
     }
   };
 

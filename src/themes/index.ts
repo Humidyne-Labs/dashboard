@@ -12,5 +12,5 @@ export const THEME_PRESETS: Theme[] = Object.values(presetModules).map((mod: any
 
 export const getThemeById = (id: string, customPresets: Theme[] = []): Theme => {
   const all = [...THEME_PRESETS, ...customPresets];
-  return all.find(t => t.id === id) || THEME_PRESETS[0];
+  return all.find(t => t.id === id) || all.find(t => t.id === 'tokyo-night') || all.find(t => t.id === 'catppuccin') || THEME_PRESETS[0];
 };

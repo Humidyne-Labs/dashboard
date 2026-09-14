@@ -440,7 +440,7 @@ export const ThemeWizardModal: React.FC<ThemeWizardModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => resetToPreset('cedar-dark')}
+                    onClick={() => resetToPreset('tokyo-night')}
                     className="px-3 py-1.5 text-xs font-medium rounded-lg bg-app-surface-elevated border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -468,7 +468,7 @@ export const ThemeWizardModal: React.FC<ThemeWizardModalProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => resetToPreset('cedar-dark')}
+                      onClick={() => resetToPreset('tokyo-night')}
                       className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-app-surface border border-app-border hover:border-app-border-highlight text-app-text-secondary hover:text-app-text-primary transition flex items-center gap-1 cursor-pointer whitespace-nowrap"
                     >
                       <RotateCcw className="w-3 h-3 shrink-0" />
