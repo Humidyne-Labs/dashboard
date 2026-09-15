@@ -52,7 +52,7 @@ self.addEventListener('push', (event) => {
     }
 
     // Ensure incoming severity is normalized to match strict checks
-    const validSeverities = ['CRITICAL', 'MAJOR', 'MINOR', 'WARNING', 'INDETERMINATE', 'INDETERMINATE'];
+    const validSeverities = ['CRITICAL', 'MAJOR', 'MINOR', 'WARNING', 'INFO', 'INDETERMINATE'];
     const rawSeverity = payload.severity 
       ? String(payload.severity).toUpperCase() 
       : 'INDETERMINATE';
