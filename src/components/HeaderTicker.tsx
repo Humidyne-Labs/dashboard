@@ -196,32 +196,23 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   );
 
   /**
-   * Generates a rich, multifaceted array of ticker "nodes" for the conveyor belt.
-   * Even with 1 device, provides a rotating sequence of informative telemetry,
-   * target thresholds, signal diagnostics, and fleet health.
+   * Generates a clean, uncluttered sequence with strictly ONE news node per device.
+   * Consolidates all key telemetry (status, RH, temperature, battery, RF link)
+   * into a single unified interactive capsule to eliminate clutter.
    */
   const renderTickerNodeSequence = (keyPrefix: string) => {
     if (activeOrSleepingDevices.length === 0) return null;
 
-    const baseNodes: React.ReactNode[] = [];
-
-    activeOrSleepingDevices.forEach((device, index) => {
+    return activeOrSleepingDevices.map((device, index) => {
       const isSelected = device.id === selectedDeviceId;
       const rh = device.telemetry.rh;
       const isDry = rh < 65;
       const isWet = rh > 75;
       const isHot = device.telemetry.temp > 75;
-      const thresholds = device.sharedAttributes?.alarm_thresholds;
-      const sleepMin =
-        device.sharedAttributes?.sleep_interval_min ||
-        (device.sharedAttributes?.sleep_interval_sec
-          ? Math.round(device.sharedAttributes.sleep_interval_sec / 60)
-          : 15);
 
-      // Node 1: Primary Telemetry Capsule
-      baseNodes.push(
+      return (
         <button
-          key={`${keyPrefix}-dev-main-${device.id}-${index}`}
+          key={`${keyPrefix}-dev-${device.id}-${index}`}
           onClick={() => onSelectDevice(device.id)}
           className={`inline-flex items-center gap-2.5 px-3 py-1 rounded-md transition-all text-xs font-medium cursor-pointer shrink-0 ${
             isSelected
@@ -252,95 +243,13 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
             {device.telemetry.battery}%
           </span>
 
-          <span className="font-mono text-app-text-primary0 text-[10px]">
+          <span className="inline-flex items-center gap-1 font-mono text-app-text-muted text-[10px]">
+            <Wifi className="w-3 h-3 text-app-text-muted" />
             {device.telemetry.rssi} dBm
           </span>
         </button>
       );
-
-      // Node 2: RH Safe Envelope & Climate Health Capsule
-      baseNodes.push(
-        <div
-          key={`${keyPrefix}-dev-rh-env-${device.id}-${index}`}
-          onClick={() => onSelectDevice(device.id)}
-          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-surface/50 border border-app-border/80 text-xs font-mono shrink-0 cursor-pointer hover:border-app-accent/30"
-          title="RH Stability Envelope"
-        >
-          <Droplets className="w-3.5 h-3.5 text-app-status-info" />
-          <span className="text-app-text-secondary">Target Envelope:</span>
-          <span className="text-app-accent font-bold">
-            {thresholds?.rhLowWarning ?? 65}%–{thresholds?.rhHighWarning ?? 73}% RH
-          </span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
-              rh >= 65 && rh <= 73
-                ? 'bg-app-bg/80 text-app-status-nominal border border-app-status-nominal/20'
-                : 'bg-app-bg/80 text-app-accent border border-app-accent/20'
-            }`}
-          >
-            {rh >= 65 && rh <= 73 ? 'Nominal Zone' : rh < 65 ? 'Dry Warning' : 'Humid Warning'}
-          </span>
-        </div>
-      );
-
-      // Node 3: Thermal Metrics & Scale Capsule
-      baseNodes.push(
-        <div
-          key={`${keyPrefix}-dev-thermal-${device.id}-${index}`}
-          onClick={() => onSelectDevice(device.id)}
-          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-surface/50 border border-app-border/80 text-xs font-mono shrink-0 cursor-pointer hover:border-app-accent/30"
-          title="Thermal Telemetry"
-        >
-          <Thermometer className="w-3.5 h-3.5 text-app-accent" />
-          <span className="text-app-text-secondary">{device.name} Temp:</span>
-          <span className="text-app-text-primary font-bold">{formatTemp(device.telemetry.temp)}</span>
-          <span className="text-app-text-primary0 text-[10px]">
-            (Canonical {toKelvinTemp(device.telemetry.temp).toFixed(1)} K)
-          </span>
-        </div>
-      );
-
-      // Node 4: Power Cycle & RF Radio Link Capsule
-      baseNodes.push(
-        <div
-          key={`${keyPrefix}-dev-power-${device.id}-${index}`}
-          onClick={() => onSelectDevice(device.id)}
-          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-surface/50 border border-app-border/80 text-xs font-mono shrink-0 cursor-pointer hover:border-app-accent/30"
-          title="Hardware Power & Radio Link"
-        >
-          <Wifi className="w-3.5 h-3.5 text-app-status-nominal" />
-          <span className="text-app-text-secondary">Wake Interval:</span>
-          <span className="text-app-status-info font-bold">{sleepMin}m Deep-Sleep</span>
-          <span className="text-app-text-muted">•</span>
-          <span className="text-app-text-secondary">RF:</span>
-          <span className="text-app-text-secondary font-bold">{device.telemetry.rssi} dBm</span>
-        </div>
-      );
     });
-
-    // Node 5: Fleet Overview & Auth Status Capsule
-    baseNodes.push(
-      <div
-        key={`${keyPrefix}-fleet-status`}
-        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-app-surface/60 border border-app-accent/20 text-xs font-mono text-app-text-primary shrink-0 select-none"
-      >
-        <Activity className="w-3.5 h-3.5 text-app-accent" />
-        <span className="font-semibold text-app-accent">Fleet Active:</span>
-        <span>
-          {activeOrSleepingDevices.length} / {devices.length} Devices Online
-        </span>
-        <span className="text-app-text-muted">•</span>
-        <span className="text-app-status-nominal">Telemetry Streaming</span>
-      </div>
-    );
-
-    // If few nodes exist, repeat to ensure track is generously wide before cloning for the infinite loop
-    let repeatedSequence: React.ReactNode[] = [...baseNodes];
-    while (repeatedSequence.length < 8) {
-      repeatedSequence = [...repeatedSequence, ...baseNodes];
-    }
-
-    return repeatedSequence;
   };
 
   return (
@@ -364,9 +273,9 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           {activeOrSleepingDevices.length > 0 ? 'Live Telemetry' : 'System Ready'}
         </div>
 
-        {/* Center Pac-Man Rotating Conveyor Belt */}
+        {/* Center Conveyor Belt */}
         <div className="overflow-hidden w-full select-none relative flex-1 min-w-0">
-          {activeOrSleepingDevices.length > 0 ? (
+          {activeOrSleepingDevices.length > 1 ? (
             <div
               className={`animate-ticker flex items-center gap-5 ${isPaused ? 'animate-ticker-paused' : ''}`}
               style={{
@@ -383,9 +292,13 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
                 {renderTickerNodeSequence('seg-b')}
               </div>
             </div>
+          ) : activeOrSleepingDevices.length === 1 ? (
+            <div className="flex items-center px-2">
+              {renderTickerNodeSequence('single')}
+            </div>
           ) : (
             <div className="px-3 text-app-text-secondary font-mono text-xs flex items-center gap-2">
-              <span className="text-app-text-primary0">SSO AUTHENTICATED:</span>
+              <span className="text-app-text-muted">SSO AUTHENTICATED:</span>
               <span className="text-app-status-nominal font-bold">
                 {auth.user?.profile?.email || authUsername || 'Active Session'}
               </span>
@@ -397,8 +310,9 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           )}
         </div>
 
-        {/* Right Conveyor Speed & Pause Controls Cluster */}
-        <div className="relative shrink-0 flex items-center gap-1.5 pl-3 border-l border-app-border bg-app-bg z-10" ref={speedMenuRef}>
+        {/* Right Conveyor Speed & Pause Controls Cluster (shown when multiple devices scroll) */}
+        {activeOrSleepingDevices.length > 1 && (
+          <div className="relative shrink-0 flex items-center gap-1.5 pl-3 border-l border-app-border bg-app-bg z-10" ref={speedMenuRef}>
           {/* Pause / Play Quick Toggle */}
           <button
             type="button"
@@ -506,11 +420,12 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
                   <RotateCcw className="w-2.5 h-2.5" />
                   <span>Reset Default</span>
                 </button>
-                <span className="font-mono text-app-text-primary0">Saved in Session</span>
+                <span className="font-mono text-app-text-muted">Saved in Session</span>
               </div>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Main Navigation Bar */}
