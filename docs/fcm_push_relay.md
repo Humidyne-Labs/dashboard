@@ -1,6 +1,6 @@
 # HUMID1 — Python FCM Push Relay Microservice Reference
 
-This document provides technical documentation for the Python Push Relay microservice (`HUMID1 Push Relay`) responsible for serving dynamic Google Firebase Cloud Messaging (FCM) Web Push VAPID credentials and relaying server-side alarms triggered by ThingsBoard.
+This document provides technical documentation for the Python Push Relay microservice (`webpush-relay`) responsible for serving dynamic Google Firebase Cloud Messaging (FCM) Web Push VAPID credentials and relaying server-side alarms triggered by ThingsBoard.
 
 ---
 
@@ -51,7 +51,7 @@ The frontend web dashboard only queries the microservice to verify its availabil
   {
     "status": "ok",
     "uptime_seconds": 128420,
-    "service": "humid1-push-relay"
+    "service": "webpush-relay"
   }
   ```
 
@@ -123,7 +123,7 @@ To configure ThingsBoard CE to invoke this endpoint when sensor thresholds are e
 2. **Customer Attributes Enrichment Node**:
    Fetch `fcm_subscription` from `SERVER_SCOPE` or `CUSTOMER_SCOPE`.
 3. **REST API Call Node**:
-   - **Endpoint URL:** `http://push-relay:6000/api/v1/notify` (or Docker service DNS name)
+   - **Endpoint URL:** `http://webpush-relay:6000/api/v1/notify` (or Docker service DNS name)
    - **Request Method:** `POST`
    - **Body Template:**
      ```json
