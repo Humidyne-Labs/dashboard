@@ -51,7 +51,16 @@ self.addEventListener('push', (event) => {
       }
     }
 
-    const severity = payload.severity || 'CRITICAL';
+    // Ensure incoming severity is normalized to match strict checks
+    const validSeverities = ['CRITICAL', 'MAJOR', 'MINOR', 'WARNING', 'INDETERMINATE', 'INDETERMINATE'];
+    const rawSeverity = payload.severity 
+      ? String(payload.severity).toUpperCase() 
+      : 'INDETERMINATE';
+
+    const severity = validSeverities.includes(rawSeverity) 
+      ? rawSeverity 
+      : 'INDETERMINATE';
+
     const cleanTitle = stripEmojis(payload.title);
     const cleanBody = stripEmojis(payload.body);
     const severityTag = `[${severity}]`;
