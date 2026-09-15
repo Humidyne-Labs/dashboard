@@ -55,11 +55,27 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      # Non-interactive configuration for Bubblewrap
-      - name: Configure Bubblewrap Paths
+      # Non-interactive configuration for Bubblewrap & Android SDK compatibility
+      - name: Configure Bubblewrap Paths & SDK Compatibility
         run: |
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+          
+          # Bubblewrap validates $ANDROID_HOME by checking for a 'tools' or 'bin' folder.
+          # In modern Android SDK images, tools are located under cmdline-tools/{version,latest}.
+          CMDLINE_DIR="$ANDROID_HOME/cmdline-tools/latest"
+          if [ ! -d "$CMDLINE_DIR" ]; then
+            CMDLINE_DIR=$(ls -d $ANDROID_HOME/cmdline-tools/* 2>/dev/null | sort -V | tail -n 1)
+          fi
+          
+          if [ -n "$CMDLINE_DIR" ] && [ -d "$CMDLINE_DIR" ]; then
+            echo "Linking cmdline-tools ($CMDLINE_DIR) to $ANDROID_HOME/tools and $ANDROID_HOME/bin for Bubblewrap compatibility..."
+            sudo ln -sf "$CMDLINE_DIR" "$ANDROID_HOME/tools"
+            sudo ln -sf "$CMDLINE_DIR/bin" "$ANDROID_HOME/bin"
+          fi
+          
+          # Ensure runner user has write permissions in ANDROID_HOME for build-tools
+          sudo chown -R runner:docker "$ANDROID_HOME"
 
       - name: Configure Keystore for Signing
         id: keystore
@@ -91,7 +107,7 @@ jobs:
 
       - name: Build Android TWA Project with Bubblewrap
         env:
-          BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
+          BUBBLEWRAP_KEYSTORE_PATH: "${{ github.workspace }}/android-build/android-keystore.jks"
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASS || 'humid1pass' }}
           BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
@@ -102,8 +118,8 @@ jobs:
           
           cd android-build
           
-          # Generate native files non-interactively using public repo assets
-          yes | bubblewrap update          
+          # Generate native files non-interactively preserving twa-manifest.json versioning
+          bubblewrap update --skipVersionUpgrade
           
           # Build APK with Bubblewrap
           bubblewrap build --manifest=twa-manifest.json --skipPwaValidation
@@ -111,7 +127,7 @@ jobs:
       - name: Build Android App Bundle (.aab) for Google Play Store
         if: github.event.inputs.build_bundle != 'false'
         env:
-          BUBBLEWRAP_KEYSTORE_PATH: "./android-build/android-keystore.jks"
+          BUBBLEWRAP_KEYSTORE_PATH: "${{ github.workspace }}/android-build/android-keystore.jks"
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASS || 'humid1pass' }}
           BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS || 'humid1-key' }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS || 'humid1pass' }}
