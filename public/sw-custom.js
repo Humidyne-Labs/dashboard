@@ -3,10 +3,21 @@
  * Handles Web Push Events, Notification Click Routing, and Periodic Background Sync
  */
 
+// Helper to strip emoji characters, unicode pictographs, and variation selectors
+function stripEmojis(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[\u{FE00}-\u{FE0F}\u{1F3FB}-\u{1F3FF}\u{200D}]/gu, '')
+    .replace(/[\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B50}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // Handle incoming Web Push notifications (e.g. from ThingsBoard Rule Engine or Web Push server)
 self.addEventListener('push', (event) => {
   let payload = {
-    title: '🚨 HUMID1 Climate Alert',
+    title: 'HUMID1 Climate Alert',
     body: 'A microclimate warning or threshold breach was detected on your humidor.',
     severity: 'CRITICAL',
     url: '/',
@@ -22,13 +33,15 @@ self.addEventListener('push', (event) => {
   }
 
   const severity = payload.severity || 'CRITICAL';
-  const badgePrefix = severity === 'CRITICAL' ? '🚨' : severity === 'MAJOR' ? '⚠️' : '⚡';
-  const formattedTitle = payload.title.startsWith('🚨') || payload.title.startsWith('⚠️')
-    ? payload.title
-    : `${badgePrefix} ${payload.title}`;
+  const cleanTitle = stripEmojis(payload.title);
+  const cleanBody = stripEmojis(payload.body);
+  const severityTag = `[${severity}]`;
+  const formattedTitle = cleanTitle.toUpperCase().includes(severityTag)
+    ? cleanTitle
+    : `${severityTag} ${cleanTitle}`;
 
   const options = {
-    body: payload.body,
+    body: cleanBody,
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
     tag: payload.tag || `humid1-push-${severity.toLowerCase()}-${Date.now()}`,

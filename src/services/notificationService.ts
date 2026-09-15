@@ -193,8 +193,8 @@ class NotificationService {
     }
 
     const title = isEscalation
-      ? `🚨 [ESCALATED TO CRITICAL] ${alarm.type.replace(/_/g, ' ')}`
-      : `🚨 [${alarm.severity}] ${alarm.type.replace(/_/g, ' ')}`;
+      ? `[ESCALATED TO CRITICAL] ${alarm.type.replace(/_/g, ' ')}`
+      : `[${alarm.severity}] ${alarm.type.replace(/_/g, ' ')}`;
 
     const body = `${deviceName || alarm.deviceName || 'Humidor'}: ${
       alarm.details?.message || 'Climate condition violated threshold envelope'

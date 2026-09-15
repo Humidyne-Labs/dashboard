@@ -10,6 +10,20 @@ export interface HumidorAlertPayload {
   timestamp?: number;
 }
 
+/**
+ * Strips emoji characters, unicode pictographs, dingbats, and variation selectors
+ * from notification strings to prevent broken 'tofu' glyph boxes on Android system trays.
+ */
+export function stripEmojis(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[\u{FE00}-\u{FE0F}\u{1F3FB}-\u{1F3FF}\u{200D}]/gu, '')
+    .replace(/[\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{2B50}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 class PushNotificationManager {
   private permission: NotificationPermissionState = 'default';
   private registration: ServiceWorkerRegistration | null = null;
@@ -155,15 +169,22 @@ class PushNotificationManager {
     }
 
     const { title, body, severity, deviceName, tag } = payload;
-    const badgeColor =
-      severity === 'CRITICAL' ? '🚨' : severity === 'MAJOR' ? '⚠️' : severity === 'WARNING' ? '⚡' : 'ℹ️';
+    
+    // Clean all unicode emojis and symbols from title, body, and device name
+    const cleanTitle = stripEmojis(title);
+    const cleanBody = stripEmojis(body);
+    const cleanDevice = deviceName ? stripEmojis(deviceName) : undefined;
 
-    // Clean title prefix
-    const cleanTitle = title.replace(/^[🚨⚠️⚡ℹ️]\s*/, '');
-    const formattedTitle = `${badgeColor} ${cleanTitle}${deviceName && !cleanTitle.includes(deviceName) ? ` — ${deviceName}` : ''}`;
+    // Use clean textual tags ([CRITICAL], [MAJOR], [WARNING], [INFO]) without emojis
+    const severityTag = `[${severity}]`;
+    const hasSeverity = cleanTitle.toUpperCase().includes(severityTag);
+    const titleWithTag = hasSeverity ? cleanTitle : `${severityTag} ${cleanTitle}`;
+    const formattedTitle = cleanDevice && !titleWithTag.includes(cleanDevice)
+      ? `${titleWithTag} — ${cleanDevice}`
+      : titleWithTag;
 
     const options: NotificationOptions = {
-      body,
+      body: cleanBody,
       // Note: Android system tray requires bitmap PNG; SVG causes silent rejection or blank box
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',

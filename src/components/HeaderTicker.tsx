@@ -198,12 +198,26 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
   /**
    * Generates a clean, uncluttered sequence with strictly ONE news node per device.
    * Consolidates all key telemetry (status, RH, temperature, battery, RF link)
-   * into a single unified interactive capsule to eliminate clutter.
+   * into a single unified interactive capsule.
+   * Repeats nodes when device count is low to guarantee a seamless continuous
+   * loop without empty gaps across narrow mobile screens or wide desktop viewports.
    */
   const renderTickerNodeSequence = (keyPrefix: string) => {
     if (activeOrSleepingDevices.length === 0) return null;
 
-    return activeOrSleepingDevices.map((device, index) => {
+    // For seamless continuous conveyor looping across all viewport widths:
+    // When only 1 device is registered, repeat it 3 times per segment.
+    // When 2 devices are registered, repeat 2 times per segment.
+    const repetitions = activeOrSleepingDevices.length === 1 ? 3 : activeOrSleepingDevices.length === 2 ? 2 : 1;
+    const stream: Array<{ device: typeof activeOrSleepingDevices[0]; rep: number; index: number }> = [];
+
+    for (let r = 0; r < repetitions; r++) {
+      activeOrSleepingDevices.forEach((device, index) => {
+        stream.push({ device, rep: r, index });
+      });
+    }
+
+    return stream.map(({ device, rep, index }) => {
       const isSelected = device.id === selectedDeviceId;
       const rh = device.telemetry.rh;
       const isDry = rh < 65;
@@ -212,7 +226,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
 
       return (
         <button
-          key={`${keyPrefix}-dev-${device.id}-${index}`}
+          key={`${keyPrefix}-dev-${device.id}-r${rep}-${index}`}
           onClick={() => onSelectDevice(device.id)}
           className={`inline-flex items-center gap-2.5 px-3 py-1 rounded-md transition-all text-xs font-medium cursor-pointer shrink-0 ${
             isSelected
@@ -275,7 +289,7 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
 
         {/* Center Conveyor Belt */}
         <div className="overflow-hidden w-full select-none relative flex-1 min-w-0">
-          {activeOrSleepingDevices.length > 1 ? (
+          {activeOrSleepingDevices.length > 0 ? (
             <div
               className={`animate-ticker flex items-center gap-5 ${isPaused ? 'animate-ticker-paused' : ''}`}
               style={{
@@ -292,10 +306,6 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
                 {renderTickerNodeSequence('seg-b')}
               </div>
             </div>
-          ) : activeOrSleepingDevices.length === 1 ? (
-            <div className="flex items-center px-2">
-              {renderTickerNodeSequence('single')}
-            </div>
           ) : (
             <div className="px-3 text-app-text-secondary font-mono text-xs flex items-center gap-2">
               <span className="text-app-text-muted">SSO AUTHENTICATED:</span>
@@ -310,9 +320,9 @@ export const HeaderTicker: React.FC<HeaderTickerProps> = ({
           )}
         </div>
 
-        {/* Right Conveyor Speed & Pause Controls Cluster (shown when multiple devices scroll) */}
-        {activeOrSleepingDevices.length > 1 && (
-          <div className="relative shrink-0 flex items-center gap-1.5 pl-3 border-l border-app-border bg-app-bg z-10" ref={speedMenuRef}>
+        {/* Right Conveyor Speed & Pause Controls Cluster */}
+        {activeOrSleepingDevices.length > 0 && (
+          <div className="relative shrink-0 flex items-center gap-1.5 pl-2 sm:pl-3 border-l border-app-border bg-app-bg z-10" ref={speedMenuRef}>
           {/* Pause / Play Quick Toggle */}
           <button
             type="button"
