@@ -14,51 +14,77 @@ function stripEmojis(str) {
     .trim();
 }
 
-// Handle incoming Web Push notifications (e.g. from ThingsBoard Rule Engine or Web Push server)
+// Handle incoming Web Push notifications (e.g. from ThingsBoard Rule Engine or Web Push microservice)
 self.addEventListener('push', (event) => {
-  let payload = {
-    title: 'HUMID1 Climate Alert',
-    body: 'A microclimate warning or threshold breach was detected on your humidor.',
-    severity: 'CRITICAL',
-    url: '/',
-  };
+  event.waitUntil((async () => {
+    // 1. Query all active window instances of the PWA
+    const clientList = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
 
-  if (event.data) {
-    try {
-      const json = event.data.json();
-      payload = { ...payload, ...json };
-    } catch {
-      payload.body = event.data.text() || payload.body;
+    // 2. Check if the user is actively looking at the dashboard tab
+    const isAppFocused = clientList.some((client) => client.focused);
+
+    // 3. If active on screen, suppress the OS system tray notification.
+    // The active in-app telemetry/alarm connection handles the in-app banner & audio prompt.
+    if (isAppFocused) {
+      console.log('[SW] App is in focus. Suppressing Web Push system notification.');
+      return;
     }
-  }
 
-  const severity = payload.severity || 'CRITICAL';
-  const cleanTitle = stripEmojis(payload.title);
-  const cleanBody = stripEmojis(payload.body);
-  const severityTag = `[${severity}]`;
-  const formattedTitle = cleanTitle.toUpperCase().includes(severityTag)
-    ? cleanTitle
-    : `${severityTag} ${cleanTitle}`;
+    // 4. App is backgrounded, minimized, or closed -> Show OS system alert
+    let payload = {
+      title: 'HUMID1 Climate Alert',
+      body: 'A microclimate warning or threshold breach was detected on your humidor.',
+      severity: 'CRITICAL',
+      url: '/',
+      deviceId: '',
+    };
 
-  const options = {
-    body: cleanBody,
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
-    tag: payload.tag || `humid1-push-${severity.toLowerCase()}-${Date.now()}`,
-    vibrate: severity === 'CRITICAL' ? [300, 100, 300, 100, 300] : [200, 100, 200],
-    requireInteraction: severity === 'CRITICAL',
-    renotify: true,
-    data: {
-      url: payload.url || '/',
-      severity,
-      timestamp: Date.now(),
-    },
-    actions: [
-      { action: 'open_dashboard', title: 'Open Dashboard' },
-    ],
-  };
+    if (event.data) {
+      try {
+        const json = event.data.json();
+        payload = { ...payload, ...json };
+      } catch {
+        payload.body = event.data.text() || payload.body;
+      }
+    }
 
-  event.waitUntil(self.registration.showNotification(formattedTitle, options));
+    const severity = payload.severity || 'CRITICAL';
+    const cleanTitle = stripEmojis(payload.title);
+    const cleanBody = stripEmojis(payload.body);
+    const severityTag = `[${severity}]`;
+    const formattedTitle = cleanTitle.toUpperCase().includes(severityTag)
+      ? cleanTitle
+      : `${severityTag} ${cleanTitle}`;
+
+    // Tag per device or general to keep alerts deduplicated cleanly
+    const deviceId = payload.deviceId || payload.deviceName || '';
+    const tag = payload.tag || (deviceId ? `humid1-alarm-${deviceId}` : 'humid1-alarm');
+    const targetUrl = payload.url || (deviceId ? `/?device=${encodeURIComponent(deviceId)}` : '/');
+
+    const options = {
+      body: cleanBody,
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      tag: tag,
+      renotify: true,
+      vibrate: severity === 'CRITICAL' ? [300, 100, 300, 100, 300] : [200, 100, 200],
+      requireInteraction: severity === 'CRITICAL',
+      data: {
+        url: targetUrl,
+        deviceId,
+        severity,
+        timestamp: Date.now(),
+      },
+      actions: [
+        { action: 'open_dashboard', title: 'Open Dashboard' },
+      ],
+    };
+
+    return self.registration.showNotification(formattedTitle, options);
+  })());
 });
 
 // Handle notification interaction (tap/click) on Android / Desktop

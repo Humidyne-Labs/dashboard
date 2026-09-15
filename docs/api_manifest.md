@@ -581,10 +581,17 @@ The dashboard provides a portable XML schema (`<humid1-device-config>`) allowing
 
 ---
 
+## 7. Web Push Notification & FCM Relay Microservice
+
+For the architecture, JSON payloads, and endpoint specifications of the Python Push Relay (`/healthz`, `/api/v1/vapid-public-key`, and ThingsBoard Rule Engine dispatch `/api/v1/notify`), refer to the dedicated specification:
+👉 **[`docs/fcm_push_relay.md`](./fcm_push_relay.md)**
+
+---
+
 <details>
   <summary>Not Actually Implemented</summary>
 
-## 7. Over-The-Air (OTA) Updates Triggering
+## 8. Over-The-Air (OTA) Updates Triggering
 
 The dashboard initiates hardware over-the-air firmware updates via a simple shared attribute transaction. 
 

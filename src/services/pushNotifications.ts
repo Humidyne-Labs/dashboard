@@ -1,3 +1,6 @@
+import { thingsboard } from './thingsboard';
+import { getEnv } from '../utils/env';
+
 export type NotificationPermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
 export interface HumidorAlertPayload {
@@ -8,6 +11,153 @@ export interface HumidorAlertPayload {
   deviceName?: string;
   tag?: string;
   timestamp?: number;
+}
+
+/**
+ * Default local Python micro-service relay endpoint hosting the FCM VAPID public key
+ */
+export const DEFAULT_MICROSERVICE_URL = 'http://localhost:6000';
+
+/**
+ * Fallback static VAPID key in case microservice is temporarily offline during cold boot
+ */
+export const FALLBACK_VAPID_PUBLIC_KEY =
+  'BPCsGTkqZflbV7jYaPUjj5dXE2kcN-lfyfn8anIZOBiqlwjf1r3JB6PMdPEYin4eKXBoFzcesbsTKBTH7FigRFY';
+
+export function getMicroserviceUrl(): string {
+  const envUrl = getEnv('VITE_PUSH_MICROSERVICE_URL', getEnv('PUSH_MICROSERVICE_URL', ''));
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim().replace(/\/$/, '');
+  }
+  return DEFAULT_MICROSERVICE_URL;
+}
+
+/**
+ * Endpoint 1: Health check
+ * Checks GET /healthz before issuing any other requests or pushing data.
+ */
+export async function checkMicroserviceHealth(microserviceBaseUrl?: string): Promise<{
+  healthy: boolean;
+  status?: string;
+  error?: string;
+}> {
+  const baseUrl = (microserviceBaseUrl || getMicroserviceUrl()).replace(/\/$/, '');
+  const url = `${baseUrl}/healthz`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json, text/plain, */*' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // ignore if not json
+      }
+      return {
+        healthy: true,
+        status: data?.status || 'ok',
+      };
+    }
+    return {
+      healthy: false,
+      error: `HTTP ${res.status}: ${res.statusText}`,
+    };
+  } catch (err: any) {
+    const isAbort = err.name === 'AbortError';
+    return {
+      healthy: false,
+      error: isAbort ? 'Connection timed out (4s)' : err?.message || 'Connection refused',
+    };
+  }
+}
+
+/**
+ * Endpoint 2: GET /api/v1/vapid-public-key
+ * First checks /healthz to ensure the micro-service is active before issuing the request.
+ */
+export async function fetchVapidPublicKey(microserviceBaseUrl?: string): Promise<{
+  key: string;
+  endpoint: string;
+  fromCache?: boolean;
+  error?: string;
+}> {
+  const baseUrl = (microserviceBaseUrl || getMicroserviceUrl()).replace(/\/$/, '');
+
+  // 1. Proactively verify micro-service health before issuing request
+  const health = await checkMicroserviceHealth(baseUrl);
+  if (!health.healthy) {
+    console.warn(`[PushManager] Microservice health check failed at ${baseUrl}/healthz (${health.error}). Checking cache.`);
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('humid1_cached_vapid_key');
+      if (cached && cached.length >= 60) {
+        const cachedSrc = localStorage.getItem('humid1_vapid_key_source') || 'cached';
+        return { key: cached, endpoint: cachedSrc, fromCache: true, error: health.error };
+      }
+    }
+    return { key: FALLBACK_VAPID_PUBLIC_KEY, endpoint: 'fallback', fromCache: true, error: health.error };
+  }
+
+  // 2. Fetch public key from the designated endpoint: /api/v1/vapid-public-key
+  const keyUrl = `${baseUrl}/api/v1/vapid-public-key`;
+  try {
+    const res = await fetch(keyUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const extractedKey = data.public_key || data.publicKey || '';
+
+      if (extractedKey && extractedKey.length >= 60) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('humid1_cached_vapid_key', extractedKey);
+          localStorage.setItem('humid1_vapid_key_source', keyUrl);
+          localStorage.setItem('humid1_vapid_fetched_at', String(Date.now()));
+        }
+        console.log(`[PushManager] Dynamically fetched VAPID public key from microservice (${keyUrl})`);
+        return { key: extractedKey, endpoint: keyUrl };
+      }
+    }
+  } catch (err: any) {
+    console.warn(`[PushManager] Error fetching from ${keyUrl}:`, err);
+  }
+
+  // Fallback to locally cached key if needed
+  if (typeof window !== 'undefined') {
+    const cached = localStorage.getItem('humid1_cached_vapid_key');
+    if (cached && cached.length >= 60) {
+      const cachedSrc = localStorage.getItem('humid1_vapid_key_source') || 'cached';
+      return { key: cached, endpoint: cachedSrc, fromCache: true };
+    }
+  }
+
+  return { key: FALLBACK_VAPID_PUBLIC_KEY, endpoint: 'fallback', fromCache: true };
+}
+
+/**
+ * Converts a URL-safe Base64 encoded VAPID public key into a Uint8Array
+ * required by the browser pushManager.subscribe applicationServerKey.
+ */
+export function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const buffer = new ArrayBuffer(rawData.length);
+  const outputArray = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 /**
@@ -112,6 +262,10 @@ class PushNotificationManager {
       if (result === 'granted') {
         // Attempt to register periodic background sync if available on Android
         this.registerPeriodicSync().catch(() => {});
+        // Auto-subscribe and sync to ThingsBoard attributes
+        this.syncSubscriptionWithThingsBoard().catch((e) => {
+          console.warn('Initial FCM push sync note:', e);
+        });
       }
 
       return this.permission;
@@ -155,6 +309,141 @@ class PushNotificationManager {
     } catch (err) {
       console.warn('Error fetching push subscription:', err);
       return null;
+    }
+  }
+
+  /**
+   * Subscribe or refresh subscription with Google FCM using dynamic VAPID Public Key from microservice
+   */
+  public async subscribeToPush(
+    customVapidPublicKey?: string,
+    forceRefresh: boolean = false
+  ): Promise<PushSubscription | null> {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return null;
+    }
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (!reg || !('pushManager' in reg)) {
+        console.warn('[PushManager] pushManager not supported in this browser.');
+        return null;
+      }
+
+      // 1. Check existing subscription
+      const existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) {
+        if (forceRefresh) {
+          await existingSub.unsubscribe();
+          console.log('[PushManager] Cleared old subscription.');
+        } else {
+          return existingSub;
+        }
+      }
+
+      // 2. Fetch VAPID key dynamically from microservice if not explicitly provided
+      let vapidKey = customVapidPublicKey;
+      if (!vapidKey) {
+        const fetched = await fetchVapidPublicKey();
+        vapidKey = fetched.key;
+      }
+
+      // 3. Subscribe with the dynamic VAPID public key
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+      const freshSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey as unknown as BufferSource,
+      });
+
+      console.log('[PushManager] Successfully obtained fresh FCM Web Push subscription:');
+      console.log(JSON.stringify(freshSub));
+      return freshSub;
+    } catch (err) {
+      console.error('[PushManager] Failed to subscribe with VAPID key:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Syncs the fresh Web Push subscription to ThingsBoard USER and CUSTOMER SERVER_SCOPE attributes.
+   * This allows ThingsBoard 24/7 rule chains to push alarms via Google FCM without device scoping.
+   */
+  public async syncSubscriptionWithThingsBoard(forceRefresh: boolean = false): Promise<{
+    success: boolean;
+    subscription?: any;
+    endpoint?: string;
+    vapidSource?: string;
+    error?: string;
+  }> {
+    try {
+      if (typeof window === 'undefined' || !('Notification' in window)) {
+        return { success: false, error: 'Notifications not supported on this device' };
+      }
+
+      if (Notification.permission !== 'granted') {
+        return { success: false, error: 'Notification permission is not granted' };
+      }
+
+      const token = thingsboard.getEffectiveToken();
+      if (!token) {
+        return { success: false, error: 'ThingsBoard user authentication token not available' };
+      }
+
+      // Dynamically retrieve VAPID key from running Python microservice
+      const keyInfo = await fetchVapidPublicKey();
+
+      const freshSub = await this.subscribeToPush(keyInfo.key, forceRefresh);
+      if (!freshSub) {
+        return { success: false, error: 'Failed to acquire push subscription from browser' };
+      }
+
+      const subJson = freshSub.toJSON ? freshSub.toJSON() : JSON.parse(JSON.stringify(freshSub));
+      const subString = JSON.stringify(subJson);
+
+      const attributesPayload = {
+        push_subscription: subString,
+        push_endpoint: freshSub.endpoint,
+        push_p256dh: subJson.keys?.p256dh || '',
+        push_auth: subJson.keys?.auth || '',
+        push_vapid_key: keyInfo.key,
+        push_vapid_source: keyInfo.endpoint,
+        fcm_push_enabled: true,
+        push_subscription_updated: Date.now(),
+        push_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'HUMID1-PWA',
+      };
+
+      // 1. Assign to USER SERVER_SCOPE attributes
+      const userSaved = await thingsboard.saveUserServerAttributes(attributesPayload);
+
+      // 2. Assign to CUSTOMER SERVER_SCOPE attributes (if user belongs to a customer)
+      const customerSaved = await thingsboard.saveCustomerServerAttributes(attributesPayload);
+
+      const success = userSaved || customerSaved;
+      if (success) {
+        try {
+          localStorage.setItem(
+            'humid1_fcm_sub_cache',
+            JSON.stringify({
+              endpoint: freshSub.endpoint,
+              vapidSource: keyInfo.endpoint,
+              syncedAt: Date.now(),
+            })
+          );
+        } catch {
+          // ignore
+        }
+      }
+
+      return {
+        success,
+        subscription: subJson,
+        endpoint: freshSub.endpoint,
+        vapidSource: keyInfo.endpoint,
+        error: success ? undefined : 'Failed saving attributes to ThingsBoard server',
+      };
+    } catch (err: any) {
+      console.error('[PushManager] syncSubscriptionWithThingsBoard failed:', err);
+      return { success: false, error: err?.message || String(err) };
     }
   }
 

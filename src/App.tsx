@@ -20,6 +20,7 @@ import { AboutModal } from './components/AboutModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
 import { ThemeWizardModal } from './components/ThemeWizardModal';
 import { alarmThresholdService } from './services/alarmThresholds';
+import { pushNotifications } from './services/pushNotifications';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { getEnv } from './utils/env';
 import { Flame, Cpu, Info, AlertTriangle } from 'lucide-react';
@@ -72,6 +73,7 @@ export default function App() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isApiInspectorOpen, setIsApiInspectorOpen] = useState(false);
+  const [apiInspectorTab, setApiInspectorTab] = useState<'logs' | 'token' | 'relay'>('logs');
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isDevWarningOpen, setIsDevWarningOpen] = useState(false);
@@ -115,8 +117,20 @@ export default function App() {
       setDevices((prev) => (areDevicesEqual(prev, updatedDevices) ? prev : updatedDevices));
       setAlarms((prev) => (areAlarmsEqual(prev, updatedAlarms) ? prev : updatedAlarms));
 
-      // Select first device if none selected
+      // Select device matching ?device= query param or first device if none selected
       setSelectedDeviceId((prevId) => {
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const targetParam = urlParams.get('device');
+          if (targetParam) {
+            const matched = updatedDevices.find(
+              (d) => d.id === targetParam || d.name.toLowerCase() === targetParam.toLowerCase()
+            );
+            if (matched) {
+              return matched.id;
+            }
+          }
+        }
         if (!prevId && updatedDevices.length > 0) {
           return updatedDevices[0].id;
         }
@@ -131,6 +145,15 @@ export default function App() {
       unsubDevices();
     };
   }, []);
+
+  // Request fresh Google FCM Web Push token on dashboard load and sync with ThingsBoard
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      pushNotifications.syncSubscriptionWithThingsBoard().catch((err) => {
+        console.info('[App] Background FCM push subscription sync note:', err);
+      });
+    }
+  }, [auth.isAuthenticated, tbProfile?.id]);
 
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0];
 
@@ -307,11 +330,16 @@ export default function App() {
           onClose={() => setIsConfigModalOpen(false)}
           onOpenDiagnostics={() => {
             setIsConfigModalOpen(false);
+            setApiInspectorTab('logs');
             setIsApiInspectorOpen(true);
           }}
         />
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-        <ApiInspectorModal isOpen={isApiInspectorOpen} onClose={() => setIsApiInspectorOpen(false)} />
+        <ApiInspectorModal
+          isOpen={isApiInspectorOpen}
+          onClose={() => setIsApiInspectorOpen(false)}
+          initialTab={apiInspectorTab}
+        />
         <DevelopmentWarningModal
           isOpen={isDevWarningOpen}
           onClose={() => setIsDevWarningOpen(false)}
@@ -324,6 +352,11 @@ export default function App() {
         <PushNotificationModal
           isOpen={isPushModalOpen}
           onClose={() => setIsPushModalOpen(false)}
+          onOpenApiDiagnostics={() => {
+            setIsPushModalOpen(false);
+            setApiInspectorTab('relay');
+            setIsApiInspectorOpen(true);
+          }}
         />
         <ThemeWizardModal
           isOpen={isThemeWizardOpen}

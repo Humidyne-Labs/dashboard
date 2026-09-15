@@ -16,6 +16,9 @@ import {
   Loader2,
   ShieldAlert,
   ShieldCheck,
+  Server,
+  Activity,
+  RefreshCw,
 } from 'lucide-react';
 import { ApiTransaction } from '../types';
 import { apiLogger } from '../services/apiLogger';
@@ -26,11 +29,16 @@ import {
   isThingsBoardToken,
   normalizeBearerToken,
 } from '../utils/authTokens';
+import {
+  checkMicroserviceHealth,
+  fetchVapidPublicKey,
+  getMicroserviceUrl,
+} from '../services/pushNotifications';
 
 interface ApiInspectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'logs' | 'token';
+  initialTab?: 'logs' | 'token' | 'relay';
 }
 
 export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
@@ -38,7 +46,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
   onClose,
   initialTab = 'logs',
 }) => {
-  const [activeTab, setActiveTab] = useState<'logs' | 'token'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'logs' | 'token' | 'relay'>(initialTab);
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [filterMethod, setFilterMethod] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -57,6 +65,26 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
     error?: string;
   } | null>(null);
   const [activationFeedback, setActivationFeedback] = useState<string | null>(null);
+
+  // Microservice Relay Diagnostics State
+  const [relayHealth, setRelayHealth] = useState<{
+    checked: boolean;
+    healthy: boolean;
+    latencyMs?: number;
+    status?: string;
+    error?: string;
+  } | null>(null);
+  const [isPingingHealth, setIsPingingHealth] = useState(false);
+  const [relayKeyInfo, setRelayKeyInfo] = useState<{
+    fetched: boolean;
+    key?: string;
+    endpoint?: string;
+    fromCache?: boolean;
+    error?: string;
+    latencyMs?: number;
+  } | null>(null);
+  const [isQueryingKey, setIsQueryingKey] = useState(false);
+  const [copiedVapidKey, setCopiedVapidKey] = useState(false);
 
   useEffect(() => {
     if (initialTab) {
@@ -89,6 +117,65 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
       setActivationFeedback(null);
     }
   }, [isOpen]);
+
+  const handlePingRelayHealth = async () => {
+    setIsPingingHealth(true);
+    const start = performance.now();
+    try {
+      const res = await checkMicroserviceHealth();
+      const latency = Math.round(performance.now() - start);
+      setRelayHealth({
+        checked: true,
+        healthy: res.healthy,
+        latencyMs: latency,
+        status: res.status,
+        error: res.error,
+      });
+    } catch (err: any) {
+      setRelayHealth({
+        checked: true,
+        healthy: false,
+        latencyMs: 0,
+        error: err?.message || 'Failed to ping microservice',
+      });
+    } finally {
+      setIsPingingHealth(false);
+    }
+  };
+
+  const handleQueryRelayKey = async () => {
+    setIsQueryingKey(true);
+    const start = performance.now();
+    try {
+      const res = await fetchVapidPublicKey();
+      const latency = Math.round(performance.now() - start);
+      setRelayKeyInfo({
+        fetched: true,
+        key: res.key,
+        endpoint: res.endpoint,
+        fromCache: res.fromCache,
+        error: res.error,
+        latencyMs: latency,
+      });
+    } catch (err: any) {
+      setRelayKeyInfo({
+        fetched: true,
+        key: '',
+        endpoint: 'error',
+        fromCache: false,
+        error: err?.message || 'Failed to query key',
+        latencyMs: 0,
+      });
+    } finally {
+      setIsQueryingKey(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && activeTab === 'relay' && !relayHealth && !isPingingHealth) {
+      handlePingRelayHealth();
+    }
+  }, [isOpen, activeTab]);
 
   if (!isOpen) return null;
 
@@ -257,6 +344,29 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
               )
             ) : (
               <span className="w-2 h-2 rounded bg-app-status-critical"></span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('relay')}
+            className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition cursor-pointer ${
+              activeTab === 'relay'
+                ? 'border-app-accent text-app-accent bg-app-accent/5'
+                : 'border-transparent text-app-text-secondary hover:text-app-text-primary'
+            }`}
+          >
+            <Server className="w-4 h-4" />
+            <span>Python Push Relay</span>
+            {relayHealth?.checked ? (
+              relayHealth.healthy ? (
+                <span className="w-2 h-2 rounded bg-app-status-nominal" title="Online"></span>
+              ) : (
+                <span className="w-2 h-2 rounded bg-app-status-critical" title="Offline"></span>
+              )
+            ) : (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-app-surface-elevated font-mono text-app-text-muted border border-app-border">
+                :6000
+              </span>
             )}
           </button>
         </div>
@@ -736,6 +846,184 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                   </pre>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PYTHON MICROSERVICE RELAY DIAGNOSTICS */}
+        {activeTab === 'relay' && (
+          <div className="flex-1 p-6 overflow-y-auto space-y-6">
+            {/* Top Overview & Security Architecture */}
+            <div className="bg-app-bg p-5 rounded-2xl border border-app-border space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-app-accent/15 text-app-accent border border-app-accent/30">
+                    <Server className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-app-text-primary flex items-center gap-2">
+                      <span>Python Microservice Relay Diagnostics</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-app-surface font-mono text-app-text-secondary border border-app-border">
+                        Internal Microservice
+                      </span>
+                    </h4>
+                    <p className="text-xs text-app-text-secondary">
+                      Serves dynamic Google FCM VAPID keys and acts as the push relay for ThingsBoard Rule Engine alerts
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-xl bg-app-surface border border-app-border text-xs font-mono text-app-text-secondary flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-app-status-nominal"></span>
+                    <span className="font-bold text-app-text-primary">{getMicroserviceUrl()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-app-surface/60 border border-app-border text-xs text-app-text-secondary flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-app-status-nominal shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-app-text-primary">
+                    Security Policy: Immutable System Host Binding
+                  </p>
+                  <p className="text-[11px] leading-relaxed">
+                    The microservice host URL is permanently locked to the trusted system environment (<code className="text-app-accent font-mono">{getMicroserviceUrl()}</code>). Client-side URL overrides in the user interface have been disabled to prevent arbitrary SSRF and unauthorized host redirects.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Microservice Endpoints Testing Suite */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Endpoint 1: GET /healthz */}
+              <div className="bg-app-bg p-5 rounded-2xl border border-app-border flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-app-accent/15 text-app-accent font-mono font-bold text-[11px]">
+                        GET
+                      </span>
+                      <span className="font-mono text-xs font-bold text-app-text-primary">/healthz</span>
+                    </div>
+                    {relayHealth?.checked && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
+                          relayHealth.healthy
+                            ? 'bg-app-status-nominal/15 border-app-status-nominal/30 text-app-status-nominal'
+                            : 'bg-app-status-critical/15 border-app-status-critical/30 text-app-status-critical'
+                        }`}
+                      >
+                        {relayHealth.healthy ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {relayHealth.healthy ? '200 OK' : 'OFFLINE'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-app-text-secondary leading-relaxed">
+                    Fast health-check ping. The web dashboard always queries <code className="text-app-accent font-mono text-[11px]">/healthz</code> with a 4-second abort controller before requesting VAPID credentials to ensure zero unhandled hangs.
+                  </p>
+                </div>
+
+                {relayHealth?.checked && (
+                  <div
+                    className={`p-3 rounded-xl border text-xs font-mono space-y-1 ${
+                      relayHealth.healthy
+                        ? 'bg-app-surface/60 border-app-status-nominal/20 text-app-text-primary'
+                        : 'bg-app-surface/60 border-app-status-critical/20 text-app-status-critical'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span>Latency: {relayHealth.latencyMs}ms</span>
+                      <span>Target: {getMicroserviceUrl()}/healthz</span>
+                    </div>
+                    <div className="text-[11px]">
+                      {relayHealth.healthy
+                        ? `Status: ${relayHealth.status || 'OK'}`
+                        : `Error: ${relayHealth.error || 'Connection refused'}`}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handlePingRelayHealth}
+                  disabled={isPingingHealth}
+                  className="w-full py-2.5 px-4 rounded-xl bg-app-surface hover:bg-app-surface-elevated border border-app-border text-app-text-primary text-xs font-bold font-mono transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Activity className={`w-4 h-4 text-app-accent ${isPingingHealth ? 'animate-spin' : ''}`} />
+                  <span>{isPingingHealth ? 'Pinging /healthz...' : 'Test GET /healthz'}</span>
+                </button>
+              </div>
+
+              {/* Endpoint 2: GET /api/v1/vapid-public-key */}
+              <div className="bg-app-bg p-5 rounded-2xl border border-app-border flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-app-accent/15 text-app-accent font-mono font-bold text-[11px]">
+                        GET
+                      </span>
+                      <span className="font-mono text-xs font-bold text-app-text-primary">
+                        /api/v1/vapid-public-key
+                      </span>
+                    </div>
+                    {relayKeyInfo?.fetched && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
+                          relayKeyInfo.key && !relayKeyInfo.error
+                            ? 'bg-app-status-nominal/15 border-app-status-nominal/30 text-app-status-nominal'
+                            : 'bg-app-status-critical/15 border-app-status-critical/30 text-app-status-critical'
+                        }`}
+                      >
+                        {relayKeyInfo.key && !relayKeyInfo.error ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {relayKeyInfo.fromCache ? 'FROM CACHE' : 'LIVE KEY'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-app-text-secondary leading-relaxed">
+                    Provides the dynamic Google FCM public key. The browser service worker passes this key into <code className="text-app-accent font-mono text-[11px]">pushManager.subscribe()</code> so push messages can be encrypted by ThingsBoard.
+                  </p>
+                </div>
+
+                {relayKeyInfo?.fetched && relayKeyInfo.key && (
+                  <div className="p-3 rounded-xl bg-app-surface/60 border border-app-border text-xs font-mono space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-app-text-muted">
+                      <span>Source: {relayKeyInfo.endpoint}</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (relayKeyInfo?.key) {
+                            try {
+                              await navigator.clipboard.writeText(relayKeyInfo.key);
+                              setCopiedVapidKey(true);
+                              setTimeout(() => setCopiedVapidKey(false), 2000);
+                            } catch {
+                              // clipboard denied or unavailable
+                            }
+                          }
+                        }}
+                        className="text-app-accent hover:underline flex items-center gap-1 text-[10px]"
+                      >
+                        {copiedVapidKey ? <Check className="w-3 h-3 text-app-status-nominal" /> : <Copy className="w-3 h-3" />}
+                        {copiedVapidKey ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <div className="text-app-text-secondary break-all text-[10px] bg-app-bg p-2 rounded-lg border border-app-border font-mono max-h-16 overflow-y-auto">
+                      {relayKeyInfo.key}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleQueryRelayKey}
+                  disabled={isQueryingKey}
+                  className="w-full py-2.5 px-4 rounded-xl bg-app-surface hover:bg-app-surface-elevated border border-app-border text-app-text-primary text-xs font-bold font-mono transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 text-app-accent ${isQueryingKey ? 'animate-spin' : ''}`} />
+                  <span>{isQueryingKey ? 'Querying key...' : 'Test GET /api/v1/vapid-public-key'}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

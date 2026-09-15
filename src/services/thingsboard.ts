@@ -1859,6 +1859,109 @@ class ThingsBoardService {
   }
 
   /**
+   * Saves SERVER_SCOPE attributes to the current USER entity.
+   * Used for Web Push VAPID/FCM subscriptions and server-side notification targeting.
+   */
+  public async saveUserServerAttributes(attributes: Record<string, any>): Promise<boolean> {
+    const token = this.getEffectiveToken();
+    if (!token) {
+      console.warn('[ThingsBoard] Cannot save user server attributes: No auth token');
+      return false;
+    }
+
+    let user = this.getCurrentUser();
+    if (!user || !user.id || user.id === 'authentik_user') {
+      user = await this.fetchUserProfile();
+    }
+    const userId = user?.id;
+    if (!userId || userId === 'authentik_user') {
+      console.warn('[ThingsBoard] Cannot save user server attributes: Invalid or unauthenticated user ID');
+      return false;
+    }
+
+    const serverUrl = this.config.serverUrl.replace(/\/$/, '');
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
+    };
+
+    const endpoints = [
+      `${serverUrl}/api/plugins/telemetry/USER/${userId}/attributes/SERVER_SCOPE`,
+      `${serverUrl}/api/plugins/telemetry/USER/${userId}/SERVER_SCOPE`,
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attributes),
+        });
+        if (res.ok) {
+          console.log(`[ThingsBoard] Persisted USER SERVER_SCOPE attributes via ${url}`);
+          return true;
+        }
+      } catch (e) {
+        console.warn(`[ThingsBoard] Attempt to save user attributes to ${url} failed:`, e);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Saves SERVER_SCOPE attributes to the CUSTOMER entity (if current user belongs to a customer).
+   * Ensures rule chains querying either USER or CUSTOMER attributes have the FCM subscription.
+   */
+  public async saveCustomerServerAttributes(attributes: Record<string, any>): Promise<boolean> {
+    const token = this.getEffectiveToken();
+    if (!token) return false;
+
+    let user = this.getCurrentUser();
+    if (!user?.customerId) {
+      user = await this.fetchUserProfile();
+    }
+    const rawCustId = user?.customerId;
+    const customerId = typeof rawCustId === 'object' ? (rawCustId as any)?.id : rawCustId;
+    if (
+      !customerId ||
+      customerId === '13814000-1dd2-11b2-8080-808080808080' ||
+      customerId === 'undefined'
+    ) {
+      return false;
+    }
+
+    const serverUrl = this.config.serverUrl.replace(/\/$/, '');
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
+    };
+
+    const endpoints = [
+      `${serverUrl}/api/plugins/telemetry/CUSTOMER/${customerId}/attributes/SERVER_SCOPE`,
+      `${serverUrl}/api/plugins/telemetry/CUSTOMER/${customerId}/SERVER_SCOPE`,
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attributes),
+        });
+        if (res.ok) {
+          console.log(`[ThingsBoard] Persisted CUSTOMER SERVER_SCOPE attributes via ${url}`);
+          return true;
+        }
+      } catch (e) {
+        console.warn(`[ThingsBoard] Attempt to save customer attributes to ${url} failed:`, e);
+      }
+    }
+    return false;
+  }
+
+  /**
    * Immediately update telemetry for a device from an incoming packet.
    * This instantly synchronizes the 4 climate widgets and device readouts across the app.
    */
