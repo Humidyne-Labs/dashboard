@@ -45,8 +45,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # YAML update is a result of SDK Tools depreciation, 
+      # (https://developer.android.com/tools/releases/sdk-tools)
       - name: Setup Android SDK Tools
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli

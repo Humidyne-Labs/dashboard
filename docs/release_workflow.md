@@ -207,6 +207,8 @@ jobs:
 
       - name: Setup Android SDK Tools
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
 
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
