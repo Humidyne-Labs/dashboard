@@ -1,4 +1,5 @@
 import { HumidorAlarm } from '../types';
+import { pushNotifications } from './pushNotifications';
 
 export interface NotificationSettings {
   pushEnabled: boolean;
@@ -201,32 +202,29 @@ class NotificationService {
 
     this.playAlarmSound(alarm.severity);
 
-    if (this.settings.pushEnabled && this.getPermission() === 'granted') {
-      try {
-        new Notification(title, {
-          body,
-          icon: '/favicon.svg',
-          tag: `humid1-${alarm.id}-${alarm.severity}`,
-          requireInteraction: alarm.severity === 'CRITICAL',
-          silent: true, // Disable host OS / browser default chime to prevent double sound alerts
-        });
-      } catch {
-        // Fallback or permission blocked in context
-      }
+    if (this.settings.pushEnabled) {
+      pushNotifications.showNotification({
+        title,
+        body,
+        severity: alarm.severity,
+        deviceId: alarm.deviceId,
+        deviceName: deviceName || alarm.deviceName,
+        tag: `humid1-${alarm.id}-${alarm.severity}`,
+        timestamp: alarm.createdTime,
+      }).catch((err) => {
+        console.warn('Failed to dispatch alert notification:', err);
+      });
     }
   }
 
   public notify(title: string, options?: NotificationOptions): void {
-    if (this.settings.pushEnabled && this.getPermission() === 'granted') {
-      try {
-        new Notification(title, {
-          icon: '/favicon.svg',
-          silent: true, // Disable host default sound to avoid double chime
-          ...options,
-        });
-      } catch {
-        // ignore
-      }
+    if (this.settings.pushEnabled) {
+      pushNotifications.showNotification({
+        title,
+        body: options?.body || '',
+        severity: 'INFO',
+        tag: options?.tag || 'humid1-info',
+      }).catch(() => {});
     }
   }
 }

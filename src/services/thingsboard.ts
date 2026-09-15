@@ -723,17 +723,33 @@ class ThingsBoardService {
     this.fetchRealDevices();
     this.fetchRealAlarms();
 
-    // 8-second interval (optimized for reactive device updates) with active tab check
+    // Adaptive polling loop: 8s in foreground, 20s in background / screen locked
+    let lastPollTime = 0;
     this.livePollInterval = window.setInterval(() => {
-      // Pause telemetry polling when tab is hidden to prevent request flood
-      if (typeof document !== 'undefined' && document.hidden) {
+      const isHidden = typeof document !== 'undefined' && document.hidden;
+      const now = Date.now();
+      const minIntervalMs = isHidden ? 20000 : 8000;
+      if (now - lastPollTime < minIntervalMs) {
         return;
       }
+      lastPollTime = now;
+
       if (this.getEffectiveToken() && !this.isFetchingDevices) {
         this.fetchRealDevices();
         this.fetchRealAlarms();
       }
-    }, 8000);
+    }, 4000);
+
+    if (typeof document !== 'undefined' && !(this as any)._visibilityListenerAttached) {
+      (this as any)._visibilityListenerAttached = true;
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.getEffectiveToken() && !this.isFetchingDevices) {
+          lastPollTime = Date.now();
+          this.fetchRealDevices();
+          this.fetchRealAlarms();
+        }
+      });
+    }
   }
 
   public stopLivePolling() {
@@ -1078,6 +1094,9 @@ class ThingsBoardService {
 
       if (hasChanged) {
         this.devices = enrichedDevices;
+        if (this.isDemoMode() || !this.getEffectiveToken()) {
+          this.evaluateAllAlarms();
+        }
         this.notifySubscribers();
       }
       this.isFetchingDevices = false;
@@ -1115,55 +1134,72 @@ class ThingsBoardService {
     apiLogger.logRequest(txId, 'GET', url, { pageSize, page, searchStatus }, `Bearer ${token}`);
 
     try {
-      const res = await apiGetAllAlarmsV2({
-        query: {
-          pageSize,
-          page,
-          sortProperty: 'createdTime',
-          sortOrder: 'DESC',
-          searchStatus,
-        } as any,
-        requestValidator: undefined,
-        responseValidator: undefined,
-      } as any);
+      let rawAlarms: any[] = [];
+      try {
+        const res = await apiGetAllAlarmsV2({
+          query: {
+            pageSize,
+            page,
+            sortProperty: 'createdTime',
+            sortOrder: 'DESC',
+            searchStatus,
+          } as any,
+          requestValidator: undefined,
+          responseValidator: undefined,
+        } as any);
 
-      if (res.data) {
-        const rawAlarms = (res.data as any).data || [];
-        const mappedAlarms: HumidorAlarm[] = rawAlarms.map((a: any) => {
-          let msg = a.type || 'Telemetry Alarm';
-          if (a.details) {
-            if (typeof a.details === 'string') {
-              msg = a.details;
-            } else if (typeof a.details === 'object') {
-              msg = a.details.message || a.details.msg || JSON.stringify(a.details);
-            }
-          }
-          return {
-            id: a.id?.id || a.id,
-            deviceId: a.originator?.id || 'unknown',
-            deviceName: a.originatorName || 'Humidor Unit',
-            severity: a.severity || 'WARNING',
-            type: a.type || 'SYSTEM_WARNING',
-            details: msg,
-            createdTime: a.createdTime || 1700000000000,
-            status: a.status || 'ACTIVE_UNACK',
-          };
+        if (res.data) {
+          rawAlarms = (res.data as any).data || [];
+        }
+      } catch (sdkErr) {
+        // Direct REST fallback if SDK validation encounters an issue
+        const directRes = await fetch(url, {
+          headers: {
+            'X-Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
+        if (directRes.ok) {
+          const directData = await directRes.json();
+          rawAlarms = directData.data || (Array.isArray(directData) ? directData : []);
+        } else {
+          throw sdkErr;
+        }
+      }
 
-        // Trigger notification sound / push alert for newly active server-side alarms
-        for (const alarm of mappedAlarms) {
-          if (alarm.status.startsWith('ACTIVE')) {
-            notificationService.notifyAlarm(alarm, alarm.deviceName);
+      const mappedAlarms: HumidorAlarm[] = rawAlarms.map((a: any) => {
+        let msg = a.type || 'Telemetry Alarm';
+        if (a.details) {
+          if (typeof a.details === 'string') {
+            msg = a.details;
+          } else if (typeof a.details === 'object') {
+            msg = a.details.message || a.details.msg || JSON.stringify(a.details);
           }
         }
+        return {
+          id: a.id?.id || a.id,
+          deviceId: a.originator?.id || 'unknown',
+          deviceName: a.originatorName || 'Humidor Unit',
+          severity: a.severity || 'WARNING',
+          type: a.type || 'SYSTEM_WARNING',
+          details: msg,
+          createdTime: a.createdTime || 1700000000000,
+          status: a.status || 'ACTIVE_UNACK',
+        };
+      });
 
-        this.alarms = mappedAlarms;
-        apiLogger.logResponse(txId, 200, { alarmCount: this.alarms.length, status: searchStatus });
-        this.notifySubscribers();
-        return this.alarms;
-      } else {
-        apiLogger.logResponse(txId, 200, { alarmCount: 0 });
+      // Pure relay: Pass server-side active alarms directly through to notification service
+      for (const alarm of mappedAlarms) {
+        if (alarm.status.startsWith('ACTIVE')) {
+          notificationService.notifyAlarm(alarm, alarm.deviceName);
+        }
       }
+
+      this.alarms = mappedAlarms;
+      apiLogger.logResponse(txId, 200, { alarmCount: this.alarms.length, status: searchStatus });
+      this.notifySubscribers();
+      return this.alarms;
     } catch (err: any) {
       console.warn('Failed to fetch alarms from ThingsBoard API:', err);
       apiLogger.logResponse(txId, 0, undefined, err?.message || 'Failed to fetch alarms');
@@ -1860,23 +1896,19 @@ class ThingsBoardService {
     });
 
     if (hasChanged) {
-      // In Demo mode or when offline without an active ThingsBoard session,
-      // run client-side alarm simulation as a fallback.
-      if (this.isDemoMode() || !this.getEffectiveToken()) {
-        this.evaluateAllAlarms();
-      }
+      this.evaluateAllAlarms();
       this.notifySubscribers();
     }
   }
 
   /**
    * Offline / Demo Mode Alarm Evaluator:
-   * Evaluates devices against local threshold configurations & hysteresis.
-   * NOTE: When connected to ThingsBoard, the server-side Rule Chain (Master Evaluator -> Trigger/Clear Alarm)
-   * is the authoritative source of truth.
+   * When connected to ThingsBoard, the server-side Rule Engine is the authoritative evaluator.
+   * The client acts purely as an uninhibited relay for server-generated alarms.
+   * This local evaluator operates strictly in Demo Mode or when disconnected.
    */
   public evaluateAllAlarms(): void {
-    // If connected to a real ThingsBoard instance, server-side Rule Engine manages alarms
+    // Separation of concerns: server-side Rule Engine manages real hardware alarms
     if (!this.isDemoMode() && this.getEffectiveToken()) {
       return;
     }

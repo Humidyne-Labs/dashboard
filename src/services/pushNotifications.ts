@@ -34,11 +34,28 @@ class PushNotificationManager {
         const reg = await navigator.serviceWorker.getRegistration();
         if (reg) {
           this.registration = reg;
+        } else {
+          navigator.serviceWorker.ready.then((readyReg) => {
+            this.registration = readyReg;
+          }).catch(() => {});
         }
       } catch (e) {
         console.warn('Could not query service worker registration:', e);
       }
     }
+  }
+
+  public async getRegistration(): Promise<ServiceWorkerRegistration | null> {
+    if (this.registration) return this.registration;
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      try {
+        this.registration = await navigator.serviceWorker.ready;
+        return this.registration;
+      } catch (e) {
+        console.warn('Failed to obtain ready ServiceWorkerRegistration:', e);
+      }
+    }
+    return null;
   }
 
   public getPermission(): NotificationPermissionState {
@@ -77,6 +94,12 @@ class PushNotificationManager {
       const result = await Notification.requestPermission();
       this.permission = result as NotificationPermissionState;
       this.notifyListeners();
+
+      if (result === 'granted') {
+        // Attempt to register periodic background sync if available on Android
+        this.registerPeriodicSync().catch(() => {});
+      }
+
       return this.permission;
     } catch (err) {
       console.error('Error requesting notification permission:', err);
@@ -84,6 +107,48 @@ class PushNotificationManager {
     }
   }
 
+  /**
+   * Registers Chromium/Android Periodic Background Sync to keep humidor alarms monitored
+   */
+  public async registerPeriodicSync(): Promise<boolean> {
+    const reg = await this.getRegistration();
+    if (!reg) return false;
+
+    if ('periodicSync' in reg) {
+      try {
+        const periodicSync = (reg as any).periodicSync;
+        await periodicSync.register('humid1-climate-check', {
+          minInterval: 15 * 60 * 1000, // 15 minutes minimum interval supported by OS
+        });
+        return true;
+      } catch (e) {
+        console.info('Periodic background sync registration note:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get active Web Push Subscription (for ThingsBoard Server Push / FCM Integration)
+   */
+  public async getPushSubscription(): Promise<PushSubscription | null> {
+    const reg = await this.getRegistration();
+    if (!reg || !('pushManager' in reg)) return null;
+
+    try {
+      return await reg.pushManager.getSubscription();
+    } catch (err) {
+      console.warn('Error fetching push subscription:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Reliable native notification dispatcher
+   * Uses ServiceWorkerRegistration.showNotification (mandatory for Android TWA/PWA)
+   * with fallback to window Notification for desktop browsers.
+   */
   public async showNotification(payload: HumidorAlertPayload): Promise<boolean> {
     if (!this.isGranted()) {
       return false;
@@ -93,39 +158,55 @@ class PushNotificationManager {
     const badgeColor =
       severity === 'CRITICAL' ? '🚨' : severity === 'MAJOR' ? '⚠️' : severity === 'WARNING' ? '⚡' : 'ℹ️';
 
-    const formattedTitle = `${badgeColor} ${title}${deviceName ? ` — ${deviceName}` : ''}`;
+    // Clean title prefix
+    const cleanTitle = title.replace(/^[🚨⚠️⚡ℹ️]\s*/, '');
+    const formattedTitle = `${badgeColor} ${cleanTitle}${deviceName && !cleanTitle.includes(deviceName) ? ` — ${deviceName}` : ''}`;
 
     const options: NotificationOptions = {
       body,
+      // Note: Android system tray requires bitmap PNG; SVG causes silent rejection or blank box
       icon: '/pwa-192x192.png',
-      badge: '/favicon.svg',
+      badge: '/pwa-192x192.png',
       tag: tag || `humid1-${severity.toLowerCase()}-${Date.now()}`,
+      // Vibration pattern for Android hardware (buzz-pause-buzz)
+      vibrate: severity === 'CRITICAL' ? [300, 100, 300, 100, 300] : [200, 100, 200],
+      requireInteraction: severity === 'CRITICAL',
+      renotify: true,
       data: {
         timestamp: Date.now(),
         severity,
         url: window.location.origin,
       },
-    };
+      // Actions supported in Android system notification tray
+      actions: [
+        { action: 'open_dashboard', title: 'Open Dashboard' },
+      ],
+    } as any;
 
     try {
-      // Prefer Service Worker showNotification if active
-      if (this.registration && 'showNotification' in this.registration) {
-        await this.registration.showNotification(formattedTitle, options);
+      const reg = await this.getRegistration();
+      if (reg && 'showNotification' in reg) {
+        await reg.showNotification(formattedTitle, options);
         return true;
       }
 
-      // Fallback to standard window Notification
-      new Notification(formattedTitle, options);
-      return true;
-    } catch (e) {
-      console.warn('Native notification failed, attempting window fallback:', e);
-      try {
+      // Desktop fallback only (Android throws Illegal Constructor for window Notification)
+      if (typeof window !== 'undefined' && 'Notification' in window) {
         new Notification(formattedTitle, options);
         return true;
-      } catch (err2) {
-        console.error('Failed to display web notification:', err2);
-        return false;
       }
+      return false;
+    } catch (e) {
+      console.warn('Native ServiceWorker showNotification failed, trying fallback:', e);
+      try {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          new Notification(formattedTitle, options);
+          return true;
+        }
+      } catch (err2) {
+        console.error('Failed to display notification:', err2);
+      }
+      return false;
     }
   }
 

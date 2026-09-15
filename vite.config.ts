@@ -68,6 +68,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/sw-custom.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
         globIgnores: ['config.js', 'env-config.js'],
         navigateFallbackDenylist: [/^\/oauth2/, /^\/login\/oauth2/],
