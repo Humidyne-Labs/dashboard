@@ -79,6 +79,13 @@ export async function checkMicroserviceHealth(microserviceBaseUrl?: string): Pro
       };
     }
 
+    if (res.status === 502) {
+      return {
+        healthy: false,
+        error: `HTTP 502 Bad Gateway: BunkerWeb cannot reach webpush-relay:2000. Ensure container webpush-relay is joined to proxy-net and Python is bound to host 0.0.0.0 (not 127.0.0.1).`,
+      };
+    }
+
     return {
       healthy: false,
       error: `HTTP ${res.status}: ${res.statusText}`,
@@ -385,6 +392,7 @@ class PushNotificationManager {
     subscription?: any;
     endpoint?: string;
     vapidSource?: string;
+    devicesSynced?: number;
     error?: string;
   }> {
     try {
@@ -413,6 +421,7 @@ class PushNotificationManager {
       const subString = JSON.stringify(subJson);
 
       const attributesPayload = {
+        fcm_subscription: subString,
         push_subscription: subString,
         push_endpoint: freshSub.endpoint,
         push_p256dh: subJson.keys?.p256dh || '',
@@ -427,10 +436,24 @@ class PushNotificationManager {
       // 1. Assign to USER SERVER_SCOPE attributes
       const userSaved = await thingsboard.saveUserServerAttributes(attributesPayload);
 
-      // 2. Assign to CUSTOMER SERVER_SCOPE attributes (if user belongs to a customer)
+      // 2. Assign to all discovered DEVICES (attempts SERVER_SCOPE and SHARED_SCOPE)
+      const devices = thingsboard.getDevices();
+      let devicesSaved = 0;
+      for (const dev of devices) {
+        try {
+          const res = await thingsboard.saveDeviceServerAttributes(dev.id, attributesPayload);
+          if (res.serverScope || res.sharedScope) {
+            devicesSaved++;
+          }
+        } catch (devErr) {
+          console.warn(`[PushManager] Could not sync attributes to device ${dev.id}:`, devErr);
+        }
+      }
+
+      // 3. Assign to CUSTOMER SERVER_SCOPE attributes (safely bypassed for customer users)
       const customerSaved = await thingsboard.saveCustomerServerAttributes(attributesPayload);
 
-      const success = userSaved || customerSaved;
+      const success = userSaved || devicesSaved > 0 || customerSaved;
       if (success) {
         try {
           localStorage.setItem(
@@ -451,6 +474,7 @@ class PushNotificationManager {
         subscription: subJson,
         endpoint: freshSub.endpoint,
         vapidSource: keyInfo.endpoint,
+        devicesSynced: devicesSaved,
         error: success ? undefined : 'Failed saving attributes to ThingsBoard server',
       };
     } catch (err: any) {

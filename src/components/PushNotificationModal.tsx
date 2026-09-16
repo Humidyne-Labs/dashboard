@@ -67,8 +67,9 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
       const res = await pushNotifications.syncSubscriptionWithThingsBoard(true);
       if (res.success) {
         setFcmSub(res.subscription);
+        const deviceNote = (res as any).devicesSynced ? ` & ${(res as any).devicesSynced} device(s)` : '';
         setSyncStatus(
-          `FCM token refreshed & synced to ThingsBoard SERVER_SCOPE${
+          `FCM token refreshed & synced to User${deviceNote}${
             res.vapidSource ? ` (via ${res.vapidSource})` : ''
           }`
         );

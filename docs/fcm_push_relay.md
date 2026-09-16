@@ -154,3 +154,29 @@ dash.humid1.com_REVERSE_PROXY_HOST_5=http://webpush-relay:2000/
 - **Same-Origin HTTPS:** Prevents browser mixed-content blocking (HTTPS page calling insecure HTTP) and eliminates cross-origin resource sharing (CORS) complications.
 - **Port Isolation:** Port `2000` remains completely private to the internal Docker network (`proxy-net`) and does not need to be exposed on WAN firewalls.
 - **Fail-Safe Fallback:** If the microservice is temporarily offline during cold boot, the dashboard utilizes cached VAPID credentials stored in browser local storage to prevent subscription disruption.
+
+### 4.3 Resolving "502 Bad Gateway" on `/push/healthz`
+If `curl https://dash.humid1.com/push/healthz` returns `502 Bad Gateway`, BunkerWeb is unable to establish a TCP socket to `webpush-relay:2000`. This is caused by one of the following:
+
+1. **Docker Network Disconnect**:
+   The `webpush-relay` container was launched on a separate network. Attach it to the BunkerWeb reverse proxy network:
+   ```bash
+   docker network connect proxy-net webpush-relay
+   ```
+2. **Python Listening on 127.0.0.1 instead of 0.0.0.0**:
+   Uvicorn/FastAPI or Flask inside the container must bind to `0.0.0.0`, not `127.0.0.1` or `localhost`:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 2000
+   ```
+3. **Container Name Mismatch**:
+   Verify the container name in `docker ps`. If the container is named differently (e.g., `micro-service_webpush-relay_1`), either add `container_name: webpush-relay` to its `docker-compose.yml` or update the BunkerWeb host parameter.
+
+---
+
+## 5. ThingsBoard Attribute Storage Scopes
+
+When the user registers or refreshes FCM push in the dashboard, the application persists the subscription payload (`fcm_subscription`, `push_subscription`, `push_endpoint`, `fcm_push_enabled`) to:
+1. **USER Entity (`SERVER_SCOPE`)**: Stored on the authenticated customer user (`/api/plugins/telemetry/USER/{userId}/attributes/SERVER_SCOPE`).
+2. **DEVICE Entity (`SERVER_SCOPE` & `SHARED_SCOPE`)**: Stored on all active devices associated with the account (`/api/plugins/telemetry/DEVICE/{deviceId}/attributes/...`).
+   - `SERVER_SCOPE`: Enables ThingsBoard rule chains using Originator Attributes Enrichment to pull `fcm_subscription`.
+   - `SHARED_SCOPE`: Provides guaranteed write permissions for customer users where tenant-level server scope writes are restricted.

@@ -941,6 +941,16 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                         ? `Status: ${relayHealth.status || 'OK'}`
                         : `Error: ${relayHealth.error || 'Connection refused'}`}
                     </div>
+                    {!relayHealth.healthy && (
+                      <div className="mt-2 pt-2 border-t border-app-status-critical/20 text-[10px] text-app-text-secondary leading-relaxed font-sans">
+                        💡 <strong className="text-app-text-primary">Troubleshooting 502 / Offline:</strong>
+                        <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                          <li>Python app must listen on <code className="text-app-accent font-mono">0.0.0.0:2000</code> (not <code className="font-mono">127.0.0.1</code>).</li>
+                          <li>Container must join BunkerWeb&apos;s network: <code className="text-app-accent font-mono">docker network connect proxy-net webpush-relay</code>.</li>
+                          <li>Check container logs: <code className="text-app-accent font-mono">docker logs webpush-relay</code>.</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
 

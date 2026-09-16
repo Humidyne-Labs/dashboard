@@ -1910,6 +1910,91 @@ class ThingsBoardService {
   }
 
   /**
+   * Saves attributes to a specific DEVICE entity under SERVER_SCOPE and SHARED_SCOPE.
+   * Ensures that ThingsBoard rule chains evaluating telemetry directly on the device
+   * have access to fcm_subscription and push_subscription.
+   */
+  public async saveDeviceServerAttributes(
+    deviceId: string,
+    attributes: Record<string, any>
+  ): Promise<{ serverScope: boolean; sharedScope: boolean }> {
+    const token = this.getEffectiveToken();
+    if (!token || !deviceId) {
+      return { serverScope: false, sharedScope: false };
+    }
+
+    const serverUrl = (this.config.serverUrl || DEFAULT_THINGSBOARD_URL).replace(/\/+$/, '');
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
+    };
+
+    let serverScope = false;
+    let sharedScope = false;
+
+    // 1. Attempt SERVER_SCOPE
+    const serverEndpoints = [
+      `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/attributes/SERVER_SCOPE`,
+      `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/SERVER_SCOPE`,
+    ];
+
+    for (const url of serverEndpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attributes),
+        });
+        if (res.ok) {
+          serverScope = true;
+          console.log(`[ThingsBoard] Persisted DEVICE SERVER_SCOPE attributes to ${deviceId}`);
+          break;
+        }
+      } catch {
+        // continue to next endpoint
+      }
+    }
+
+    // 2. Attempt SHARED_SCOPE (guaranteed writable by CUSTOMER_USER)
+    const sharedEndpoints = [
+      `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/attributes/SHARED_SCOPE`,
+      `${serverUrl}/api/plugins/telemetry/DEVICE/${deviceId}/SHARED_SCOPE`,
+    ];
+
+    for (const url of sharedEndpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attributes),
+        });
+        if (res.ok) {
+          sharedScope = true;
+          console.log(`[ThingsBoard] Persisted DEVICE SHARED_SCOPE attributes to ${deviceId}`);
+          break;
+        }
+      } catch {
+        // continue
+      }
+    }
+
+    // 3. Update in-memory state so dashboard immediately reflects the changes
+    this.devices = this.devices.map((dev) => {
+      if (dev.id === deviceId) {
+        const updatedShared = { ...dev.sharedAttributes, ...attributes };
+        return {
+          ...dev,
+          sharedAttributes: updatedShared,
+        };
+      }
+      return dev;
+    });
+
+    return { serverScope, sharedScope };
+  }
+
+  /**
    * Saves SERVER_SCOPE attributes to the CUSTOMER entity (if current user belongs to a customer).
    * Ensures rule chains querying either USER or CUSTOMER attributes have the FCM subscription.
    */
@@ -1921,6 +2006,12 @@ class ThingsBoardService {
     if (!user?.customerId) {
       user = await this.fetchUserProfile();
     }
+
+    // Customer Users in ThingsBoard CE do not have permission to modify the Customer entity (results in 403)
+    if (user?.authority === 'CUSTOMER_USER') {
+      return false;
+    }
+
     const rawCustId = user?.customerId;
     const customerId = typeof rawCustId === 'object' ? (rawCustId as any)?.id : rawCustId;
     if (
