@@ -120,19 +120,31 @@ To configure ThingsBoard CE to invoke this endpoint when sensor thresholds are e
 
 1. **Filter Node (Script Filter / Switch)**:
    Detect condition, e.g. `msg.humidity > metadata.rh_high_critical`.
-2. **Customer Attributes Enrichment Node**:
-   Fetch `fcm_subscription` from `SERVER_SCOPE` or `CUSTOMER_SCOPE`.
-3. **REST API Call Node**:
-   - **Endpoint URL:** `http://webpush-relay:2000/api/v1/notify` (internal Docker network `proxy-net`)
+2. **Originator Attributes Enrichment Node ("Get Token Data")**:
+   - Fetch Server attribute: `push_subscription`
+   - Set "Add originator attributes to": **Metadata** (this assigns `metadata.ss_push_subscription`).
+3. **Transformation Script Node**:
+   ```javascript
+   var rawSub = metadata.ss_push_subscription || metadata.push_subscription;
+   var subscription = rawSub ? ((typeof rawSub === 'string') ? JSON.parse(rawSub) : rawSub) : {};
+   
+   return {
+     msg: {
+       subscription: subscription,
+       title: "[" + (metadata.alarmSeverity || "CRITICAL") + "] " + (metadata.alarmType || "Alarm") + " - " + (metadata.deviceName || "HUMID1 Sensor"),
+       body: "Alert triggered: " + (metadata.alarmType || "Threshold breached"),
+       severity: metadata.alarmSeverity || "CRITICAL",
+       deviceName: metadata.deviceName || "HUMID1",
+       url: "https://dash.humid1.com"
+     },
+     metadata: metadata,
+     msgType: msgType
+   };
+   ```
+4. **REST API Call Node**:
+   - **Endpoint URL:** `https://dash.humid1.com/push/api/v1/notify` (or internal `http://webpush-relay:2000/push/api/v1/notify`)
    - **Request Method:** `POST`
-   - **Body Template:**
-     ```json
-     {
-       "subscription": $[metadata.fcm_subscription],
-       "title": "HUMID1 Alert: $[metadata.deviceName]",
-       "body": "Relative humidity is $[msg.humidity]% — threshold exceeded!"
-     }
-     ```
+   - **Send message body:** Enabled
 
 ---
 

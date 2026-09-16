@@ -420,17 +420,10 @@ class PushNotificationManager {
       const subJson = freshSub.toJSON ? freshSub.toJSON() : JSON.parse(JSON.stringify(freshSub));
       const subString = JSON.stringify(subJson);
 
+      // Minimal, clean payload: ThingsBoard Rule Engine only needs push_subscription JSON
       const attributesPayload = {
-        fcm_subscription: subString,
         push_subscription: subString,
-        push_endpoint: freshSub.endpoint,
-        push_p256dh: subJson.keys?.p256dh || '',
-        push_auth: subJson.keys?.auth || '',
-        push_vapid_key: keyInfo.key,
-        push_vapid_source: keyInfo.endpoint,
-        fcm_push_enabled: true,
-        push_subscription_updated: Date.now(),
-        push_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'HUMID1-PWA',
+        push_enabled: true,
       };
 
       // 1. Assign to USER SERVER_SCOPE attributes
