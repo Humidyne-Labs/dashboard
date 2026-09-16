@@ -21,7 +21,7 @@ This document provides technical documentation for the Python Push Relay microse
                                                           v
                                              +-------------------------+
                                              | Python Push Relay       |
-                                             | (:6000)                 |
+                                             | (:2000)                 |
                                              +-------------------------+
                                                           |
                                                 pywebpush / FCM API
@@ -123,7 +123,7 @@ To configure ThingsBoard CE to invoke this endpoint when sensor thresholds are e
 2. **Customer Attributes Enrichment Node**:
    Fetch `fcm_subscription` from `SERVER_SCOPE` or `CUSTOMER_SCOPE`.
 3. **REST API Call Node**:
-   - **Endpoint URL:** `http://webpush-relay:6000/api/v1/notify` (or Docker service DNS name)
+   - **Endpoint URL:** `http://webpush-relay:2000/api/v1/notify` (internal Docker network `proxy-net`)
    - **Request Method:** `POST`
    - **Body Template:**
      ```json
@@ -136,7 +136,21 @@ To configure ThingsBoard CE to invoke this endpoint when sensor thresholds are e
 
 ---
 
-## 4. Security & Network Configuration
+## 4. BunkerWeb Reverse Proxy & Network Configuration
 
-- **Immutable Host Binding:** The frontend dashboard connects exclusively to the pre-configured microservice environment URI (`VITE_PUSH_MICROSERVICE_URL` or default `http://localhost:6000`). UI override fields are prohibited to prevent Server-Side Request Forgery (SSRF) and unauthorized host redirections.
-- **Fail-Safe Fallback:** If the microservice is temporarily offline during cold boot, the dashboard utilizes cached VAPID credentials stored in local storage to prevent subscription disruption.
+### 4.1 BunkerWeb Reverse Proxy Configuration
+In production on `dash.humid1.com`, BunkerWeb routes frontend traffic to the dashboard container and proxies `/push` to the internal `webpush-relay` service:
+
+```ini
+# Route 5: Web Push Relay Microservice -> webpush-relay:2000
+dash.humid1.com_REVERSE_PROXY_URL_5=/push/
+dash.humid1.com_REVERSE_PROXY_HOST_5=http://webpush-relay:2000/
+```
+
+> **Important (Trailing Slashes):**  
+> In BunkerWeb (Nginx), using trailing slashes (`/push/` and `http://webpush-relay:2000/`) ensures Nginx automatically strips the `/push/` prefix before forwarding to the Python microservice. A browser request to `https://dash.humid1.com/push/healthz` arrives at the Python service as `GET /healthz`.
+
+### 4.2 Benefits of the `/push` Proxy
+- **Same-Origin HTTPS:** Prevents browser mixed-content blocking (HTTPS page calling insecure HTTP) and eliminates cross-origin resource sharing (CORS) complications.
+- **Port Isolation:** Port `2000` remains completely private to the internal Docker network (`proxy-net`) and does not need to be exposed on WAN firewalls.
+- **Fail-Safe Fallback:** If the microservice is temporarily offline during cold boot, the dashboard utilizes cached VAPID credentials stored in browser local storage to prevent subscription disruption.

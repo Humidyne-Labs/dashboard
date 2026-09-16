@@ -14,9 +14,13 @@ export interface HumidorAlertPayload {
 }
 
 /**
- * Default local Python micro-service relay endpoint hosting the FCM VAPID public key
+ * Default micro-service relay endpoint.
+ * In production behind BunkerWeb on dash.humid1.com, traffic is proxied via '/push'.
+ * Local dev fallback or direct access port is 2000 (webpush-relay:2000).
  */
-export const DEFAULT_MICROSERVICE_URL = 'http://localhost:6000';
+export const DEFAULT_MICROSERVICE_URL = '/push';
+export const LOCAL_MICROSERVICE_PORT = 2000;
+export const LOCAL_MICROSERVICE_URL = 'http://localhost:2000';
 
 /**
  * Fallback static VAPID key in case microservice is temporarily offline during cold boot
@@ -67,6 +71,14 @@ export async function checkMicroserviceHealth(microserviceBaseUrl?: string): Pro
         status: data?.status || 'ok',
       };
     }
+
+    if (res.status === 404) {
+      return {
+        healthy: false,
+        error: `HTTP 404: /healthz not found at ${url}. Check BunkerWeb route trailing slashes (e.g. REVERSE_PROXY_URL_5=/push/ & REVERSE_PROXY_HOST_5=http://webpush-relay:2000/) or verify Python endpoint routing.`,
+      };
+    }
+
     return {
       healthy: false,
       error: `HTTP ${res.status}: ${res.statusText}`,

@@ -365,7 +365,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
               )
             ) : (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-app-surface-elevated font-mono text-app-text-muted border border-app-border">
-                :6000
+                /push
               </span>
             )}
           </button>
@@ -885,10 +885,10 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({
                 <ShieldCheck className="w-4 h-4 text-app-status-nominal shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-bold text-app-text-primary">
-                    Security Policy: Immutable System Host Binding
+                    Security Policy: Immutable Reverse Proxy Routing
                   </p>
                   <p className="text-[11px] leading-relaxed">
-                    The microservice host URL is permanently locked to the trusted system environment (<code className="text-app-accent font-mono">{getMicroserviceUrl()}</code>). Client-side URL overrides in the user interface have been disabled to prevent arbitrary SSRF and unauthorized host redirects.
+                    Browser requests query the trusted BunkerWeb reverse proxy path (<code className="text-app-accent font-mono">{getMicroserviceUrl()}</code>), which securely tunnels to internal container <code className="text-app-accent font-mono">webpush-relay:2000</code>. This maintains same-origin HTTPS security without exposing backend ports or allowing SSRF redirects.
                   </p>
                 </div>
               </div>
