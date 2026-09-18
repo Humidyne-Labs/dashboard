@@ -1,61 +1,64 @@
-## Dashboard, Settings and Navigation  
+# Screen Captures
 
-<!-- The dashboard in its current state won't actually allow users to sign-in with plain TB credentials, one must use the SSO portal, for security, and 'forced' TOTP, via a 3rd party authentication application or offline hardware based TOPT token. There is also currently no physical means to allow a user to create a native TB account, one must use the SSO registration flow in order to receive access to the servers hosted web applications. This was done in an attempt to secure user accounts, prevent leaks, and consolidate all web application accounts into one manageable dashboard for efficient administration. Thank you for your understand. -->
+> [!NOTE]
+> Authentication is handled exclusively through the Authentik SSO portal (OAuth2 + PKCE) with enforced TOTP via a third-party authenticator app or hardware token. There is no native ThingsBoard credential registration flow; all accounts are provisioned through the Authentik registration portal. This was implemented to consolidate account management and harden user security.
 
-### Authorization Screen  
+## Dashboard, Settings and Navigation
+
+### Authorization Screen
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Auth-Dialog.png" alt="Authorization Screen" width="80%">
 
-### Main Dashboard I  
+### Main Dashboard I
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_1.png" alt="Main Dashboard I" width="80%">
 
-### Main Dashboard II  
+### Main Dashboard II
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Main-Dashboard_2.png" alt="Main Dashboard II" width="80%">
 
-### About Dialog  
+### About Dialog
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/About-Dialog.png" alt="About Dialog" width="80%">
 
-### Development Notice Popup  
+### Development Notice Popup
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/DEV-Notice.png" alt="Development Notice Popup" width="80%">
 
 ### Live Diagnostics
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/API-Live-Diagnostics.png" alt="Live Diagnostics" width="80%">
 
-### Advanced Settings Dialog  
+### Advanced Settings Dialog
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Settings-Dialog.png" alt="Advanced Settings Dialog" width="80%">
 
-### Device Claiming Dialog  
+### Device Claiming Dialog
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Claim-Device.png" alt="Device Claiming Dialog" width="80%">
 
-## Theme Support  
+## Theme Support
 
-### Theme Wizard Presets  
+### Theme Wizard Presets
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard.png" alt="Theme Wizard Presets" width="80%">
 
-### Theme Wizard Palette  
+### Theme Wizard Palette
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Palette.png" alt="Theme Wizard Palette" width="80%">
 
-### Theme Wizard Font  
+### Theme Wizard Font
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Font.png" alt="Theme Wizard Font" width="80%">
 
-### Theme Wizard Style  
+### Theme Wizard Style
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Theme-Wizard-Style.png" alt="Theme Wizard Style" width="80%">
 
-## Dashboard Widgets  
+## Dashboard Widgets
 
-### Timeseries Graph Zoom Preview I  
+### Timeseries Graph Zoom Preview I
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_1.png" alt="Timeseries Graph Zoom Preview I" width="80%">
 
-### Timeseries Graph Zoom Preview II  
+### Timeseries Graph Zoom Preview II
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Zoom-Preview_2.png" alt="Timeseries Graph Zoom Preview II" width="80%">
 
-## Envelope Notifications  
+## Envelope Notifications
 
-### Sample Email Correspondence  
+### Sample Email Correspondence
 <img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/Email-Sample.png" alt="Sample Email Correspondence" width="80%">
 
-### Sample Device Export XML (**humid1-test-sensor-b077bd-config.xml**)  
+### Sample Device Export XML (**humid1-test-sensor-b077bd-config.xml**)
 
-```XML
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <humid1-device-config version="1.0" exported-at="2026-09-12T02:42:55.300Z">
   <metadata>
@@ -132,7 +135,7 @@
       <border-radius>12px</border-radius>
       <card-radius>16px</card-radius>
       <button-radius>8px</button-radius>
-      <font-family>&apos;Inter&apos;, sans-serif</font-family>
+      <font-family>'Inter', sans-serif</font-family>
       <mono-family>ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace</mono-family>
       <backdrop-blur>12px</backdrop-blur>
       <border-width>1px</border-width>
@@ -142,23 +145,19 @@
 </humid1-device-config>
 ```
 
-## Mobile Platform Snapshots  
-<!-- Please note, the wrapper around the dashboard present in the android package may alter the dashboards dynamic layout. I have not yet had the opportunity to 'actually' test the android APK, only the web dashboard, via chrome. 'IF' there is a notable impact to the dashboards layout, a future revision will attempt to addresses any malformations in the UI. Note Recorded at 9/12/2026. -->
+## Mobile Platform Snapshots
 
-> moto g stylus 5G - 2023  
-> Android 14 - *Upside Down Cake*  
-> 
-> Display Size - 6.6" FHD+  
-> Resolution - Full HD+ (2400 x 1080)  
-> Screen to Body Ratio - Active Area-Touch Panel (AA-TP): 92.42%  
-> Display Technology - LTPS l 120Hz refresh rate  
-> Aspect Ratio - 20:9  
+> [!NOTE]
+> Tested on a **Motorola Moto G Stylus 5G (2023)** running Android 14 (*Upside Down Cake*).
+> Display: 6.6″ FHD+ · 2400×1080 · 120 Hz LTPS · 20:9 · 92.42% screen-to-body ratio.
+>
+> The Android TWA wrapper may affect certain dynamic layout constraints. If any UI malformations are observed in the native APK, a future revision will address them.
 
 <table>
   <tr>
     <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_1.png" alt="Mobile UI Snapshot 1"></td>
     <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_2.png" alt="Mobile UI Snapshot 2"></td>
-    <td><img src=https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_3.png alt="Mobile UI Snapshot 3"></td>
+    <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_3.png" alt="Mobile UI Snapshot 3"></td>
   </tr>
   <tr>
     <td><img src="https://raw.githubusercontent.com/Humidyne-Labs/assets/main/Images/dashboard-snapshot/mobile-platform/mobile_4.png" alt="Mobile UI Snapshot 4"></td>

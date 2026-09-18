@@ -1,12 +1,12 @@
 # HUMID1 — REST API Manifest & JSON Reference
 
-This document serves as the authoritative, technically precise reference of the **actual ThingsBoard CE REST API integrations and JSON payloads** executed by the HUMID1 Dashboard frontend. Every transaction documented here maps directly to the active services and components implemented in `/src/services/thingsboard.ts` and the UI controls.
+This document serves as the authoritative reference for the **ThingsBoard CE REST API integrations and JSON payloads** executed by the HUMID1 Dashboard frontend. Every transaction documented here maps directly to the active services and components implemented in `/src/services/thingsboard.ts` and the UI controls.
 
 ---
 
 ## 1. Authentication & Session Lifecycle
 
-The dashboard connects to ThingsBoard CE utilizing a secure dual-access mechanism: direct username/password credential authentication or OpenID Connect (OIDC) Single Sign-On (SSO) redirects mapped from Authentik.
+The dashboard connects to ThingsBoard CE using a secure dual-access mechanism: direct username/password credential authentication, or OpenID Connect (OIDC) Single Sign-On (SSO) redirects mapped from Authentik.
 
 ### 1.1 Direct REST Login
 Authenticates a tenant administrator or customer user directly, returning a short-lived access JWT and a long-lived refresh token.
@@ -92,10 +92,10 @@ Obtains current active session details, authority structures (`CUSTOMER_USER` or
 The dashboard manages the lifecycle of customer-owned humidor units.
 
 ### 2.1 Fetch Claimed / Customer Devices
-Discovers and lists hardware devices bounded to the logged-in user profile. If authenticated as a Customer, it targets customer-specific endpoints; otherwise, it falls back to tenant administrator endpoints.
+Discovers and lists hardware devices bound to the logged-in user profile. If authenticated as a Customer, it targets customer-specific endpoints; otherwise it falls back to tenant administrator endpoints.
 
 - **Endpoint (Customer Users):** `GET /api/customer/{customerId}/deviceInfos?pageSize=100&page=0`
-- **Alternative Endpoint (Fallback):** `GET /api/customer/{customerId}/devices?pageSize=100&page=0`
+- **Fallback Endpoint (Customer Users):** `GET /api/customer/{customerId}/devices?pageSize=100&page=0`
 - **Endpoint (Tenant Admins):** `GET /api/deviceInfos?pageSize=100&page=0`
 - **Request Headers:**
   ```http
@@ -169,7 +169,7 @@ Gracefully unbinds a hardware unit from the customer user's registry.
   ```http
   Authorization: Bearer <JWT_Access_Token>
   ```
-- **Response Status:** `200 OK` (Indicates unclaiming execution succeeded)
+- **Response Status:** `200 OK`
 
 ---
 
@@ -363,7 +363,8 @@ Fetches configuration values and hardware diagnostic details.
   ]
   ```
 
-> **Note on Canonical Kelvin Storage:** All temperature thresholds (`tempLowCritical`, `tempLowWarning`, `tempHighWarning`, `tempHighCritical`, `tempHist`) are stored canonically in **Kelvin (K)** in `alarm_thresholds`. This allows the ThingsBoard rule chain engine to evaluate temperature alarm conditions against unit-agnostic Kelvin values regardless of whether the user sets `temp_unit` to `"F"`, `"C"`, or `"K"`.
+> [!NOTE]
+> **Canonical Kelvin Storage:** All temperature thresholds (`tempLowCritical`, `tempLowWarning`, `tempHighWarning`, `tempHighCritical`, `tempHist`) are stored in **Kelvin (K)** inside `alarm_thresholds`. This allows the ThingsBoard rule chain engine to evaluate temperature conditions against unit-agnostic Kelvin values regardless of whether the user has set `temp_unit` to `"F"`, `"C"`, or `"K"`.
 
 ---
 
@@ -373,32 +374,32 @@ Pushes threshold updates, sleep duration controls, or toggle configurations back
 - **Endpoint:** `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE`
 - **Request Payload:**
   ```json
-  "requestPayload": {
-        "sleep_interval_min": 15,
-        "sleep_interval_sec": 900,
-        "device_theme": "light",
-        "auto_update_enabled": true,
-        "manual_ota_trigger": false,
-        "sound_enabled": false,
-        "temp_unit": "F",
-        "alarm_thresholds": {
-          "rhLowCritical": 62,
-          "rhLowWarning": 65,
-          "rhHighWarning": 73,
-          "rhHighCritical": 76,
-          "tempLowCritical": 287.6,
-          "tempLowWarning": 290.93,
-          "tempHighWarning": 295.37,
-          "tempHighCritical": 297.04,
-          "batteryLowCritical": 15,
-          "batteryLowWarning": 25,
-          "rhHist": 1.5,
-          "tempHist": 0.556,
-          "battHist": 2
-        }
-      }
+  {
+    "sleep_interval_min": 15,
+    "sleep_interval_sec": 900,
+    "device_theme": "light",
+    "auto_update_enabled": true,
+    "manual_ota_trigger": false,
+    "sound_enabled": false,
+    "temp_unit": "F",
+    "alarm_thresholds": {
+      "rhLowCritical": 62,
+      "rhLowWarning": 65,
+      "rhHighWarning": 73,
+      "rhHighCritical": 76,
+      "tempLowCritical": 287.6,
+      "tempLowWarning": 290.93,
+      "tempHighWarning": 295.37,
+      "tempHighCritical": 297.04,
+      "batteryLowCritical": 15,
+      "batteryLowWarning": 25,
+      "rhHist": 1.5,
+      "tempHist": 0.556,
+      "battHist": 2
+    }
+  }
   ```
-- **Response Status:** `200 OK` (Attribute update successful)
+- **Response Status:** `200 OK`
 
 ---
 
@@ -446,7 +447,7 @@ Queries real-time alarms linked to the active tenant/customer devices.
 ---
 
 ### 4.2 Acknowledge Active Alarm
-Acknowledges an unresolved alert, indicating to other operators that attention has been directed.
+Acknowledges an unresolved alert, indicating that attention has been directed.
 
 - **Endpoint:** `POST /api/alarm/{alarmId}/ack`
 - **Request Headers:**
@@ -458,7 +459,7 @@ Acknowledges an unresolved alert, indicating to other operators that attention h
 ---
 
 ### 4.3 Clear Resolved Alarm
-Purges or clears an active alarm, resolving its visual warning status.
+Clears an active alarm, resolving its visual warning status.
 
 - **Endpoint:** `POST /api/alarm/{alarmId}/clear`
 - **Request Headers:**
@@ -484,54 +485,54 @@ Dispatches interactive requests to the device. These block synchronously (with a
   ```
 - **Request Payload (Ping Example):**
   ```json
-    "requestPayload": {
-      "method": "ping",
-      "params": {},
-      "timeout": 4000
-    }
+  {
+    "method": "ping",
+    "params": {},
+    "timeout": 4000
+  }
   ```
-- **Response Payload (200 OK - Device Acknowledged):**
+- **Response Payload (200 OK):**
   ```json
-    "responsePayload": {
-      "status": "error",
-      "message": "Unknown method"
-    }
+  {
+    "status": "error",
+    "message": "Unknown method"
+  }
   ```
 
 - **Request Payload (Buzzer Test Example):**
   ```json
-    "requestPayload": {
-      "method": "testBuzzer",
-      "params": {
-        "durationMs": 500
-      },
-      "timeout": 4000
-    }
+  {
+    "method": "testBuzzer",
+    "params": {
+      "durationMs": 500
+    },
+    "timeout": 4000
+  }
   ```
 - **Response Payload (200 OK):**
   ```json
-    "responsePayload": {
-      "status": "error",
-      "message": "Unknown method"
-    }
+  {
+    "status": "error",
+    "message": "Unknown method"
+  }
   ```
 
 - **Request Payload (Time Synchronization Example):**
   ```json
-    "requestPayload": {
-      "method": "syncTime",
-      "params": {
-        "epoch": 1788929078
-      },
-      "timeout": 4000
-    }
+  {
+    "method": "syncTime",
+    "params": {
+      "epoch": 1788929078
+    },
+    "timeout": 4000
+  }
   ```
 - **Response Payload (200 OK):**
   ```json
-    "responsePayload": {
-      "status": "error",
-      "message": "Unknown method"
-    }
+  {
+    "status": "error",
+    "message": "Unknown method"
+  }
   ```
 
 ---
@@ -584,19 +585,14 @@ The dashboard provides a portable XML schema (`<humid1-device-config>`) allowing
 ## 7. Web Push Notification & FCM Relay Microservice
 
 For the architecture, JSON payloads, and endpoint specifications of the Python Push Relay (`/healthz`, `/api/v1/vapid-public-key`, and ThingsBoard Rule Engine dispatch `/api/v1/notify`), refer to the dedicated specification:
+
 👉 **[`docs/fcm_push_relay.md`](./fcm_push_relay.md)**
 
 ---
 
-<details>
-  <summary>Not Actually Implemented</summary>
+## 8. Manual OTA Trigger (Shared Attribute)
 
-## 8. Over-The-Air (OTA) Updates Triggering
-
-The dashboard initiates hardware over-the-air firmware updates via a simple shared attribute transaction. 
-
-### 6.1 Manual OTA Trigger
-Rather than managing intricate server-side binary uploads, clicking **"Push OTA Update Now"** inside the *OTA Update Center* card simply updates the `manual_ota_trigger` shared attribute on the device to `true`. On its next wakeup, the ESP32 registers this trigger, downloads its bin package, completes the flashing routine, and resets the attribute upon successful boot.
+The dashboard initiates hardware over-the-air firmware updates via a shared attribute transaction. Clicking **"Push OTA Update Now"** inside the *OTA Update Center* sets the `manual_ota_trigger` shared attribute to `true`. On its next wakeup, the ESP32 registers this trigger, downloads its firmware package, completes the flashing routine, and resets the attribute upon successful boot.
 
 - **Endpoint:** `POST /api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE`
 - **Request Payload:**
@@ -606,5 +602,3 @@ Rather than managing intricate server-side binary uploads, clicking **"Push OTA 
   }
   ```
 - **Response Status:** `200 OK`
-
-</details>
